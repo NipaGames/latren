@@ -31,7 +31,6 @@ void Resources::LoadConfig(const std::fs::path& path, SerializableStruct& config
     }
     else {
         spdlog::info("Restoring defaults...");
-        config = {};
         SaveConfig(path, config);
     }
 }
