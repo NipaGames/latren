@@ -39,7 +39,7 @@ const Character& Font::GetChar(WCHAR c) const {
 
 template <typename T>
 glm::ivec2 GetRowVerticalPadding(const Font& font, const T& text) {
-    int max = font.padding[1];
+    int max = 0;
     int min = 0;
     auto it = text.begin();
     while (it != text.end()) {
@@ -236,6 +236,8 @@ int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineS
         h += additionalRows * (font.fontHeight + lineSpacing);
         std::string lastRow = text.substr(text.find_last_of('\n'));
         padding = GetRowVerticalPadding(font, lastRow);
+        if (padding[1] + padding[0] == 0)
+            padding[1] = font.padding[1];
     }
     else {
         padding = GetVerticalPadding(font, text);
