@@ -13,14 +13,14 @@ private:
     std::unordered_map<EventID, std::function<void(Params...)>> callbacks_;
 public:
     void Dispatch(const Params&... params) {
-        for (const auto& [hash, fn] : callbacks_) {
+        for (const auto& [id, fn] : callbacks_) {
             fn(params...);
         }
     }
     EventID Subscribe(const std::function<void(Params...)>& fn) {
-        EventID hash = NextID();
-        callbacks_.insert({ hash, fn });
-        return hash;
+        EventID id = NextID();
+        callbacks_.insert({ id, fn });
+        return id;
     }
     void Unsubscribe(const EventID& hash) {
         callbacks_.erase(hash);
@@ -31,41 +31,37 @@ public:
 };
 
 template <typename E, typename Fn>
-class IEventHandler : public IDFactory {
+class BasicEventHandler : public IDFactory {
+protected:
+    std::unordered_map<E, std::unordered_map<EventID, Fn>> events_;
 public:
-    virtual EventID Subscribe(const E&, const Fn&) = 0;
-    virtual void Unsubscribe(const E&, const EventID&) = 0;
-    virtual void ClearEvents() = 0;
+    virtual ~BasicEventHandler() = default;
+    virtual EventID Subscribe(const E& e, const Fn& fn) {
+        EventID id = NextID();
+        events_[e].insert({ id, fn });
+        return id;
+    }
+    virtual void Unsubscribe(const E& e, const EventID& id) {
+        events_[e].erase(id);
+    }
+    virtual void ClearEvents() {
+        events_.clear();
+    }
 };
 
 template <typename E, typename... Params>
-class EventHandler : public IEventHandler<E, std::function<void(Params...)>> {
-private:
-    std::unordered_map<E, std::unordered_map<EventID, std::function<void(Params...)>>> events_;
+class EventHandler : public BasicEventHandler<E, std::function<void(Params...)>> {
 public:
     void Dispatch(const E& e, const Params&... params) {
         for (const auto& [hash, fn] : events_[e]) {
             fn(params...);
         }
     }
-    EventID Subscribe(const E& e, const std::function<void(Params...)>& fn) {
-        EventID hash = NextID();
-        events_[e].insert({ hash, fn });
-        return hash;
-    }
-    void Unsubscribe(const E& e, const EventID& hash) {
-        events_[e].erase(hash);
-    }
-    void ClearEvents() {
-        events_.clear();
-    }
 };
 
 template <typename E, typename... Variants>
-class VariantEventHandler : public IEventHandler<E, std::variant<std::function<void()>, std::function<Variants>...>> {
+class VariantEventHandler : public BasicEventHandler<E, std::variant<std::function<void()>, std::function<Variants>...>> {
 typedef std::variant<std::function<void()>, std::function<Variants>...> Variant;
-private:
-    std::unordered_map<E, std::unordered_map<EventID, Variant>> events_;
 public:
     template <typename... Params>
     void Dispatch(const E& e, Params... params) {
@@ -75,16 +71,5 @@ public:
             else
                 std::get<std::function<void(Params...)>>(fn)(params...);
         }
-    }
-    EventID Subscribe(const E& e, const Variant& fn) {
-        EventID hash = NextID();
-        events_[e].insert({ hash, fn });
-        return hash;
-    }
-    void Unsubscribe(const E& e, const EventID& hash) {
-        events_[e].erase(hash);
-    }
-    void ClearEvents() {
-        events_.clear();
     }
 };
