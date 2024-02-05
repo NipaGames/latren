@@ -11,7 +11,6 @@ ListComponent::~ListComponent() {
 
 void ListComponent::SetScrollPos(float pos) {
     scrollPos_ = pos;
-    float rootPos = GetOffset().y;
     for (int i = 0; i < children_.size(); i++) {
         UIComponent* c = children_.at(i);
         c->transform.pos.y = i * -itemSpacing + pos;

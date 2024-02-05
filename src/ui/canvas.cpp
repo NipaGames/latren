@@ -37,7 +37,6 @@ Canvas& Canvas::operator=(Canvas&& other) {
 }
 
 Canvas::~Canvas() {
-    return;
     for (const auto& [p, components] : components_) {
         for (UIComponent* c : components) {
             if (c->canvas_ == this)

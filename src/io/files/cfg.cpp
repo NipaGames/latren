@@ -31,7 +31,7 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
                     inStrLiteral = !inStrLiteral;
             }
             else if (expr.at(i) == '#' && !inStrLiteral) {
-                expr = expr.substr(0, i);
+                expr.resize(i);
                 break;
             }
         }
