@@ -98,7 +98,7 @@ void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const st
     std::string strId = std::string(magic_enum::enum_name(id));
     onResourceLoad.Dispatch(strId);
     GLuint program = glCreateProgram();
-    LoadShader(program, Paths::Path(Paths::STANDARD_SHADER_DIR, path), t);
+    LoadShader(program, Paths::Path(Paths::LATREN_CORE_SHADER_DIR, path), t);
     glLinkProgram(program);
     auto programMessage = GetProgramInfoLog(program);
 	if (programMessage != "")
@@ -123,9 +123,9 @@ void Resources::ShaderManager::LoadShader(const std::string& id, const std::stri
 void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const std::string& vert, const std::string& frag, const std::string& geom) {
     LoadShader(
         (std::string) magic_enum::enum_name(id),
-        Paths::Path(Paths::STANDARD_SHADER_DIR, vert),
-        Paths::Path(Paths::STANDARD_SHADER_DIR, frag),
-        geom.empty() ? geom : Paths::Path(Paths::STANDARD_SHADER_DIR, geom)
+        Paths::Path(Paths::LATREN_CORE_SHADER_DIR, vert),
+        Paths::Path(Paths::LATREN_CORE_SHADER_DIR, frag),
+        geom.empty() ? geom : Paths::Path(Paths::LATREN_CORE_SHADER_DIR, geom)
     );
 }
 
@@ -146,9 +146,9 @@ void Resources::ShaderManager::LoadStandardShaders() {
 void Resources::ShaderManager::Load(const Resources::ShaderImport& import) {
     LoadShader(
         import.id,
-        Paths::Path(path_, import.vertexPath),
-        Paths::Path(path_, import.fragmentPath),
-        import.geometryPath.empty() ? import.geometryPath : Paths::Path(path_, import.geometryPath)
+        Paths::Path(path_, import.vertexPath.ParsePath(path_).generic_string()),
+        Paths::Path(path_, import.fragmentPath.ParsePath(path_).generic_string()),
+        import.geometryPath.IsEmpty() ? "" : Paths::Path(path_, import.geometryPath.ParsePath(path_).generic_string())
     );
 }
 

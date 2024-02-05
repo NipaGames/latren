@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 cmake_policy(SET CMP0079 NEW)
 
 option(LATREN_BUILD_STANDALONE OFF)
+option(LATREN_BUNDLE_RESOURCES OFF)
+set(LATREN_RESOURCE_DIR ${RUNTIME_OUTPUT_DIRECTORY}/../res)
+set(LATREN_INTERNAL_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/res/.latren)
 
 set(VERSION_LATREN 0.1)
 project(latren VERSION ${VERSION_LATREN})
@@ -20,6 +23,7 @@ set(SUBMODULE_GLEW_DIR ${THIRD_PARTY_DIR}/glew)
 set(SUBMODULE_GLFW_DIR ${THIRD_PARTY_DIR}/glfw)
 set(SUBMODULE_GLM_DIR ${THIRD_PARTY_DIR}/glm)
 set(SUBMODULE_SPDLOG_DIR ${THIRD_PARTY_DIR}/spdlog)
+set(SUBMODULE_OPENAL_DIR ${THIRD_PARTY_DIR}/openal-soft)
 set(BUILD_SHARED_LIBS OFF)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -39,18 +43,15 @@ set(LATREN_THIRDPARTY_INCLUDES
     ${SUBMODULE_GLM_DIR}
     ${SUBMODULE_SPDLOG_DIR}/include
     ${SUBMODULE_FREETYPE_DIR}/include
-    ${SUBMODULE_GLFW_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${LATREN_THIRDPARTY_INCLUDES})
-
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_BINARY_DIR}/lib ${CMAKE_BINARY_DIR})
-
+    ${SUBMODULE_GLFW_DIR}/include
+    ${SUBMODULE_OPENAL_DIR}/include)
 # sources
 file(GLOB_RECURSE GLOB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 # output binary
 add_library(latren SHARED ${GLOB_SOURCES})
 
-string (REPLACE ";" "\n\t- " SourcesFormatted "\n\t- ${Sources}")
+string(REPLACE ";" "\n\t- " SourcesFormatted "\n\t- ${Sources}")
 
 set(STATIC_LIB_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib CACHE BOOL "" FORCE)
 if(LATREN_BUILD_STANDALONE)
@@ -61,6 +62,13 @@ endif()
 
 message("static library output: ${STATIC_LIB_OUTPUT_DIR}")
 message("shared library output: ${SHARED_LIB_OUTPUT_DIR}")
+
+target_include_directories(latren PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${LATREN_THIRDPARTY_INCLUDES})
+target_link_directories(latren PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_BINARY_DIR}/lib ${CMAKE_BINARY_DIR})
+if(NOT LATREN_BUILD_STANDALONE)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${LATREN_THIRDPARTY_INCLUDES})
+    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_BINARY_DIR}/lib ${CMAKE_BINARY_DIR})
+endif()
 
 set(ARCHIVE_OUTPUT_DIRECTORY ${STATIC_LIB_OUTPUT_DIR} CACHE BOOL "" FORCE)
 set(LIBRARY_OUTPUT_PATH ${STATIC_LIB_OUTPUT_DIR} CACHE BOOL "" FORCE)
@@ -114,6 +122,13 @@ message("[ spdlog ]")
 add_subdirectory(${SUBMODULE_SPDLOG_DIR})
 target_link_latren_depen(spdlog)
 
+message("[ openal ]")
+set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
+set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
+add_subdirectory(${SUBMODULE_OPENAL_DIR})
+target_link_latren_depen(OpenAL)
+
 # i couldn't get these to work statically
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
@@ -138,3 +153,9 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 # project version macros
 target_compile_definitions(latren PRIVATE LATREN_VERSION_MAJ=${PROJECT_VERSION_MAJOR} LATREN_VERSION_MIN=${PROJECT_VERSION_MINOR})
 set_target_properties(latren PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${SHARED_LIB_OUTPUT_DIR})
+
+# resources
+if(LATREN_BUNDLE_RESOURCES)
+    message("Copying resources to ${LATREN_RESOURCE_DIR}")
+    file(COPY ${LATREN_INTERNAL_RESOURCE_DIR} DESTINATION ${LATREN_RESOURCE_DIR})
+endif()

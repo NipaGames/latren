@@ -12,8 +12,7 @@ std::optional<TextureID> Resources::TextureManager::LoadResource(const std::fs::
         return std::optional<TextureID>(TEXTURE_NONE);
     }
 
-    auto fPath = std::filesystem::absolute(path);
-    std::string absPath = fPath.string();
+    std::string absPath = path.generic_string();
 
     TextureID texture;
     glGenTextures(1, &texture);

@@ -10,6 +10,7 @@
 #include <variant>
 #include <spdlog/spdlog.h>
 
+#include "resourcepath.h"
 #include "fs.h"
 #include "serializablestruct.h"
 #include "configs.h"
@@ -31,18 +32,19 @@ namespace CFG {
     typedef CFGField<std::vector<ICFGField*>> CFGObject;
 };
 
+
 namespace Resources {
     using AdditionalImportData = std::vector<std::variant<std::string, float, int>>;
     struct Import {
-        std::string path;
+        ResourcePath path;
         std::string id;
         AdditionalImportData additionalData;
     };
     struct ShaderImport {
         std::string id;
-        std::string vertexPath;
-        std::string fragmentPath;
-        std::string geometryPath;
+        ResourcePath vertexPath;
+        ResourcePath fragmentPath;
+        ResourcePath geometryPath;
     };
     template <typename T>
     class ResourceManager {
@@ -84,12 +86,13 @@ namespace Resources {
                 spdlog::info("Failed loading {} '{}'", typeStr_, fileName);
         }
         virtual void Load(const Import& import) {
+            std::fs::path importPath = import.path.ParsePath(path_);
             if (import.id.empty())
-                SetItemID(std::fs::proximate(import.path, path_).generic_string());
+                SetItemID(std::fs::proximate(importPath, path_).generic_string());
             else
                 SetItemID(import.id);
             SetAdditionalData(import.additionalData);
-            Load(path_ / import.path);
+            Load(importPath);
         }
         virtual void LoadImports() {
             for (const auto& f : std::fs::directory_iterator(path_))
