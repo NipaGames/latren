@@ -9,8 +9,3 @@ private:
         return new Forward(dynamic_cast<const Forward&>(*c));
     });
 };
-
-class TestComponent1 : public Component<TestComponent1> { };
-class TestComponent2 : public TestComponent1 { };
-class TestComponent3 : public TestComponent2, public ForwardComponent<TestComponent3> { };
-class TestComponent4 : public TestComponent3, public ForwardComponent<TestComponent4> { };
