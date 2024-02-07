@@ -14,72 +14,91 @@ namespace Lights {
     };
     
     extern int LIGHTS_INDEX;
-    extern const int MAX_LIGHTS;
-    extern uint32_t RESERVED_LIGHTS;
+    LATREN_API int GetNextLightIndex();
+    typedef uint32_t LightReserves;
+    extern LightReserves RESERVED_LIGHTS;
+    extern const uint8_t MAX_LIGHTS;
 
     LATREN_API void ReserveIndex(int);
     LATREN_API bool IsReserved(int);
     LATREN_API int& GetIndex(LightType);
     LATREN_API void ResetIndices();
 
-    class Light : public Component<Light> {
-    friend class Renderer;
-    private:
-        LightType type_ = LightType::NONE;
+    class ILight {
     protected:
-        void SetType(LightType t) { type_ = t; }
-        std::string lightUniform_;
         bool isAssignedToRenderer_ = false;
+    public:
+        virtual void UseAsNext() = 0;
+        virtual void ApplyLight(GLuint) const = 0;
+        LATREN_API virtual void AssignToRenderer();
+        LATREN_API virtual void RemoveFromRenderer();
+        LATREN_API virtual void ApplyForAllShaders() const;
+    };
+
+    template <typename Derived>
+    class Light : public Component<Derived>, public ILight {
+    private:
+        LightType lightType_ = LightType::NONE;
+    protected:
+        void SetLightType(LightType t) { lightType_ = t; }
+        std::string lightUniform_;
     public:
         DEFINE_COMPONENT_DATA_VALUE(glm::vec3, color, glm::vec3(1.0f));
         DEFINE_COMPONENT_DATA_VALUE(float, intensity, 1.0f);
 
-        LATREN_API virtual ~Light();
-        LATREN_API IComponent* Clone() const override;
-        LATREN_API void Start() override;
-        LightType GetType() { return type_; }
-        LATREN_API virtual void UseAsNext();
-        LATREN_API virtual void ApplyLight(GLuint) const;
-        LATREN_API virtual void ApplyForAllShaders() const;
+        virtual ~Light() {
+            if (isAssignedToRenderer_)
+                RemoveFromRenderer();
+        }
+        virtual void Start() {
+            if (!isAssignedToRenderer_)
+                AssignToRenderer();
+        }
+        LightType GetType() { return lightType_; }
+        virtual void UseAsNext() override {
+            lightUniform_ = "lights[" + std::to_string(GetNextLightIndex()) + "]";
+        }
+        virtual void ApplyLight(GLuint shader) const override {
+            glUniform1i(glGetUniformLocation(shader, std::string(lightUniform_ + ".enabled").c_str()), GL_TRUE);
+            glUniform1i(glGetUniformLocation(shader, std::string(lightUniform_ + ".type").c_str()), static_cast<int>(lightType_));
+            glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".color").c_str()), color.x, color.y, color.z);
+            glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".intensity").c_str()), intensity);
+        }
     };
 
-    class PointLight : public Light {
+    class PointLight : public Light<PointLight> {
     public:
         DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
 
-        PointLight() { Light::SetType(LightType::POINT); }
+        PointLight() { Light::SetLightType(LightType::POINT); }
         LATREN_API void ApplyLight(GLuint) const;
     };
-    REGISTER_COMPONENT(PointLight);
 
-    class DirectionalLight : public Light {
+    class DirectionalLight : public Light<DirectionalLight> {
     public:
         DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
         
-        DirectionalLight() { Light::SetType(LightType::DIRECTIONAL); }
+        DirectionalLight() { Light::SetLightType(LightType::DIRECTIONAL); }
         LATREN_API void ApplyLight(GLuint) const;
     };
-    REGISTER_COMPONENT(DirectionalLight);
 
-    class DirectionalLightPlane : public Light {
+    class DirectionalLightPlane : public Light<DirectionalLightPlane> {
     public:
         DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
         DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
         
-        DirectionalLightPlane() { Light::SetType(LightType::DIRECTIONAL_PLANE); }
+        DirectionalLightPlane() { Light::SetLightType(LightType::DIRECTIONAL_PLANE); }
         LATREN_API void ApplyLight(GLuint) const;
     };
-    REGISTER_COMPONENT(DirectionalLightPlane);
 
-    class Spotlight : public Light {
+    class Spotlight : public Light<Spotlight> {
     public:
         DEFINE_COMPONENT_DATA_VALUE_DEFAULT(float, cutOffMin);
         DEFINE_COMPONENT_DATA_VALUE_DEFAULT(float, cutOffMax);
         DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
         DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
 
-        Spotlight() { Light::SetType(LightType::SPOTLIGHT); }
+        Spotlight() { Light::SetLightType(LightType::SPOTLIGHT); }
         LATREN_API void ApplyLight(GLuint) const;
     };
-    REGISTER_COMPONENT(Spotlight);
 }

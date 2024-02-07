@@ -22,5 +22,4 @@ namespace UI {
         LATREN_API void Start();
         LATREN_API void Render(const glm::mat4&);
     };
-    REGISTER_COMPONENT(ImageComponent);
 };

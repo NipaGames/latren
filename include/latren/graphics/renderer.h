@@ -16,7 +16,7 @@ namespace UI {
     class Canvas;
 };
 namespace Lights {
-    class Light;
+    class ILight;
 };
 namespace Config {
     struct VideoSettings;
@@ -31,8 +31,8 @@ private:
     GLuint MSAAFbo_;
     GLuint MSAATextureColorBuffer_;
     Shape framebufferShape_;
-    std::vector<Renderable*> renderables_;
-    std::vector<Lights::Light*> lights_;
+    std::vector<IRenderable*> renderables_;
+    std::vector<Lights::ILight*> lights_;
     // smart pointers would be ideal here but i'm too lazy and tired to start rewriting
     std::unordered_map<std::string, UI::Canvas*> canvases_;
     Camera camera_ = Camera();
@@ -41,7 +41,7 @@ private:
     glm::ivec2 viewportSize_;
     int maxRenderedLights_ = 0;
     std::vector<GLuint> shaders_;
-    std::vector<Renderable*> renderablesOnFrustum_;
+    std::vector<IRenderable*> renderablesOnFrustum_;
     std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
 public:
     std::shared_ptr<Mesh> skybox = nullptr;
@@ -61,11 +61,11 @@ public:
     LATREN_API void Render();
     LATREN_API void UpdateCameraProjection(int, int);
     // doesn't take ownership
-    LATREN_API void AddRenderable(Renderable*);
-    LATREN_API void RemoveRenderable(Renderable*);
+    LATREN_API void AddRenderable(IRenderable*);
+    LATREN_API void RemoveRenderable(IRenderable*);
     // doesn't take ownership
-    LATREN_API void AddLight(Lights::Light*);
-    LATREN_API void RemoveLight(Lights::Light*);
+    LATREN_API void AddLight(Lights::ILight*);
+    LATREN_API void RemoveLight(Lights::ILight*);
     LATREN_API void CopyShadersFromResources();
     LATREN_API void UpdateFrustum();
     LATREN_API void SortMeshesByDistance();

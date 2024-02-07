@@ -4,12 +4,13 @@
 #include <optional>
 #include <iostream>
 #include <sstream>
+#include <typeindex>
 #include <unordered_map>
 #include <spdlog/spdlog.h>
 
 #include <latren/latren.h>
 
-enum class ComponentDataValueType {
+enum class ComponentDataContainerType {
     SINGLE,
     VECTOR
 };
@@ -18,8 +19,9 @@ class ComponentData;
 class IComponentDataValue {
 public:
     std::string name;
-    const type_info* type;
-    ComponentDataValueType componentType;
+    std::type_index type;
+    ComponentDataContainerType containerType;
+    IComponentDataValue() : type(typeid(IComponentDataValue)) { }
     virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>&) = 0;
     // Only present in vector types
     virtual void CopyValuesFromComponentDataArray(const ComponentData&) = 0;
@@ -61,8 +63,8 @@ public:
     T* ptr = nullptr;
     T val;
     ComponentDataValue() {
-        this->type = &typeid(T);
-        this->componentType = ComponentDataValueType::SINGLE;
+        this->type = typeid(T);
+        this->containerType = ComponentDataContainerType::SINGLE;
     }
     ComponentDataValue(const std::string& name, T* ptr) : ComponentDataValue() {
         this->name = name;
@@ -90,8 +92,8 @@ template <typename T>
 class ComponentDataValueVector : public ComponentDataValue<std::vector<T>> {
 public:
     ComponentDataValueVector() {
-        this->type = &typeid(T);
-        this->componentType = ComponentDataValueType::VECTOR;
+        this->type = typeid(T);
+        this->containerType = ComponentDataContainerType::VECTOR;
     }
     ComponentDataValueVector(const std::string& name, std::vector<T>* ptr) : ComponentDataValueVector() {
         this->name = name;
@@ -104,7 +106,7 @@ public:
             return;
         this->ptr->reserve(data.vars.size());
         for (auto v : data.vars) {
-            if (v.second->type->hash_code() != typeid(T).hash_code())
+            if (v.second->type != typeid(T))
                 continue;
             auto dataValue = std::dynamic_pointer_cast<ComponentDataValue<T>>(v.second);
             int i = std::stoi(v.first);
@@ -131,7 +133,15 @@ std::shared_ptr<ComponentDataValue<T>> _valPtr_##name = ComponentDataValue<T>::C
 std::vector<T> name; \
 std::shared_ptr<ComponentDataValue<std::vector<T>>> _valPtr_##name = ComponentDataValueVector<T>::Create(#name, &name, this->data.vars)
 
+class IComponent;
+struct ComponentType {
+    std::string name;
+    std::type_index type;
+    IComponent*(*initializer)(const ComponentData&);
+};
+
 class Entity;
+class IForwardComponent;
 class LATREN_API IComponent {
 friend class Entity;
 private:
@@ -140,7 +150,6 @@ private:
 public:
     ComponentData data;
     Entity* parent;
-    size_t typeHash;
     virtual IComponent* Clone() const = 0;
     virtual ~IComponent() { }
     IComponent() { }
@@ -149,6 +158,9 @@ public:
     virtual void IFirstUpdate() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
+    virtual bool ForwardType(const std::type_index&, const std::function<IComponent*(const IComponent*)>&) = 0;
+    virtual std::type_index GetType() const { return typeid(IComponent); }
+
     template <typename C>
     static IComponent* CreateInstance(const ComponentData& data) {
         IComponent* c = new C();
@@ -158,43 +170,51 @@ public:
         return c;
     }
 
-    static std::optional<const type_info*> GetComponentType(const std::string&);
-    static std::optional<const type_info*> GetComponentType(size_t);
-    static std::optional<std::string> GetComponentName(size_t);
+    static std::optional<ComponentType> GetComponentType(const std::string&);
+    static std::optional<ComponentType> GetComponentType(const std::type_index&);
+    static std::optional<std::string> GetComponentName(const std::type_index&);
 
-    static IComponent* CreateComponent(const type_info*, const ComponentData& = ComponentData());
+    static IComponent* CreateComponent(const std::type_index&, const ComponentData& = ComponentData());
     static IComponent* CreateComponent(const std::string&, const ComponentData& = ComponentData());
-    static IComponent* CreateComponent(size_t, const ComponentData& = ComponentData());
 
-    static bool RegisterComponent(const type_info*, IComponent*(*)(const ComponentData&));
+    static bool RegisterComponent(const type_info&, IComponent*(*)(const ComponentData&));
     template <typename C>
     static bool RegisterComponent() {
-        return RegisterComponent(&typeid(C), CreateInstance<C>);
+        return RegisterComponent(typeid(C), CreateInstance<C>);
     }
 };
 
-struct ComponentType {
-    std::string name;
-    const type_info* type;
-    IComponent*(*initializer)(const ComponentData&);
+template <class Component>
+class RegisterComponent {
+private:
+    inline static bool _isRegistered = IComponent::RegisterComponent<Component>();
 };
 
-// all components that aren't directly derived from Component will need this
-#define REGISTER_COMPONENT(C) inline bool _isRegistered_##C = IComponent::RegisterComponent<C>()
-
 template <class Derived>
-class Component : public IComponent {
-protected:
-    inline static bool _isRegistered = IComponent::RegisterComponent<Derived>();
+class Component : public IComponent, public RegisterComponent<Derived> {
+friend class Entity;
+private:
+    std::function<IComponent*(const IComponent*)> cloneFn_ = [](const IComponent* c) {
+        return new Derived(dynamic_cast<const Derived&>(*c));
+    };
+    std::type_index type_ = typeid(Derived);
 public:
     virtual ~Component() = default;
     virtual IComponent* Clone() const override {
-        return new Derived(dynamic_cast<const Derived&>(*this));
+        return cloneFn_(this);
     }
     void IStart() override { dynamic_cast<Derived*>(this)->Start(); }
     void IUpdate() override { dynamic_cast<Derived*>(this)->Update(); }
     void IFirstUpdate() override { dynamic_cast<Derived*>(this)->FirstUpdate(); }
     void IFixedUpdate() override { dynamic_cast<Derived*>(this)->FixedUpdate(); }
+    virtual bool ForwardType(const std::type_index& t, const std::function<IComponent*(const IComponent*)>& clone) override {
+        type_ = t;
+        cloneFn_ = clone;
+        return true;
+    }
+    virtual std::type_index GetType() const override {
+        return type_;
+    }
 
     template <typename T>
     const T& GetValue(const std::string& key) {

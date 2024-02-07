@@ -56,10 +56,9 @@ void Entity::CopyFrom(const Entity& e) {
     transform = GetComponent<Transform>();
 }
 
-IComponent* const Entity::GetComponent(const type_info* type) const {
-    size_t tHash = type->hash_code();
+IComponent* const Entity::GetComponent(const std::type_index& type) const {
     for (auto c : components_) {
-        if (c->typeHash == tHash)
+        if (c->GetType() == type)
             return c;
     }
     return nullptr;
@@ -68,19 +67,13 @@ IComponent* Entity::GetComponent(const std::string& name) const {
     auto ct = IComponent::GetComponentType(name);
     if (!ct.has_value())
         return nullptr;
-    return GetComponent(ct.value());
-}
-IComponent* Entity::GetComponent(size_t tHash) const {
-    auto ct = IComponent::GetComponentType(tHash);
-    if (!ct.has_value())
-        return nullptr;
-    return GetComponent(ct.value());
+    return GetComponent(ct.value().type);
 }
 
-void Entity::RemoveComponent(size_t tHash) {
+void Entity::RemoveComponent(const std::type_index& type) {
     for (auto it = components_.begin(); it != components_.end(); ++it) {
         IComponent* c = *it;
-        if (c->typeHash == tHash) {
+        if (c->GetType() == type) {
             components_.erase(it);
             delete c;
             return;
@@ -89,17 +82,17 @@ void Entity::RemoveComponent(size_t tHash) {
 }
 void Entity::RemoveComponent(const std::string& name) {
     auto ct = IComponent::GetComponentType(name);
-    if (!ct.has_value())
-        RemoveComponent(ct.value()->hash_code());
+    if (ct.has_value())
+        RemoveComponent(ct.value().type);
 }
 
-IComponent* Entity::AddComponent(const type_info* type, const ComponentData& data) {
+IComponent* Entity::AddComponent(const std::type_index& type, const ComponentData& data) {
     IComponent* c = IComponent::CreateComponent(type, data);
     if (c == nullptr)
         return nullptr;
     c->parent = this;
     components_.push_back(c);
-    if (type->hash_code() == typeid(Transform).hash_code())
+    if (type == typeid(Transform))
         transform = dynamic_cast<Transform*>(c);
     return c;
 }
@@ -107,20 +100,14 @@ IComponent* Entity::AddComponent(const std::string& name, const ComponentData& d
     auto ct = IComponent::GetComponentType(name);
     if (!ct.has_value())
         return nullptr;
-    return AddComponent(ct.value(), data);
-}
-IComponent* Entity::AddComponent(size_t tHash, const ComponentData& data) {
-    auto ct = IComponent::GetComponentType(tHash);
-    if (!ct.has_value())
-        return nullptr;
-    return AddComponent(ct.value(), data);
+    return AddComponent(ct.value().type, data);
 }
 
 void Entity::OverrideComponentValues(const Entity& e) {
     for (auto c : e.components_) {
-        IComponent* mc = GetComponent(c->typeHash);
+        IComponent* mc = GetComponent(c->GetType());
         if (mc == nullptr)
-            AddComponent(c->typeHash, c->data);
+            AddComponent(c->GetType(), c->data);
         else {
             for (const auto&[k, v] : c->data.vars) {
                 v->CloneValuesTo(mc->data.vars[k]);
@@ -165,7 +152,7 @@ void Entity::Destroy() {
 std::vector<std::string> Entity::ListComponentNames() const {
     std::vector<std::string> names;
     for (const IComponent* c : components_) {
-        auto optn = IComponent::GetComponentName(c->typeHash);
+        auto optn = IComponent::GetComponentName(c->GetType());
         if (optn.has_value())
             names.push_back(optn.value());
     }

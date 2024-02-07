@@ -4,7 +4,7 @@
 #include "../shaders.h"
 #include "../material.h"
 
-class BillboardRenderer : public Renderable {
+class BillboardRenderer : public Renderable<BillboardRenderer> {
 private:
     mutable glm::mat4 modelMatrix_;
     GLuint vao_ = NULL;
@@ -19,8 +19,7 @@ public:
 
     LATREN_API virtual void UpdateVertexBuffer();
     LATREN_API virtual void CalculateMatrices();
-    LATREN_API virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&) const;
+    LATREN_API virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::vec3&) const override;
     LATREN_API virtual void Start();
-    LATREN_API virtual void Render(const glm::mat4&, const glm::mat4&, const Shader* = nullptr, bool = false) const;
+    LATREN_API virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const;
 };
-REGISTER_COMPONENT(BillboardRenderer);

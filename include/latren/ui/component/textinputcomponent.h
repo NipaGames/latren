@@ -30,5 +30,4 @@ namespace UI {
         LATREN_API void Render(const glm::mat4&);
         LATREN_API void UpdateWindowSize();
     };
-    REGISTER_COMPONENT(TextInputComponent);
 };

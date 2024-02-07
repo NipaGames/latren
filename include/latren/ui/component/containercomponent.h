@@ -20,5 +20,4 @@ namespace UI {
         LATREN_API size_t GetChildCount();
         LATREN_API Rect GetLocalBounds() const override;
     };
-    REGISTER_COMPONENT(ContainerComponent);
 };

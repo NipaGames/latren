@@ -19,7 +19,6 @@ namespace UI {
         LATREN_API void AddListItem(UI::UIComponent*);
         LATREN_API void SetScrollPos(float);
     };
-    REGISTER_COMPONENT(ListComponent);
 
     class TextListComponent : public ListComponent {
     using ListComponent::ListComponent;
@@ -27,5 +26,4 @@ namespace UI {
         HorizontalAlignment itemAlignment = HorizontalAlignment::CENTER;
         LATREN_API void AddListItem(const std::string&);
     };
-    REGISTER_COMPONENT(TextListComponent);
 };

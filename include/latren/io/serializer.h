@@ -56,11 +56,11 @@ namespace Serializer {
             ([&] {
                 // dynamic_pointer_cast won't do here so we'll need this workaround
                 void* cast;
-                switch (d->componentType) {
-                    case ComponentDataValueType::SINGLE:
+                switch (d->containerType) {
+                    case ComponentDataContainerType::SINGLE:
                         cast = dynamic_cast<ComponentDataValue<T>*>(&*d);
                         break;
-                    case ComponentDataValueType::VECTOR:
+                    case ComponentDataContainerType::VECTOR:
                         cast = dynamic_cast<ComponentDataValue<std::vector<T>>*>(&*d);
                         break;
                 }

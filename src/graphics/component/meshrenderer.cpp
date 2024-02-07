@@ -39,12 +39,12 @@ void MeshRenderer::CalculateMatrices() {
 }
 
 
-void MeshRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::mat4& transformMatrix) const {
-    Renderable::UpdateUniforms(shader, projectionMatrix, viewMatrix);
+void MeshRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::mat4& transformMatrix, const glm::vec3& viewPos) const {
+    Renderable::UpdateUniforms(shader, projectionMatrix, viewMatrix, viewPos);
     shader.SetUniform("model", modelMatrix_ * transformMatrix);
 }
 
-void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const Shader* shader, bool aabbDebug) const {
+void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, bool aabbDebug) const {
     bool useDefaultShaders = (shader == nullptr);
     for (const auto& mesh : meshes) {
         if (mesh->material == nullptr)
@@ -52,7 +52,7 @@ void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& vi
         
         if (useDefaultShaders) {
             const Shader& s = GetMaterialShader(mesh->material);
-            UpdateUniforms(s, projectionMatrix, viewMatrix, mesh->transformMatrix);
+            UpdateUniforms(s, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
             mesh->material->Use(s);
             if (useCustomMaterial) {
                 customMaterial.Use(s);
@@ -60,7 +60,7 @@ void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& vi
             }
         }
         else {
-            UpdateUniforms(*shader, projectionMatrix, viewMatrix, mesh->transformMatrix);
+            UpdateUniforms(*shader, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
             mesh->material->Use(*shader);
         }
 

@@ -1,2 +1,2 @@
 This folder contains the standard resources required for running Latren.
-Please don't modify these files as the core engine is dependant of them.
+Please don't modify these files as the core engine is dependant on them.

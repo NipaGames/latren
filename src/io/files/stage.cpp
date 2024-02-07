@@ -40,9 +40,9 @@ std::list<Entity> StageSerializer::ParseEntities(const json& entities, int* inva
                 if (blueprints_->HasItem(blueprint)) {
                     const std::vector<IComponent*>& blueprintComponents = blueprints_->GetItem(blueprint);
                     for (const IComponent* c : blueprintComponents) {
-                        IComponent* entityComponent = entity.GetComponent(c->typeHash);
+                        IComponent* entityComponent = entity.GetComponent(c->GetType());
                         if (entityComponent == nullptr)
-                            entityComponent = entity.AddComponent(c->typeHash);
+                            entityComponent = entity.AddComponent(c->GetType());
                         for (const auto& [varName, varValue] : c->data.vars) {
                             varValue->CloneValuesTo(entityComponent->data.GetComponentDataValue(varName));
                         }

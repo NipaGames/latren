@@ -7,7 +7,7 @@
 #include <latren/defines/opengl.h>
 #include <memory>
 
-class MeshRenderer : public Renderable {
+class MeshRenderer : public Renderable<MeshRenderer> {
 friend class Renderer;
 private:
     mutable glm::mat4 modelMatrix_;
@@ -20,11 +20,10 @@ public:
     DEFINE_COMPONENT_DATA_VALUE(bool, copyMeshes, false);
 
     LATREN_API virtual void CalculateMatrices();
-    LATREN_API virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::mat4&) const;
+    LATREN_API virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::mat4&, const glm::vec3&) const;
 
     LATREN_API virtual void Start();
     LATREN_API virtual bool IsOnFrustum(const ViewFrustum&) const;
-    LATREN_API virtual void Render(const glm::mat4&, const glm::mat4&, const Shader* = nullptr, bool = false) const;
+    LATREN_API virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const;
     const ViewFrustum::AABB& GetAABB() const { return aabb_; }
 };
-REGISTER_COMPONENT(MeshRenderer);

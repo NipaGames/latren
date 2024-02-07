@@ -21,12 +21,12 @@ bool Serializer::SetJSONComponentValue(IComponent* c, const std::string& k, cons
     const auto& serializer = *it;
     SerializationArgs args(SerializerType::COMPONENT_DATA);
     args.entityId = entityId;
-    switch (dataVal->componentType) {
-        case ComponentDataValueType::SINGLE:
+    switch (dataVal->containerType) {
+        case ComponentDataContainerType::SINGLE:
             args.ctData = &c->data;
             args.ctK = k;
             return (serializer->fn)(args, jsonVal);
-        case ComponentDataValueType::VECTOR:
+        case ComponentDataContainerType::VECTOR:
             if (!jsonVal.is_array())
                 return false;
 

@@ -61,5 +61,4 @@ namespace UI {
         // get the text bounds fixed to the font size, const height and bottom
         LATREN_API UI::Rect GetLocalBounds() const override;
     };
-    REGISTER_COMPONENT(TextComponent);
 };

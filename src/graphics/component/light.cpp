@@ -4,12 +4,17 @@
 using namespace Lights;
 
 int Lights::LIGHTS_INDEX = 0;
-const int Lights::MAX_LIGHTS = 32;
-// this is fucking evil right here
+// this is fucking evil right here (and way too smartass)
 // 32 lights, 1 bit for reserved, 0 for not
-uint32_t Lights::RESERVED_LIGHTS = 0x0;
+LightReserves Lights::RESERVED_LIGHTS = 0x0;
+// they warned about premature optimization but this is fucking prenatal optimization
+const uint8_t Lights::MAX_LIGHTS = (uint8_t) sizeof(LightReserves) * 8;
 
 namespace Lights {
+    int GetNextLightIndex() {
+        return LIGHTS_INDEX++;
+    }
+    
     void ReserveIndex(int index) {
         RESERVED_LIGHTS |= (1 << index);
     }
@@ -27,27 +32,7 @@ namespace Lights {
         return LIGHTS_INDEX;
     }
 
-    Light::~Light() {
-        if (isAssignedToRenderer_)
-            Game::GetGameInstanceBase()->GetRenderer().RemoveLight(this);
-    }
-
-    void Light::Start() {
-        if (!isAssignedToRenderer_)
-            Game::GetGameInstanceBase()->GetRenderer().AddLight(this);
-    }
-    
-    void Light::UseAsNext() {
-        lightUniform_ = "lights[" + std::to_string(LIGHTS_INDEX++) + "]";
-    }
-    void Light::ApplyLight(GLuint shader) const {
-        glUniform1i(glGetUniformLocation(shader, std::string(lightUniform_ + ".enabled").c_str()), GL_TRUE);
-        glUniform1i(glGetUniformLocation(shader, std::string(lightUniform_ + ".type").c_str()), static_cast<int>(type_));
-        glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".color").c_str()), color.x, color.y, color.z);
-        glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".intensity").c_str()), intensity);
-    }
-
-    void Light::ApplyForAllShaders() const {
+    void ILight::ApplyForAllShaders() const {
         for (GLuint shader : Game::GetGameInstanceBase()->GetRenderer().GetShaders()) {
             glUseProgram(shader);
             ApplyLight(shader);
@@ -55,25 +40,16 @@ namespace Lights {
         glUseProgram(0);
     }
 
-    IComponent* Light::Clone() const {
-        IComponent* c = nullptr;
-        switch (type_) {
-        case LightType::POINT:
-            c = new PointLight(*static_cast<const PointLight*>(this));
-            break;
-        case LightType::DIRECTIONAL:
-            c = new DirectionalLight(*static_cast<const DirectionalLight*>(this));
-            break;
-        case LightType::DIRECTIONAL_PLANE:
-            c = new DirectionalLightPlane(*static_cast<const DirectionalLightPlane*>(this));
-            break;
-        case LightType::SPOTLIGHT:
-            c = new Spotlight(*static_cast<const Spotlight*>(this));
-            break;
-        }
-        return c;
+    void ILight::AssignToRenderer() {
+        Game::GetGameInstanceBase()->GetRenderer().AddLight(this);
+        isAssignedToRenderer_ = true;
     }
-    
+
+    void ILight::RemoveFromRenderer() {
+        Game::GetGameInstanceBase()->GetRenderer().RemoveLight(this);
+        isAssignedToRenderer_ = false;
+    }
+
     void PointLight::ApplyLight(GLuint shader) const {
         Light::ApplyLight(shader);
         glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".pos").c_str()), parent->transform->position.x, parent->transform->position.y, parent->transform->position.z);

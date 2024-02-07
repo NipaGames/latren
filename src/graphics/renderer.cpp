@@ -146,15 +146,17 @@ void Renderer::Start() {
 }
 
 void Renderer::SortMeshesByDistance() {
-    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&] (const auto& mesh0, const auto& mesh1) {
-        return glm::length(camera_.pos - mesh0->parent->transform->position) > glm::length(camera_.pos - mesh1->parent->transform->position);
+    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&] (const IRenderable* r1, const IRenderable* r2) {
+        glm::vec3 pos1 = dynamic_cast<const IComponent*>(r1)->parent->transform->position;
+        glm::vec3 pos2 = dynamic_cast<const IComponent*>(r2)->parent->transform->position;
+        return glm::length(camera_.pos - pos1) > glm::length(camera_.pos - pos2);
     });
 }
 
 void Renderer::UpdateFrustum() {
     renderablesOnFrustum_.clear();
-    std::copy_if(renderables_.begin(), renderables_.end(), std::back_inserter(renderablesOnFrustum_), [&] (const Renderable* renderable) {
-        return renderable->alwaysOnFrustum || renderable->IsOnFrustum(camera_.frustum);
+    std::copy_if(renderables_.begin(), renderables_.end(), std::back_inserter(renderablesOnFrustum_), [&] (const IRenderable* renderable) {
+        return renderable->IsAlwaysOnFrustum() || renderable->IsOnFrustum(camera_.frustum);
     });
 }
 
@@ -170,22 +172,22 @@ void Renderer::Render() {
     glm::mat4 viewMatrix = glm::lookAt(camera_.pos, camera_.pos + camera_.front, camera_.up);
 
     glUseProgram(0);
-    for (auto renderable : renderables_) {
-        if (!renderable->isStatic)
+    for (IRenderable* renderable : renderables_) {
+        if (!renderable->IsStatic())
             renderable->CalculateMatrices();
     }
-    std::vector<const Renderable*> lateRenderables;
-    std::vector<const Renderable*> renderablesAfterPostProcessing;
-    for (const Renderable* renderable : renderablesOnFrustum_) {
-        if (renderable->renderLate) {
+    std::vector<const IRenderable*> lateRenderables;
+    std::vector<const IRenderable*> renderablesAfterPostProcessing;
+    for (const IRenderable* renderable : renderablesOnFrustum_) {
+        if (renderable->RenderLate()) {
             lateRenderables.push_back(renderable);
             continue;
         }
-        else if (renderable->renderAfterPostProcessing) {
+        else if (renderable->RenderAfterPostProcessing()) {
             renderablesAfterPostProcessing.push_back(renderable);
             continue;
         }
-        renderable->IRender(camera_.projectionMatrix, viewMatrix, nullptr, showAabbs);
+        renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
 
     // draw skybox
@@ -213,13 +215,13 @@ void Renderer::Render() {
         glDisable(GL_DEPTH_CLAMP);
     }
 
-    for (const Renderable* renderable : lateRenderables) {
-         renderable->IRender(camera_.projectionMatrix, viewMatrix, nullptr, showAabbs);
+    for (const IRenderable* renderable : lateRenderables) {
+         renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
 
     if (highlightNormals) {
-        for (const Renderable*  renderable : renderables_) {
-            renderable->IRender(camera_.projectionMatrix, viewMatrix, &normalShader_);
+        for (const IRenderable*  renderable : renderables_) {
+            renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, &normalShader_);
         }
     }
     if (showHitboxes) {
@@ -244,8 +246,8 @@ void Renderer::Render() {
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
-    for (const Renderable* renderable : renderablesAfterPostProcessing) {
-        renderable->IRender(camera_.projectionMatrix, viewMatrix, nullptr, showAabbs);
+    for (const IRenderable* renderable : renderablesAfterPostProcessing) {
+        renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
     
     glDisable(GL_DEPTH_TEST);
@@ -301,23 +303,20 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
     UpdateCameraProjection(w, h);
 }
 
-void Renderer::AddLight(Lights::Light* light) {
+void Renderer::AddLight(Lights::ILight* light) {
     lights_.push_back(light);
-    light->isAssignedToRenderer_ = true;
 }
 
-void Renderer::RemoveLight(Lights::Light* light) {
-    light->isAssignedToRenderer_ = false;
+void Renderer::RemoveLight(Lights::ILight* light) {
     if (lights_.size() == 0) return;
     lights_.erase(std::remove(lights_.begin(), lights_.end(), light), lights_.end());
 }
 
-void Renderer::AddRenderable(Renderable* renderable) {
+void Renderer::AddRenderable(IRenderable* renderable) {
     renderables_.push_back(renderable);
-    renderable->isAssignedToRenderer_ = true;
 }
 
-void Renderer::RemoveRenderable(Renderable* renderable) {
+void Renderer::RemoveRenderable(IRenderable* renderable) {
     if (renderables_.size() == 0) return;
     renderables_.erase(std::remove(renderables_.begin(), renderables_.end(), renderable), renderables_.end());
     UpdateFrustum();

@@ -45,18 +45,18 @@ void BillboardRenderer::CalculateMatrices() {
     modelMatrix_ = glm::scale(modelMatrix_, parent->transform->size);
 }
 
-void BillboardRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix) const {
-    Renderable::UpdateUniforms(shader, projectionMatrix, viewMatrix);
+void BillboardRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos) const {
+    Renderable::UpdateUniforms(shader, projectionMatrix, viewMatrix, viewPos);
     shader.SetUniform("model", modelMatrix_);
 }
 
-void BillboardRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const Shader* shader, bool aabbDebug) const {
+void BillboardRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, bool aabbDebug) const {
     if (material != nullptr) {
-        UpdateUniforms(GetMaterialShader(material), projectionMatrix, viewMatrix);
+        UpdateUniforms(GetMaterialShader(material), projectionMatrix, viewMatrix, viewPos);
         material->Use();
     }
     else {
-        UpdateUniforms(BillboardRenderer::SHADER_, projectionMatrix, viewMatrix);
+        UpdateUniforms(BillboardRenderer::SHADER_, projectionMatrix, viewMatrix, viewPos);
     }
     glBindVertexArray(vao_);
     glDrawArrays(GL_POINTS, 0, pointsCount_);

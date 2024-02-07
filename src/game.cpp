@@ -6,6 +6,9 @@
 #include <latren/io/files/cfg.h>
 #include <latren/io/paths.h>
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
 std::unique_ptr<Game> GLOBAL_GAME_INSTANCE_;
 
 bool Game::InitWindow() {
