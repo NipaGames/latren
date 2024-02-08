@@ -20,9 +20,6 @@ void EntityManager::RemoveEntity(size_t hash) {
     size_t s = entities_.size();
     entities_.erase(std::remove_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->GetID() == hash; }), entities_.end());
     size_t removed = s - entities_.size();
-    if (removed > 1) {
-        std::cout << "what the fuck" << std::endl;
-    }
 }
 
 size_t EntityManager::CountEntities(const std::string& id) {

@@ -28,13 +28,13 @@ public:
     LATREN_API void Destroy(EntityManager& mgr);
     LATREN_API void Destroy();
     LATREN_API EntityID GetID() const;
-    LATREN_API IComponent* const GetComponent(const std::type_index&) const;
+    LATREN_API IComponent* const GetComponent(std::type_index) const;
     template <typename C>
     C* const GetComponent() const {
         return static_cast<C*>(GetComponent(typeid(C)));
     }
     LATREN_API IComponent* GetComponent(const std::string&) const;
-    LATREN_API void RemoveComponent(const std::type_index&);
+    LATREN_API void RemoveComponent(std::type_index);
     LATREN_API void RemoveComponent(const std::string&);
     template <typename C>
     void RemoveComponent() {
@@ -55,7 +55,7 @@ public:
             transform = dynamic_cast<Transform*>(c);
         return c;
     }
-    LATREN_API IComponent* AddComponent(const std::type_index&, const ComponentData& = ComponentData());
+    LATREN_API IComponent* AddComponent(std::type_index, const ComponentData& = ComponentData());
     LATREN_API IComponent* AddComponent(const std::string&, const ComponentData& = ComponentData());
     LATREN_API std::vector<std::string> ListComponentNames() const;
     LATREN_API void OverrideComponentValues(const Entity& e);

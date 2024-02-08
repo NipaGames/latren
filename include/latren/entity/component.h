@@ -2,16 +2,19 @@
 
 #include <optional>
 #include <iostream>
+#include <memory>
 #include <spdlog/spdlog.h>
 
 #include <latren/latren.h>
+#include "mempool.h"
 #include "serializable.h"
 
 class IComponent;
 struct ComponentType {
     std::string name;
     std::type_index type;
-    IComponent*(*initializer)(const ComponentData&);
+    std::function<IComponent*(const ComponentData&)> componentInitializer;
+    std::function<std::unique_ptr<IComponentMemoryPool>()> memPoolInitializer;
 };
 
 class Entity;
@@ -32,7 +35,7 @@ public:
     virtual void IFirstUpdate() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
-    virtual bool ForwardType(const std::type_index&, const std::function<IComponent*(const IComponent*)>&) = 0;
+    virtual bool ForwardType(std::type_index, const std::function<IComponent*(const IComponent*)>&) = 0;
     virtual std::type_index GetType() const { return typeid(IComponent); }
 
     template <typename C>
@@ -45,16 +48,34 @@ public:
     }
 
     static std::optional<ComponentType> GetComponentType(const std::string&);
-    static std::optional<ComponentType> GetComponentType(const std::type_index&);
-    static std::optional<std::string> GetComponentName(const std::type_index&);
+    static std::optional<ComponentType> GetComponentType(std::type_index);
+    template <typename T>
+    static std::optional<ComponentType> GetComponentType() { return GetComponentType(typeid(T)); }
 
-    static IComponent* CreateComponent(const std::type_index&, const ComponentData& = ComponentData());
+    static std::optional<std::string> GetComponentName(std::type_index);
+    template <typename T>
+    static std::optional<std::string> GetComponentName() { return GetComponentName(typeid(T)); }
+
+    static std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool(std::type_index);
+    template <typename T>
+    static std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool() { return CreateComponentMemoryPool(typeid(T)); }
+    static ComponentPoolContainer CreateComponentMemoryPools();
+
+    static IComponent* CreateComponent(std::type_index, const ComponentData& = ComponentData());
     static IComponent* CreateComponent(const std::string&, const ComponentData& = ComponentData());
+    template <typename T>
+    static IComponent* CreateComponent(const ComponentData& data = ComponentData()) { return CreateComponent(typeid(T), data); }
 
-    static bool RegisterComponent(const type_info&, IComponent*(*)(const ComponentData&));
+    static bool RegisterComponent(const type_info&,
+        const std::function<IComponent*(const ComponentData&)>&,
+        const std::function<std::unique_ptr<IComponentMemoryPool>()>&);
     template <typename C>
     static bool RegisterComponent() {
-        return RegisterComponent(typeid(C), CreateInstance<C>);
+        return RegisterComponent(
+            typeid(C),
+            CreateInstance<C>,
+            std::make_unique<ComponentMemoryPool<C>>
+        );
     }
 };
 
@@ -81,7 +102,7 @@ public:
     void IUpdate() override { dynamic_cast<Derived*>(this)->Update(); }
     void IFirstUpdate() override { dynamic_cast<Derived*>(this)->FirstUpdate(); }
     void IFixedUpdate() override { dynamic_cast<Derived*>(this)->FixedUpdate(); }
-    virtual bool ForwardType(const std::type_index& t, const std::function<IComponent*(const IComponent*)>& clone) override {
+    virtual bool ForwardType(std::type_index t, const std::function<IComponent*(const IComponent*)>& clone) override {
         type_ = t;
         cloneFn_ = clone;
         return true;

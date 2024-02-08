@@ -56,7 +56,7 @@ void Entity::CopyFrom(const Entity& e) {
     transform = GetComponent<Transform>();
 }
 
-IComponent* const Entity::GetComponent(const std::type_index& type) const {
+IComponent* const Entity::GetComponent(std::type_index type) const {
     for (auto c : components_) {
         if (c->GetType() == type)
             return c;
@@ -70,7 +70,7 @@ IComponent* Entity::GetComponent(const std::string& name) const {
     return GetComponent(ct.value().type);
 }
 
-void Entity::RemoveComponent(const std::type_index& type) {
+void Entity::RemoveComponent(std::type_index type) {
     for (auto it = components_.begin(); it != components_.end(); ++it) {
         IComponent* c = *it;
         if (c->GetType() == type) {
@@ -86,7 +86,7 @@ void Entity::RemoveComponent(const std::string& name) {
         RemoveComponent(ct.value().type);
 }
 
-IComponent* Entity::AddComponent(const std::type_index& type, const ComponentData& data) {
+IComponent* Entity::AddComponent(std::type_index type, const ComponentData& data) {
     IComponent* c = IComponent::CreateComponent(type, data);
     if (c == nullptr)
         return nullptr;

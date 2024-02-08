@@ -6,7 +6,7 @@ the reincarnation of the great opengl-game
 ### features:
 - [x] basic lighting (phong shading, no shadows)
 - [x] resource management system
-- [x] event component system
+- [x] weird hybrid ecs + unity esque component mess (making a major rework atm, before it was just the unity-like stuff)
 - [x] stage deserialization with whacky pseudo-reflection
 - [x] physics (bullet implementation)
 - [x] shit runs on my crap school laptop
