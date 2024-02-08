@@ -12,8 +12,8 @@ private:
     GLsizei pointsCount_ = 0;
     inline static Shader SHADER_ = Shaders::ShaderID::BILLBOARD;
 public:
-    DEFINE_COMPONENT_DATA_VALUE_VECTOR(glm::vec3, positions);
-    DEFINE_COMPONENT_DATA_VALUE_DEFAULT(std::shared_ptr<Material>, material);
+    std::vector<glm::vec3> positions; LE_RCDV(positions)
+    std::shared_ptr<Material> material; LE_RCDV(material)
 
     LATREN_API virtual ~BillboardRenderer();
 

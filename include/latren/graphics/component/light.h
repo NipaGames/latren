@@ -3,6 +3,7 @@
 #include <latren/defines/opengl.h>
 #include <latren/entity/component.h>
 #include <latren/entity/entity.h>
+#include <latren/entity/serializable.h>
 
 namespace Lights {
     enum class LightType {
@@ -43,8 +44,8 @@ namespace Lights {
         void SetLightType(LightType t) { lightType_ = t; }
         std::string lightUniform_;
     public:
-        DEFINE_COMPONENT_DATA_VALUE(glm::vec3, color, glm::vec3(1.0f));
-        DEFINE_COMPONENT_DATA_VALUE(float, intensity, 1.0f);
+        glm::vec3 color = glm::vec3(1.0f); LE_RCDV(color)
+        float intensity = 1.0f; LE_RCDV(intensity)
 
         virtual ~Light() {
             if (isAssignedToRenderer_)
@@ -68,7 +69,7 @@ namespace Lights {
 
     class PointLight : public Light<PointLight> {
     public:
-        DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
+        float range = 20.0f; LE_RCDV(range)
 
         PointLight() { Light::SetLightType(LightType::POINT); }
         LATREN_API void ApplyLight(GLuint) const;
@@ -76,7 +77,7 @@ namespace Lights {
 
     class DirectionalLight : public Light<DirectionalLight> {
     public:
-        DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
+        glm::vec3 dir; LE_RCDV(dir)
         
         DirectionalLight() { Light::SetLightType(LightType::DIRECTIONAL); }
         LATREN_API void ApplyLight(GLuint) const;
@@ -84,8 +85,8 @@ namespace Lights {
 
     class DirectionalLightPlane : public Light<DirectionalLightPlane> {
     public:
-        DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
-        DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
+        glm::vec3 dir; LE_RCDV(dir);
+        float range = 20.0f; LE_RCDV(range)
         
         DirectionalLightPlane() { Light::SetLightType(LightType::DIRECTIONAL_PLANE); }
         LATREN_API void ApplyLight(GLuint) const;
@@ -93,10 +94,10 @@ namespace Lights {
 
     class Spotlight : public Light<Spotlight> {
     public:
-        DEFINE_COMPONENT_DATA_VALUE_DEFAULT(float, cutOffMin);
-        DEFINE_COMPONENT_DATA_VALUE_DEFAULT(float, cutOffMax);
-        DEFINE_COMPONENT_DATA_VALUE_DEFAULT(glm::vec3, dir);
-        DEFINE_COMPONENT_DATA_VALUE(float, range, 20.0f);
+        float cutOffMin; LE_RCDV(cutOffMin)
+        float cutOffMax; LE_RCDV(cutOffMax)
+        glm::vec3 dir; LE_RCDV(dir)
+        float range = 20.0f; LE_RCDV(range)
 
         Spotlight() { Light::SetLightType(LightType::SPOTLIGHT); }
         LATREN_API void ApplyLight(GLuint) const;

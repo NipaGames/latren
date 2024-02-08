@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <iostream>
+#include <sstream>
 
 using namespace UI::Text;
 

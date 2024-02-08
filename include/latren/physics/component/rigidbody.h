@@ -20,14 +20,15 @@ namespace Physics {
         btCollisionShape* CreateMeshCollider();
     public:
         btRigidBody* rigidBody = nullptr;
-        DEFINE_COMPONENT_DATA_VALUE(btCollisionShape*, collider, nullptr);
-        DEFINE_COMPONENT_DATA_VALUE(ColliderConstructor, colliderFrom, ColliderConstructor::TRANSFORM);
-        DEFINE_COMPONENT_DATA_VALUE_VECTOR(int, colliderMeshes);
-        DEFINE_COMPONENT_DATA_VALUE(float, mass, 1.0f);
-        DEFINE_COMPONENT_DATA_VALUE(bool, interpolate, false);
-        DEFINE_COMPONENT_DATA_VALUE(bool, overwriteTransform, true);
-        DEFINE_COMPONENT_DATA_VALUE(bool, doesMassAffectGravity, false);
-        DEFINE_COMPONENT_DATA_VALUE(bool, disableCollisions, false);
+
+        btCollisionShape* collider = nullptr; LE_RCDV(collider)
+        ColliderConstructor colliderFrom = ColliderConstructor::TRANSFORM; LE_RCDV(colliderFrom)
+        std::vector<int> colliderMeshes; LE_RCDV(colliderMeshes)
+        float mass = 1.0f; LE_RCDV(mass)
+        bool interpolate = false; LE_RCDV(interpolate)
+        bool overwriteTransform = true; LE_RCDV(overwriteTransform)
+        bool doesMassAffectGravity = false; LE_RCDV(doesMassAffectGravity)
+        bool disableCollisions = false; LE_RCDV(disableCollisions)
         LATREN_API ~RigidBody();
         LATREN_API void Start();
         LATREN_API void Update();

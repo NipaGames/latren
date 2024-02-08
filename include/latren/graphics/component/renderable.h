@@ -25,15 +25,15 @@ template <typename Derived>
 class Renderable : public Component<Derived>, public IRenderable {
 public:
     // enable this if the object transform doesn't update, no need to calculate model matrices every frame that way
-    DEFINE_COMPONENT_DATA_VALUE(bool, isStatic, false);
-    DEFINE_COMPONENT_DATA_VALUE(bool, alwaysOnFrustum, false);
-    DEFINE_COMPONENT_DATA_VALUE(bool, assignToRenderer, true);
-    DEFINE_COMPONENT_DATA_VALUE(bool, disableDepthTest, false);
-    DEFINE_COMPONENT_DATA_VALUE_DEFAULT(Material, customMaterial);
-    DEFINE_COMPONENT_DATA_VALUE(bool, useCustomMaterial, false);
+    bool isStatic = false; LE_RCDV(isStatic)
+    bool alwaysOnFrustum = false; LE_RCDV(alwaysOnFrustum)
+    bool assignToRenderer = true; LE_RCDV(assignToRenderer)
+    bool disableDepthTest = false; LE_RCDV(disableDepthTest)
+    Material customMaterial; LE_RCDV(customMaterial)
+    bool useCustomMaterial = false; LE_RCDV(useCustomMaterial)
     // render over skybox and any other entities
-    DEFINE_COMPONENT_DATA_VALUE(bool, renderLate, false);
-    DEFINE_COMPONENT_DATA_VALUE(bool, renderAfterPostProcessing, false);
+    bool renderLate = false; LE_RCDV(renderLate)
+    bool renderAfterPostProcessing = false; LE_RCDV(renderAfterPostProcessing)
 
     virtual ~Renderable() {
         if (isAssignedToRenderer_)

@@ -15,9 +15,9 @@ private:
     bool isAssignedToRenderer_ = false;
 public:
     // enable this if the object transform doesn't update, no need to calculate model matrices every frame that way
-    DEFINE_COMPONENT_DATA_VALUE(std::string, object, "");
-    DEFINE_COMPONENT_DATA_VALUE_VECTOR(std::shared_ptr<Mesh>, meshes);
-    DEFINE_COMPONENT_DATA_VALUE(bool, copyMeshes, false);
+    std::string object = ""; LE_RCDV(object)
+    std::vector<std::shared_ptr<Mesh>> meshes; LE_RCDV(meshes)
+    bool copyMeshes = false; LE_RCDV(copyMeshes)
 
     LATREN_API virtual void CalculateMatrices();
     LATREN_API virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::mat4&, const glm::vec3&) const;

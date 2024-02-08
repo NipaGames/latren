@@ -4,7 +4,7 @@
 #include <stb/stb_image.h>
 #include <spdlog/spdlog.h>
 
-const char* const DEFAULT_FACES[6] = {
+const char* const DEFAULE_FACES[6] = {
     "RIGHT.png",
     "LEFT.png",
     "TOP.png",
@@ -29,7 +29,7 @@ void FlipHorizontally(uint8_t*& img, int width, int height, int nChannels) {
 }
 
 Texture::TextureID Cubemap::LoadTextureFromDir(const std::string& dir, bool flipHorizontally) {
-    return LoadTextureFromFaces(dir, DEFAULT_FACES, flipHorizontally);
+    return LoadTextureFromFaces(dir, DEFAULE_FACES, flipHorizontally);
 }
 Texture::TextureID Cubemap::LoadTextureFromFaces(const std::string& dir, const char* const faces[6], bool flipHorizontally) {
     Texture::TextureID texture;

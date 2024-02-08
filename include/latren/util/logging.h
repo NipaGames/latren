@@ -5,12 +5,12 @@
 #include <string>
 
 namespace Logging {
-    inline constexpr std::string_view DEFAULT_SPDLOG_PATTERN = "[%T] %^%-10l%$ %v";
+    inline constexpr std::string_view DEFAULE_SPDLOG_PATTERN = "[%T] %^%-10l%$ %v";
 
     enum class LogLevel {
         DEFAULT,
         DEBUG
     };
 
-    LATREN_API void InitSPDLog(const std::string& = std::string(DEFAULT_SPDLOG_PATTERN), LogLevel = LogLevel::DEFAULT);
+    LATREN_API void InitSPDLog(const std::string& = std::string(DEFAULE_SPDLOG_PATTERN), LogLevel = LogLevel::DEFAULT);
 };
