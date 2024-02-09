@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 #include <memory>
 #include <functional>
@@ -21,6 +22,7 @@ public:
     C& GetComponent(ComponentIndex i) {
         return static_cast<C&>(GetComponent(i));
     }
+    virtual void ForEach(const std::function<void(IComponent&)>&) = 0;
 };
 typedef std::unordered_map<std::type_index, std::unique_ptr<IComponentMemoryPool>> ComponentPoolContainer;
 
@@ -72,7 +74,10 @@ public:
     IComponent& GetComponent(ComponentIndex i) override {
         return components_.at(references_.at(i));
     }
-    void ForEach(std::function<void(C&)> fn) {
+    void ForEach(const std::function<void(C&)>& fn) {
         std::for_each(components_.begin(), components_.end(), fn);
     }
+    void ForEach(const std::function<void(IComponent&)>& fn) override {
+        ForEach(static_cast<const std::function<void(C&)>&>(fn));
+    } 
 };
