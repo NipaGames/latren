@@ -41,7 +41,7 @@ public:
     template <typename C>
     static IComponent* CreateInstance(const ComponentData& data) {
         IComponent* c = new C();
-        for (const auto&[k, v] : data.vars) {
+        for (const auto& [k, v] : data.vars) {
             v->CloneValuesTo(c->data.vars[k]);
         }
         return c;
@@ -65,6 +65,10 @@ public:
     static IComponent* CreateComponent(const std::string&, const ComponentData& = ComponentData());
     template <typename T>
     static IComponent* CreateComponent(const ComponentData& data = ComponentData()) { return CreateComponent(typeid(T), data); }
+
+    static TypedComponentData CreateComponentData(std::type_index);
+    template <typename T>
+    static TypedComponentData CreateComponentData() { return CreateComponentData(typeid(T)); }
 
     static bool RegisterComponent(const type_info&,
         const std::function<IComponent*(const ComponentData&)>&,

@@ -8,11 +8,16 @@
 
 #include "entity/entity.h"
 
+struct DeserializedEntity {
+    std::string id;
+    std::vector<TypedComponentData> components;
+};
+
 struct Stage {
     std::string id;
     // additional game-specific data
     nlohmann::json data;
 
-    std::list<Entity> entities;
-    std::unordered_set<size_t> instantiatedEntities;
+    std::vector<DeserializedEntity> entities;
+    std::unordered_set<EntityIndex> instantiatedEntities;
 };

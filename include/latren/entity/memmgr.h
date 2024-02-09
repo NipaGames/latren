@@ -16,14 +16,14 @@ public:
         return static_cast<ComponentMemoryPool<C>&>(GetPool(typeid(C)));
     }
     LATREN_API const ComponentPoolContainer& GetAllPools();
-    LATREN_API GeneralComponentReference AllocNewComponent(std::type_index);
+    LATREN_API GeneralComponentReference AllocNewComponent(std::type_index, EntityIndex);
     template <typename C>
-    ComponentReference<C> AllocNewComponent() {
-        return static_cast<const ComponentReference<C>&>(AllocNewComponent(typeid(C)));
+    ComponentReference<C> AllocNewComponent(EntityIndex i) {
+        return static_cast<const ComponentReference<C>&>(AllocNewComponent(typeid(C), i));
     }
-    LATREN_API void DeleteComponent(std::type_index, ComponentIndex);
+    LATREN_API void DeleteComponent(std::type_index, EntityIndex);
     template <typename C>
-    void DeleteComponent(ComponentIndex i) {
+    void DeleteComponent(EntityIndex i) {
         DeleteComponent(typeid(C), i);
     }
     template <typename C>

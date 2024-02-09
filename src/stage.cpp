@@ -29,7 +29,7 @@ bool Resources::StageManager::LoadStage(const std::string& id) {
     Stage& s = items_.at(id);
     s.instantiatedEntities.clear();
 
-    for (const Entity& e : s.entities) {
+    for (const DeserializedEntity& e : s.entities) {
         if (e.id.empty()) {
             Entity& instantiated = Game::GetGameInstanceBase()->GetEntityManager().CreateEntity();
             instantiated.OverrideComponentValues(e);

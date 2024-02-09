@@ -6,27 +6,23 @@
 using namespace Serializer;
 using json = nlohmann::json;
 
-bool Serializer::DeserializeComponentFromJSON(IComponent* c, const nlohmann::json& json, const std::string& entityId) {
-    if (c == nullptr)
-        return false;
+bool Serializer::DeserializeComponentDataFromJSON(ComponentData& data, const nlohmann::json& json, const std::string& entityId) {
     VariableMap copyableData;
-    for (const auto&[k, v] : json.items()) {
-        if (Serializer::SetJSONComponentValue(c, k, v, entityId))
-            copyableData.insert({ k, c->data.vars.at(k) });
+    for (const auto& [k, v] : json.items()) {
+        if (Serializer::ParseJSONComponentData(data, k, v, entityId))
+            copyableData.insert({ k, data.vars.at(k) });
         else
             return false;
     }
-    c->data.vars = copyableData;
+    data.vars = copyableData;
     return true;
 }
 
-std::list<Entity> StageSerializer::ParseEntities(const json& entities, int* invalidEntities) {
-    std::list<Entity> parsedEntities;
-    for (const auto&[ek, ev] : entities.items()) {
+std::vector<DeserializedEntity> StageSerializer::ParseEntities(const json& entities, int* invalidEntities) {
+    std::vector<DeserializedEntity> parsedEntities;
+    for (const auto& [ek, ev] : entities.items()) {
         if (ev.is_object()) {
-            Entity entity("");
-            entity.RemoveComponent<Transform>();
-            entity.transform = nullptr;
+            DeserializedEntity entity;
             if (ev.contains("id")) {
                 if (ev["id"].is_string())
                     entity.id = ev["id"];
@@ -38,41 +34,29 @@ std::list<Entity> StageSerializer::ParseEntities(const json& entities, int* inva
             }
             if (!blueprint.empty() && blueprints_ != nullptr) {
                 if (blueprints_->HasItem(blueprint)) {
-                    const std::vector<IComponent*>& blueprintComponents = blueprints_->GetItem(blueprint);
-                    for (const IComponent* c : blueprintComponents) {
-                        IComponent* entityComponent = entity.GetComponent(c->GetType());
-                        if (entityComponent == nullptr)
-                            entityComponent = entity.AddComponent(c->GetType());
-                        for (const auto& [varName, varValue] : c->data.vars) {
-                            varValue->CloneValuesTo(entityComponent->data.GetComponentDataValue(varName));
-                        }
-                    }
+                    entity.components = blueprints_->GetItem(blueprint);
                 }
                 else {
                     spdlog::warn("Cannot find blueprint '{}'!", blueprint);
                 }
             }
-            for (const auto&[ck, cv] : ev.items()) {
+            for (const auto& [ck, cv] : ev.items()) {
                 if (!cv.is_object())
                     continue;
-                IComponent* c = entity.GetComponent(ck);
-                
-                if (c == nullptr) {
-                    c = entity.AddComponent(ck);
-                }
-                
-                bool success = DeserializeComponentFromJSON(c, cv, entity.id);
+                TypedComponentData data = IComponent::CreateComponentData(IComponent::GetComponentType(ck)->type);
+                bool success = DeserializeComponentDataFromJSON(data, cv, entity.id);
                 if (!success) {
                     spdlog::warn("Failed deserializing component '{}'!", ck);
                     // yeah yeah the whole entity isn't necessarily invalid but this will do now
                     if (invalidEntities != nullptr)
                         (*invalidEntities)++;
                 }
+                entity.components.push_back(data);
             }
             parsedEntities.push_back(entity);
         }
         else if (ev.is_array()) {
-            std::list<Entity> recursiveEntities = ParseEntities(ev, invalidEntities);
+            std::vector<DeserializedEntity> recursiveEntities = ParseEntities(ev, invalidEntities);
             parsedEntities.insert(parsedEntities.end(), recursiveEntities.begin(), recursiveEntities.end());
         }
         else if (invalidEntities != nullptr) {

@@ -81,6 +81,17 @@ IComponent* IComponent::CreateComponent(const std::string& name, const Component
     return CreateComponent(it->type, data);
 }
 
+TypedComponentData IComponent::CreateComponentData(const std::type_index type) {
+    TypedComponentData data = TypedComponentData(type);
+    IComponent* dummy = CreateComponent(type);
+    for (const auto& [k, v] : dummy->data.vars) {
+        data.vars[k] = v;
+        data.vars[k]->DetachPointer();
+    }
+    delete dummy;
+    return data;
+}
+
 bool IComponent::RegisterComponent(const type_info& type,
     const std::function<IComponent*(const ComponentData&)>& componentInitializer,
     const std::function<std::unique_ptr<IComponentMemoryPool>()>& memPoolInitializer)

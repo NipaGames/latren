@@ -9,17 +9,17 @@
 #include <typeindex>
 #include <latren/util/idfactory.h>
 
-typedef size_t ComponentIndex;
+typedef size_t EntityIndex;
 
 class IComponent;
 struct GeneralComponentReference;
 class IComponentMemoryPool {
 public:
-    virtual GeneralComponentReference AllocNewComponent() = 0;
-    virtual void DeleteComponent(ComponentIndex) = 0;
-    virtual IComponent& GetComponent(ComponentIndex) = 0;
+    virtual GeneralComponentReference AllocNewComponent(EntityIndex) = 0;
+    virtual void DeleteComponent(EntityIndex) = 0;
+    virtual IComponent& GetComponent(EntityIndex) = 0;
     template <typename C>
-    C& GetComponent(ComponentIndex i) {
+    C& GetComponent(EntityIndex i) {
         return static_cast<C&>(GetComponent(i));
     }
     virtual void ForEach(const std::function<void(IComponent&)>&) = 0;
@@ -28,7 +28,7 @@ typedef std::unordered_map<std::type_index, std::unique_ptr<IComponentMemoryPool
 
 struct GeneralComponentReference {
     IComponentMemoryPool* pool;
-    ComponentIndex index;
+    EntityIndex index;
     IComponent& GetComponent() const {
         return pool->GetComponent(index);
     };
@@ -49,16 +49,14 @@ template <typename C, typename = std::enable_if_t<!std::is_same_v<C, IComponent>
 class ComponentMemoryPool : public IComponentMemoryPool, public IDFactory {
 private:
     std::vector<C> components_;
-    std::unordered_map<ComponentIndex, size_t> references_;
-    ComponentIndex currentIndex_ = 0;
+    std::unordered_map<EntityIndex, size_t> references_;
 public:
-    GeneralComponentReference AllocNewComponent() override {
+    GeneralComponentReference AllocNewComponent(EntityIndex i) override {
         C& c = components_.emplace_back(C());
-        ComponentIndex i = NextID();
         references_[i] = components_.size() - 1;
         return ComponentReference<C> { this, i };
     }
-    void DeleteComponent(ComponentIndex i) override {
+    void DeleteComponent(EntityIndex i) override {
         if (references_.count(i) == 0)
             return;
         size_t pos = references_.at(i);
@@ -66,12 +64,12 @@ public:
             return;
         components_.erase(components_.begin() + pos);
         references_.erase(i);
-        for (auto&[k, v] : references_) {
+        for (auto& [k, v] : references_) {
             if (v > pos)
                 v--;
         }
     }
-    IComponent& GetComponent(ComponentIndex i) override {
+    IComponent& GetComponent(EntityIndex i) override {
         return components_.at(references_.at(i));
     }
     void ForEach(const std::function<void(C&)>& fn) {

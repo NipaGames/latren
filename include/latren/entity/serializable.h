@@ -17,7 +17,8 @@ public:
     std::type_index type;
     ComponentDataContainerType containerType;
     IComponentDataValue() : type(typeid(IComponentDataValue)) { }
-    virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>&) = 0;
+    virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>&) const = 0;
+    virtual void DetachPointer() = 0;
     // Only present in vector types
     virtual void CopyValuesFromComponentDataArray(const ComponentData&) = 0;
 };
@@ -52,28 +53,40 @@ public:
     }
 };
 
+class TypedComponentData : public ComponentData {
+public:
+    std::type_index type;
+    TypedComponentData(std::type_index t) : type(t) { }
+};
+
 template <typename T, ComponentDataContainerType Container>
 class ComponentDataValueBase : public IComponentDataValue {
 public:
     T* ptr = nullptr;
     T val;
+    using ThisType = ComponentDataValueBase<T, Container>;
     ComponentDataValueBase() {
-        this->type = typeid(T);
-        this->containerType = Container;
+        type = typeid(T);
+        containerType = Container;
     }
     ComponentDataValueBase(const std::string& name, T* ptr) : ComponentDataValueBase() {
         this->name = name;
         this->ptr = ptr;
-        if (ptr != nullptr)
-            val = *ptr;
+        if (this->ptr != nullptr)
+            val = *this->ptr;
     }
-    virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>& c) override {
-        std::shared_ptr<ComponentDataValueBase<T, Container>> data = std::static_pointer_cast<ComponentDataValueBase<T, Container>>(c);
+    virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>& c) const override {
+        std::shared_ptr<ThisType> data = std::static_pointer_cast<ThisType>(c);
         data->name = name;
+        data->type = type;
+        data->containerType = containerType;
         data->val = val;
         if (data->ptr != nullptr) {
             *data->ptr = val;
         }
+    }
+    virtual void DetachPointer() override {
+        ptr = nullptr;
     }
     virtual void CopyValuesFromComponentDataArray(const ComponentData&) { }
 };
@@ -95,17 +108,20 @@ public:
     using VecT = std::vector<T>;
     using ComponentDataValueBase<std::vector<T>, ComponentDataContainerType::VECTOR>::ComponentDataValueBase;
     virtual void CopyValuesFromComponentDataArray(const ComponentData& data) override {
-        if (this->ptr == nullptr)
-            return;
-        this->ptr->reserve(data.vars.size());
+        VecT* target = ptr;
+        if (ptr == nullptr)
+            target = &val;
+        target->reserve(data.vars.size());
         for (auto v : data.vars) {
             if (v.second->type != typeid(T))
                 continue;
             auto dataValue = std::dynamic_pointer_cast<ComponentDataValue<T>>(v.second);
             int i = std::stoi(v.first);
-            this->ptr->insert(this->ptr->begin() + i, dataValue->val);
-            this->val = *this->ptr;
+            target->insert(target->begin() + i, dataValue->val);
         }
+        // copy to val
+        if (target == ptr)
+            val = *ptr;
     }
     static std::shared_ptr<ComponentDataValue<VecT>> Create(const std::string& name, std::vector<T>* ptr, VariableMap& map) {
         std::shared_ptr<ComponentDataValue<VecT>> c = std::make_shared<ComponentDataValue<VecT>>(name, ptr);
@@ -115,7 +131,7 @@ public:
 };
 
 #define LE_REGISTER_COMPONENT_DATA_VALUE(name) \
-std::shared_ptr<ComponentDataValue<decltype(name)>> _valPtr_##name = ComponentDataValue<decltype(name)>::Create(#name, &name, this->data.vars);
+std::shared_ptr<ComponentDataValue<decltype(name)>> _valPtr_##name = ComponentDataValue<decltype(name)>::Create(#name, &name, data.vars);
 #define LE_RCDV(name) LE_REGISTER_COMPONENT_DATA_VALUE(name)
 
 #define LE_DEFINE_COMPONENT_DATA_VALUE(T, name, val) \

@@ -7,13 +7,13 @@ JSONSerializerList& Serializer::GetJSONSerializerList() {
     return jsonSerializers;
 }
 
-bool Serializer::SetJSONComponentValue(IComponent* c, const std::string& k, const nlohmann::json& jsonVal, const std::string& entityId) {
-    auto dataVal = c->data.GetComponentDataValue(k);
+bool Serializer::ParseJSONComponentData(ComponentData& data, const std::string& k, const nlohmann::json& jsonVal, const std::string& entityId) {
+    auto dataVal = data.GetComponentDataValue(k);
     if (dataVal == nullptr)
         return false;
     
     auto it = std::find_if(GetJSONSerializerList().begin(), GetJSONSerializerList().end(), [&](const auto& s) {
-        return s->CompareToComponentType(c->data.GetComponentDataValue(k));
+        return s->CompareToComponentType(data.GetComponentDataValue(k));
     });
     if (it == GetJSONSerializerList().end())
         return false;
@@ -23,7 +23,7 @@ bool Serializer::SetJSONComponentValue(IComponent* c, const std::string& k, cons
     args.entityId = entityId;
     switch (dataVal->containerType) {
         case ComponentDataContainerType::SINGLE:
-            args.ctData = &c->data;
+            args.ctData = &data;
             args.ctK = k;
             return (serializer->fn)(args, jsonVal);
         case ComponentDataContainerType::VECTOR:

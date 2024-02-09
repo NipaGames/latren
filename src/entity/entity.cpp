@@ -103,13 +103,13 @@ IComponent* Entity::AddComponent(const std::string& name, const ComponentData& d
     return AddComponent(ct.value().type, data);
 }
 
-void Entity::OverrideComponentValues(const Entity& e) {
-    for (auto c : e.components_) {
-        IComponent* mc = GetComponent(c->GetType());
+void Entity::OverrideComponentValues(const DeserializedEntity& e) {
+    for (const TypedComponentData& data : e.components) {
+        IComponent* mc = GetComponent(data.type);
         if (mc == nullptr)
-            AddComponent(c->GetType(), c->data);
+            AddComponent(data.type, data);
         else {
-            for (const auto&[k, v] : c->data.vars) {
+            for (const auto& [k, v] : data.vars) {
                 v->CloneValuesTo(mc->data.vars[k]);
             }
         }

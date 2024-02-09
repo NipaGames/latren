@@ -54,17 +54,16 @@ namespace Serializer {
         bool CompareToComponentType(std::shared_ptr<IComponentDataValue> d) const override {
             bool found = false;
             ([&] {
-                // dynamic_pointer_cast won't do here so we'll need this workaround
-                void* cast;
+                std::type_index type = typeid(T);
                 switch (d->containerType) {
                     case ComponentDataContainerType::SINGLE:
-                        cast = dynamic_cast<ComponentDataValue<T>*>(&*d);
+                        type = typeid(T);
                         break;
                     case ComponentDataContainerType::VECTOR:
-                        cast = dynamic_cast<ComponentDataValue<std::vector<T>>*>(&*d);
+                        type = typeid(std::vector<T>);
                         break;
                 }
-                if (cast != nullptr) {
+                if (d->type.hash_code() == type.hash_code()) {
                     found = true;
                     return;
                 }
@@ -138,7 +137,7 @@ namespace Serializer {
         });
     }
 
-    LATREN_API bool SetJSONComponentValue(IComponent*, const std::string&, const nlohmann::json&, const std::string& = "");
+    LATREN_API bool ParseJSONComponentData(ComponentData&, const std::string&, const nlohmann::json&, const std::string& = "");
     template <typename T>
     bool SetJSONPointerValue(T* ptr, const nlohmann::json& jsonVal) {
         return SetPointerValue<T>(ptr, jsonVal, GetJSONSerializerList());

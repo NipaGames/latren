@@ -7,6 +7,7 @@ typedef size_t EntityID;
 
 class Transform;
 class EntityManager;
+struct DeserializedEntity;
 class Entity {
 private:
     std::vector<IComponent*> components_;
@@ -58,5 +59,5 @@ public:
     LATREN_API IComponent* AddComponent(std::type_index, const ComponentData& = ComponentData());
     LATREN_API IComponent* AddComponent(const std::string&, const ComponentData& = ComponentData());
     LATREN_API std::vector<std::string> ListComponentNames() const;
-    LATREN_API void OverrideComponentValues(const Entity& e);
+    LATREN_API void OverrideComponentValues(const DeserializedEntity& e);
 };
