@@ -13,9 +13,9 @@ Canvas::Canvas(Canvas&& other) :
     bgVerticalAnchor(other.bgVerticalAnchor),
     components_(std::move(other.components_))
 {
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            c->canvas_ = this;
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            c.CastComponent<UI::UIComponent>().canvas = this;
         }
     }
 }
@@ -28,19 +28,19 @@ Canvas& Canvas::operator=(Canvas&& other) {
     bgSize = other.bgSize;
     bgVerticalAnchor = other.bgVerticalAnchor;
     components_ = std::move(other.components_);
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            c->canvas_ = this;
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            c.CastComponent<UI::UIComponent>().canvas = this;
         }
     }
     return *this;
 }
 
 Canvas::~Canvas() {
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            if (c->canvas_ == this)
-                c->canvas_ = nullptr;
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            if (c.CastComponent<UI::UIComponent>().canvas == this)
+                c.CastComponent<UI::UIComponent>().canvas = nullptr;
         }
     }
     components_.clear();
@@ -92,12 +92,12 @@ void Canvas::Draw() {
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            if (c->isVisible) {
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            if (c.CastComponent<UI::UIComponent>().isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
-                c->Render(proj);
+                c.CastComponent<UI::UIComponent>().Render(proj);
             }
         }
     }
@@ -120,16 +120,16 @@ glm::vec2 Canvas::GetOffset() const {
     return offset;
 }
 
-void Canvas::AddUIComponent(UIComponent* c, int priority) {
+void Canvas::AddUIComponent(GeneralComponentReference c, int priority) {
     components_[priority].push_back(c);
-    c->canvas_ = this;
+    c.CastComponent<UI::UIComponent>().canvas = this;
 }
 
 void Canvas::UpdateComponentsOnWindowSize(float m) {
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            c->aspectRatioModifier_ = m;
-            c->UpdateWindowSize();
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            c.CastComponent<UI::UIComponent>().aspectRatioModifier_ = m;
+            c.CastComponent<UI::UIComponent>().UpdateWindowSize();
         }
     }
 }
@@ -139,7 +139,7 @@ void Canvas::UpdateWindowSize(int w, int h) {
     UpdateComponentsOnWindowSize(aspectRatioModifier);
 }
 
-void Canvas::RemoveUIComponent(const UI::UIComponent* c) {
+void Canvas::RemoveUIComponent(const GeneralComponentReference& c) {
     for (auto& [p, components] : components_) {
         const auto it = std::find(components.begin(), components.end(), c);
         if (it == components.end())

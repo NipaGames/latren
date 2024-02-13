@@ -4,7 +4,7 @@
 #include "../materials.h"
 
 namespace UI {
-    class TextInputComponent : public TextButtonComponent {
+    class TextInputComponent : public TextButtonComponent, RegisterComponent<TextInputComponent> {
     using TextButtonComponent::TextButtonComponent;
     private:
         bool inputFocus_ = false;

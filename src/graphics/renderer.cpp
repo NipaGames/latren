@@ -116,13 +116,13 @@ void Renderer::UpdateLighting() {
     for (GLuint shader : shaders_) {
         glUseProgram(shader);
         Lights::ResetIndices();
-        for (auto l : lights_) {
+        Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachDerivedComponent<Lights::ILight>([&](Lights::ILight& l, IComponentMemoryPool&) {
             while (Lights::IsReserved(Lights::LIGHTS_INDEX)) {
                 Lights::LIGHTS_INDEX++;
             }
-            l->UseAsNext();
-            l->ApplyLight(shader);
-        }
+            l.UseAsNext();
+            l.ApplyLight(shader);
+        });
         if (Lights::LIGHTS_INDEX < maxRenderedLights_) {
             for (int i = Lights::LIGHTS_INDEX; i < maxRenderedLights_; i++) {
                 if (!Lights::IsReserved(i))
@@ -146,17 +146,18 @@ void Renderer::Start() {
 }
 
 void Renderer::SortMeshesByDistance() {
-    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&] (const IRenderable* r1, const IRenderable* r2) {
-        glm::vec3 pos1 = dynamic_cast<const IComponent*>(r1)->parent->transform->position;
-        glm::vec3 pos2 = dynamic_cast<const IComponent*>(r2)->parent->transform->position;
+    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&] (GeneralComponentReference& r1, GeneralComponentReference& r2) {
+        glm::vec3 pos1 = r1.GetComponentBase().parent.GetTransform().position;
+        glm::vec3 pos2 = r1.GetComponentBase().parent.GetTransform().position;
         return glm::length(camera_.pos - pos1) > glm::length(camera_.pos - pos2);
     });
 }
 
 void Renderer::UpdateFrustum() {
     renderablesOnFrustum_.clear();
-    std::copy_if(renderables_.begin(), renderables_.end(), std::back_inserter(renderablesOnFrustum_), [&] (const IRenderable* renderable) {
-        return renderable->IsAlwaysOnFrustum() || renderable->IsOnFrustum(camera_.frustum);
+    Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool& pool) {
+        if (r.IsAlwaysOnFrustum() || r.IsOnFrustum(camera_.frustum))
+            renderablesOnFrustum_.push_back({ &pool, static_cast<IComponent&>(r) });
     });
 }
 
@@ -172,22 +173,24 @@ void Renderer::Render() {
     glm::mat4 viewMatrix = glm::lookAt(camera_.pos, camera_.pos + camera_.front, camera_.up);
 
     glUseProgram(0);
-    for (IRenderable* renderable : renderables_) {
-        if (!renderable->IsStatic())
-            renderable->CalculateMatrices();
-    }
-    std::vector<const IRenderable*> lateRenderables;
-    std::vector<const IRenderable*> renderablesAfterPostProcessing;
-    for (const IRenderable* renderable : renderablesOnFrustum_) {
-        if (renderable->RenderLate()) {
-            lateRenderables.push_back(renderable);
+    Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
+        if (!r.IsStatic())
+            r.CalculateMatrices();
+    });
+    // will have to write a render pass enum, this is just plain dumb
+    std::vector<GeneralComponentReference> lateRenderables;
+    std::vector<GeneralComponentReference> renderablesAfterPostProcessing;
+    for (GeneralComponentReference& ref : renderablesOnFrustum_) {
+        IRenderable& renderable = ref.CastComponent<IRenderable>();
+        if (renderable.RenderLate()) {
+            lateRenderables.push_back(ref);
             continue;
         }
-        else if (renderable->RenderAfterPostProcessing()) {
-            renderablesAfterPostProcessing.push_back(renderable);
+        else if (renderable.RenderAfterPostProcessing()) {
+            renderablesAfterPostProcessing.push_back(ref);
             continue;
         }
-        renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+        renderable.IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
 
     // draw skybox
@@ -215,14 +218,14 @@ void Renderer::Render() {
         glDisable(GL_DEPTH_CLAMP);
     }
 
-    for (const IRenderable* renderable : lateRenderables) {
-         renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+    for (GeneralComponentReference& ref : lateRenderables) {
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
-
+    
     if (highlightNormals) {
-        for (const IRenderable*  renderable : renderables_) {
-            renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, &normalShader_);
-        }
+        Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
+            r.IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, &normalShader_);
+        });
     }
     if (showHitboxes) {
         if (Physics::GLOBAL_DYNAMICS_WORLD_ != nullptr)
@@ -246,10 +249,9 @@ void Renderer::Render() {
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
-    for (const IRenderable* renderable : renderablesAfterPostProcessing) {
-        renderable->IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+    for (GeneralComponentReference& ref : renderablesAfterPostProcessing) {
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
-    
     glDisable(GL_DEPTH_TEST);
     for (auto& c : canvases_) {
         c.second->Draw();
@@ -303,37 +305,6 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
     UpdateCameraProjection(w, h);
 }
 
-void Renderer::AddLight(Lights::ILight* light) {
-    lights_.push_back(light);
-}
-
-void Renderer::RemoveLight(Lights::ILight* light) {
-    if (lights_.size() == 0) return;
-    lights_.erase(std::remove(lights_.begin(), lights_.end(), light), lights_.end());
-}
-
-void Renderer::AddRenderable(IRenderable* renderable) {
-    renderables_.push_back(renderable);
-}
-
-void Renderer::RemoveRenderable(IRenderable* renderable) {
-    if (renderables_.size() == 0) return;
-    renderables_.erase(std::remove(renderables_.begin(), renderables_.end(), renderable), renderables_.end());
-    UpdateFrustum();
-}
-
-void Renderer::CleanUpEntities() {
-    for (const auto& [k, v] : canvases_) {
-        if (v->isOwnedByRenderer)
-            delete v;
-    }
-    canvases_.clear();
-    renderables_.clear();
-    renderablesOnFrustum_.clear();
-    lights_.clear();
-    UpdateFrustum();
-}
-
 std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) {
     if (materials_.count(mat) == 0)
         return materials_.at(MATERIAL_MISSING);
@@ -362,4 +333,14 @@ void Renderer::AssignCanvas(const std::string& id, UI::Canvas* c) {
 void Renderer::MoveCanvas(const std::string& id, UI::Canvas* c) {
     AssignCanvas(id, c);
     c->isOwnedByRenderer = true;
+}
+
+void Renderer::CleanUp() {
+    for (const auto& [k, v] : canvases_) {
+        if (v->isOwnedByRenderer)
+                delete v;
+    }
+    canvases_.clear();
+    renderablesOnFrustum_.clear();
+    UpdateFrustum();
 }

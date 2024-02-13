@@ -1,56 +1,55 @@
 #include <latren/entity/entitymanager.h>
+#include <latren/entity/transform.h>
 
-#include <algorithm>
-
-Entity& EntityManager::CreateEntity(const std::string& id) {
-    entities_.emplace_back(std::make_unique<Entity>(id));
-    return *entities_.back();
+void EntityManager::Setup() {
+    componentMemoryManager_.MovePools(IComponent::CreateComponentMemoryPools());
 }
 
-Entity& EntityManager::AddEntity(const Entity& e) {
-    entities_.push_back(std::make_unique<Entity>(e));
-    return *entities_.back();
+void EntityManager::StartAll() {
+    componentMemoryManager_.ForAllComponents([](IComponent& c) {
+        c.IStart();
+    });
+}
+void EntityManager::UpdateAll() {
+    componentMemoryManager_.ForAllComponents([](IComponent& c) {
+        c.IUpdate();
+    });
 }
 
-void EntityManager::RemoveEntities(const std::string& id) {
-    entities_.erase(std::remove_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->id == id; }), entities_.end());
+void EntityManager::FixedUpdateAll() {
+    componentMemoryManager_.ForAllComponents([](IComponent& c) {
+        c.IFixedUpdate();
+    });
 }
 
-void EntityManager::RemoveEntity(size_t hash) {
-    size_t s = entities_.size();
-    entities_.erase(std::remove_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->GetID() == hash; }), entities_.end());
-    size_t removed = s - entities_.size();
+ComponentMemoryManager& EntityManager::GetComponentMemory() {
+    return componentMemoryManager_;
 }
 
-size_t EntityManager::CountEntities(const std::string& id) {
-    return std::count_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->id == id; });
+Entity EntityManager::CreateEntity() {
+    Entity e = Entity(this, NextID());
+    e.AddComponent<Transform>();
+    return e;
 }
 
-size_t EntityManager::CountEntities() {
-    return entities_.size();
+GeneralComponentReference EntityManager::AddComponent(EntityIndex entity, std::type_index type) {
+    return componentMemoryManager_.AllocNewComponent(entity, type);
 }
 
-bool EntityManager::HasEntity(size_t hash) {
-    // every entity has an unique hash anyway so no need to check if count > 1
-    return std::count_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->GetID() == hash; }) == 1;
+void EntityManager::DeleteComponent(EntityIndex entity, std::type_index type) {
+    componentMemoryManager_.DeleteComponent(entity, type);
 }
 
-Entity& EntityManager::GetEntity(const std::string& id) {
-     return **std::find_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->id == id; });
+void EntityManager::ClearEverything() {
+    componentMemoryManager_.ForEachPool([](IComponentMemoryPool& pool) {
+        pool.ClearAllComponents();
+    });
 }
 
-const std::list<std::unique_ptr<Entity>>& EntityManager::GetEntities() {
-    return entities_;
-}
-
-void EntityManager::ClearEntities() {
-    entities_.clear();
-}
-
-Entity& EntityManager::operator[](const std::string& id) {
-    auto it = std::find_if(entities_.begin(), entities_.end(), [&](const auto& e) { return e->id == id; });
-    if (it != entities_.end())
-        return **it;
-    else
-        return CreateEntity(id);
+size_t EntityManager::GetTotalPoolBytes() {
+    size_t total = 0;
+    componentMemoryManager_.ForEachPool([&total](IComponentMemoryPool& pool) {
+        total += pool.GetTotalBytes();
+    });
+    return total;
 }

@@ -16,7 +16,7 @@ namespace UI {
         ListComponent(UI::Canvas* c, int p = 0) : ContainerComponent(c, p) { bgOverflow = false; }
 
         LATREN_API void Start() override;
-        LATREN_API void AddListItem(UI::UIComponent*);
+        LATREN_API void AddListItem(GeneralComponentReference);
         LATREN_API void SetScrollPos(float);
     };
 

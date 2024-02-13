@@ -33,9 +33,9 @@ void MeshRenderer::Start() {
 }
 
 void MeshRenderer::CalculateMatrices() {
-    modelMatrix_ = glm::translate(glm::mat4(1.0f), parent->transform->position);
-    modelMatrix_ *= glm::mat4_cast(parent->transform->rotation);
-    modelMatrix_ = glm::scale(modelMatrix_, parent->transform->size);
+    modelMatrix_ = glm::translate(glm::mat4(1.0f), parent.GetTransform().position);
+    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation);
+    modelMatrix_ = glm::scale(modelMatrix_, parent.GetTransform().size);
 }
 
 

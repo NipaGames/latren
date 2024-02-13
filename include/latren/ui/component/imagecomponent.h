@@ -4,7 +4,7 @@
 #include "../materials.h"
 
 namespace UI {
-    class ImageComponent : public UIComponent {
+    class ImageComponent : public UIComponent, RegisterComponent<ImageComponent> {
     using UIComponent::UIComponent;
     private:
         Shape quadShape_;

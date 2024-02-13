@@ -3,14 +3,10 @@
 using namespace UI;
 
 void ContainerComponent::ClearChildren() {
-    for (UIComponent* c : children_) {
-        delete c;
-    }
     children_.clear();
 }
 
 void ContainerComponent::DeleteChildAtIndex(size_t i) {
-    delete children_.at(i);
     children_.erase(children_.begin() + i);
 }
 
@@ -23,9 +19,9 @@ void ContainerComponent::Render(const glm::mat4& proj) {
 }
 
 void ContainerComponent::Update() {
-    for (const auto& [p, components] : components_) {
-        for (UIComponent* c : components) {
-            c->Update();
+    for (auto& [p, components] : components_) {
+        for (GeneralComponentReference& c : components) {
+            c.CastComponent<UI::UIComponent>().Update();
         }
     }
 }
@@ -35,17 +31,17 @@ void ContainerComponent::UpdateWindowSize() {
 }
 
 glm::vec2 ContainerComponent::GetOffset() const {
-    return canvas_->GetOffset() + GetTransform().pos + offset;
+    return canvas->GetOffset() + GetTransform().pos + offset;
 }
 
 size_t ContainerComponent::GetChildCount() {
     return children_.size();
 }
 
-void ContainerComponent::AddChild(UI::UIComponent* c) {
-    c->AddToCanvas(this);
+void ContainerComponent::AddChild(GeneralComponentReference c) {
+    c.CastComponent<UI::UIComponent>().AddToCanvas(this);
     children_.push_back(c);
-    c->Start();
+    c.CastComponent<UI::UIComponent>().Start();
 }
 
 Rect ContainerComponent::GetLocalBounds() const {

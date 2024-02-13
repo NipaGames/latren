@@ -38,7 +38,7 @@ namespace UI {
         bool IsHoveredOver() { return isHoveredOver_; }
     };
     
-    class TextButtonComponent : public ButtonComponent<TextComponent> {
+    class TextButtonComponent : public ButtonComponent<TextComponent>, RegisterComponent<TextButtonComponent> {
     using ButtonComponent::ButtonComponent;
     protected:
         Shape bgShape_;

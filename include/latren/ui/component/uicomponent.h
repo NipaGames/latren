@@ -22,11 +22,11 @@ namespace UI {
     class UIComponent : public Component<UIComponent> {
     friend class Canvas;
     protected:
-        Canvas* canvas_ = nullptr;
         int priority_ = 0;
         bool isAddedToCanvas_ = false;
         float aspectRatioModifier_ = 1.0f;
     public:
+        Canvas* canvas = nullptr;
         UITransform transform { glm::vec2(0.0f), 1.0f };
         UITransformFrom transformFrom = UITransformFrom::ENTITY_TRANSFORM_2D;
         EventHandler<std::string> eventHandler;

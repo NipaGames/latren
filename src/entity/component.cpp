@@ -3,7 +3,6 @@
 
 IComponent::IComponent(const IComponent& c) {
     hasStarted_ = c.hasStarted_;
-    hasHadFirstUpdate_ = c.hasHadFirstUpdate_;
     for (const auto& [k, v] : c.data.vars) {
         if (data.vars.count(k) != 0)
             v->CloneValuesTo(data.vars.at(k));

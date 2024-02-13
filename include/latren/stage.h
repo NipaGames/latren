@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "entity/entity.h"
+#include "entity/serializable.h"
 
 struct DeserializedEntity {
     std::string id;

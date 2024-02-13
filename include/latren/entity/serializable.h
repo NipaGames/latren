@@ -88,7 +88,7 @@ public:
     virtual void DetachPointer() override {
         ptr = nullptr;
     }
-    virtual void CopyValuesFromComponentDataArray(const ComponentData&) { }
+    virtual void CopyValuesFromComponentDataArray(const ComponentData&) override { }
 };
 
 template <typename T>
@@ -131,7 +131,7 @@ public:
 };
 
 #define LE_REGISTER_COMPONENT_DATA_VALUE(name) \
-std::shared_ptr<ComponentDataValue<decltype(name)>> _valPtr_##name = ComponentDataValue<decltype(name)>::Create(#name, &name, data.vars);
+std::shared_ptr<ComponentDataValue<decltype(name)>> _valPtr_##name = ComponentDataValue<decltype(name)>::Create(#name, &name, GetData().vars);
 #define LE_RCDV(name) LE_REGISTER_COMPONENT_DATA_VALUE(name)
 
 #define LE_DEFINE_COMPONENT_DATA_VALUE(T, name, val) \

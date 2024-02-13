@@ -2,14 +2,15 @@
 
 #include <latren/latren.h>
 
-typedef size_t CommonID;
-
+template <typename CounterT = size_t>
 class IDFactory {
 protected:
-    CommonID counter_ = 0;
+    CounterT counter_ = 0;
 public:
-    LATREN_API CommonID NextID();
+    CounterT NextID() {
+        return counter_++;
+    }
 };
 
-typedef CommonID EventID;
-typedef CommonID EntityID;
+typedef size_t EventID;
+typedef size_t EntityID;

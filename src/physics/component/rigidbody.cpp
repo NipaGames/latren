@@ -30,7 +30,7 @@ RigidBody::~RigidBody() {
 // (this even comes with 16 bit optimizations!!!)
 btCollisionShape* RigidBody::CreateMeshCollider() {
     meshData_ = new btTriangleIndexVertexArray();
-    const std::vector<std::shared_ptr<Mesh>>& meshes = parent->GetComponent<MeshRenderer>()->meshes;
+    const std::vector<std::shared_ptr<Mesh>>& meshes = parent.GetComponent<MeshRenderer>().meshes;
     for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++) {
         if (colliderMeshes.size() > 0 && std::find(colliderMeshes.begin(), colliderMeshes.end(), meshIndex) == colliderMeshes.end())
             continue;
@@ -90,36 +90,34 @@ btCollisionShape* RigidBody::CreateMeshCollider() {
 }
 
 void RigidBody::Start() {
-    Transform* t = parent->transform;
+    Transform& t = parent.GetTransform();
     btTransform transform;
     transform.setIdentity();
     meshData_ = nullptr;
     rigidBody = nullptr;
 
-    MeshRenderer* meshRenderer;
     if (collider == nullptr) {
         switch (colliderFrom) {
             case ColliderConstructor::TRANSFORM:
                 collider = new btBoxShape(btVector3(.5f, .5f, .5f));
                 break;
             case ColliderConstructor::AABB:
-                meshRenderer = parent->GetComponent<MeshRenderer>();
-                collider = new btBoxShape(Physics::GLMVectorToBtVector3(meshRenderer->GetAABB().extents));
-                colliderOriginOffset_ = meshRenderer->GetAABB().center * t->size;
-                transform.setOrigin(Physics::GLMVectorToBtVector3(t->rotation * colliderOriginOffset_));
+                collider = new btBoxShape(Physics::GLMVectorToBtVector3(parent.GetComponent<MeshRenderer>().GetAABB().extents));
+                colliderOriginOffset_ = parent.GetComponent<MeshRenderer>().GetAABB().center * t.size;
+                transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation * colliderOriginOffset_));
                 break;
             case ColliderConstructor::MESH:
                 collider = CreateMeshCollider();
                 break;
         }
     }
-    collider->setLocalScaling(collider->getLocalScaling() * Physics::GLMVectorToBtVector3(t->size));
+    collider->setLocalScaling(collider->getLocalScaling() * Physics::GLMVectorToBtVector3(t.size));
     btVector3 localInertia(0, 0, 0);
     if (mass != 0.0f)
         collider->calculateLocalInertia(mass, localInertia);
 
-    transform.setOrigin(transform.getOrigin() + Physics::GLMVectorToBtVector3(t->position));
-    transform.setRotation(Physics::GLMQuatToBtQuat(t->rotation));
+    transform.setOrigin(transform.getOrigin() + Physics::GLMVectorToBtVector3(t.position));
+    transform.setRotation(Physics::GLMQuatToBtQuat(t.rotation));
 
     btDefaultMotionState* motionState = new btDefaultMotionState(transform);
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, collider, localInertia);
@@ -140,23 +138,23 @@ void RigidBody::Start() {
 }
 
 void RigidBody::UpdateTransform() {
-    Transform* t = parent->transform;
+    Transform& t = parent.GetTransform();
     btTransform transform;
     rigidBody->getMotionState()->getWorldTransform(transform);
     glm::quat rot = Physics::BtQuatToGLMQuat(transform.getRotation());
 
-    t->position = Physics::BtVectorToGLMVector3(transform.getOrigin()) - rot * colliderOriginOffset_;
-    t->rotation = rot;
+    t.position = Physics::BtVectorToGLMVector3(transform.getOrigin()) - rot * colliderOriginOffset_;
+    t.rotation = rot;
 }
 
 void RigidBody::CopyTransform() {
-    Transform* t = parent->transform;
+    Transform& t = parent.GetTransform();
     btTransform transform;
     btMotionState* ms = rigidBody->getMotionState();
     ms->getWorldTransform(transform);
     
-    transform.setOrigin(Physics::GLMVectorToBtVector3(t->position + t->rotation * colliderOriginOffset_));
-    transform.setRotation(t->btGetRotation());
+    transform.setOrigin(Physics::GLMVectorToBtVector3(t.position + t.rotation * colliderOriginOffset_));
+    transform.setRotation(t.btGetRotation());
 
     ms->setWorldTransform(transform);
     rigidBody->setMotionState(ms);
@@ -188,7 +186,7 @@ void RigidBody::SetPos(const glm::vec3& pos) {
     transform.setOrigin(btVector3(pos.x, pos.y, pos.z));
     ms->setWorldTransform(transform);
     rigidBody->setMotionState(ms);
-    parent->transform->position = pos;
+    parent.GetTransform().position = pos;
 }
 
 void RigidBody::EnableDebugVisualization(bool enabled) {

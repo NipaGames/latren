@@ -2,23 +2,23 @@
 
 #include <list>
 
-#include "entity.h"
+#include "component.h"
+#include "memmgr.h"
+#include <latren/util/idfactory.h>
 
-class EntityManager {
+class EntityManager : public IDFactory<EntityIndex> {
+friend class Game;
 private:
-    std::list<std::unique_ptr<Entity>> entities_;
+    ComponentMemoryManager componentMemoryManager_;
 public:
-    LATREN_API Entity& CreateEntity(const std::string& = "");
-    LATREN_API Entity& AddEntity(const Entity&);
-    LATREN_API void RemoveEntities(const std::string&);
-    LATREN_API void RemoveEntity(size_t);
-    LATREN_API size_t CountEntities(const std::string&);
-    LATREN_API size_t CountEntities();
-    LATREN_API void ClearEntities();
-    LATREN_API bool HasEntity(size_t);
-    // also creates a new entity if it doesn't exist
-    LATREN_API Entity& operator[](const std::string& id);
-    LATREN_API Entity& GetEntity(const std::string& id);
-    LATREN_API const std::list<std::unique_ptr<Entity>>& GetEntities();
-    LATREN_API friend class Game;
+    LATREN_API void Setup();
+    LATREN_API void StartAll();
+    LATREN_API void UpdateAll();
+    LATREN_API void FixedUpdateAll();
+    LATREN_API ComponentMemoryManager& GetComponentMemory();
+    LATREN_API Entity CreateEntity();
+    LATREN_API GeneralComponentReference AddComponent(EntityIndex, std::type_index);
+    LATREN_API void DeleteComponent(EntityIndex, std::type_index);
+    LATREN_API void ClearEverything();
+    LATREN_API size_t GetTotalPoolBytes();
 };

@@ -16,19 +16,30 @@ public:
         return static_cast<ComponentMemoryPool<C>&>(GetPool(typeid(C)));
     }
     LATREN_API const ComponentPoolContainer& GetAllPools();
-    LATREN_API GeneralComponentReference AllocNewComponent(std::type_index, EntityIndex);
+    LATREN_API GeneralComponentReference AllocNewComponent(EntityIndex, std::type_index);
     template <typename C>
-    ComponentReference<C> AllocNewComponent(EntityIndex i) {
-        return static_cast<const ComponentReference<C>&>(AllocNewComponent(typeid(C), i));
+    ComponentReference<C> AllocNewComponent(EntityIndex entity) {
+        return static_cast<const ComponentReference<C>&>(AllocNewComponent(entity, typeid(C)));
     }
-    LATREN_API void DeleteComponent(std::type_index, EntityIndex);
+    LATREN_API void DeleteComponent(EntityIndex, std::type_index);
     template <typename C>
-    void DeleteComponent(EntityIndex i) {
-        DeleteComponent(typeid(C), i);
+    void DeleteComponent(EntityIndex entity) {
+        DeleteComponent(entity, typeid(C));
     }
     template <typename C>
-    void ForEach(const std::function<void(C&)>& fn) {
+    void ForEachComponent(const std::function<void(C&)>& fn) {
         GetPool<C>().ForEach(fn);
     }
-    LATREN_API void ForEachPool(const std::function<void(IComponent&)>&);
+    LATREN_API void ForEachPool(const std::function<void(IComponentMemoryPool&)>&);
+    LATREN_API void ForAllComponents(const std::function<void(IComponent&)>&);
+    template <typename C>
+    void ForEachDerivedComponent(const std::function<void(C&, IComponentMemoryPool&)>& fn) {
+        ForEachPool([&](IComponentMemoryPool& pool) {
+            if (pool.CanCastComponentsTo<C>()) {
+                pool.ForEach([&](IComponent& c) {
+                    fn(dynamic_cast<C&>(c), pool);
+                });
+            }
+        });
+    }
 };

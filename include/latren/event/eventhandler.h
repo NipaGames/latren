@@ -8,7 +8,7 @@
 #include <functional>
 
 template <typename... Params>
-class SingleEventHandler : public IDFactory {
+class SingleEventHandler : public IDFactory<> {
 private:
     std::unordered_map<EventID, std::function<void(Params...)>> callbacks_;
 public:
@@ -31,7 +31,7 @@ public:
 };
 
 template <typename E, typename Fn>
-class BasicEventHandler : public IDFactory {
+class BasicEventHandler : public IDFactory<> {
 protected:
     std::unordered_map<E, std::unordered_map<EventID, Fn>> events_;
 public:

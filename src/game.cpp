@@ -46,6 +46,7 @@ void Game::GameThreadInit() {
     glfwShowWindow(window_.GetWindow());
     Serializer::CFGSerializer importsSerializer = Serializer::CFGSerializer(CFG::ImportsFile());
     importsSerializer.DeserializeFile(Paths::IMPORTS_PATH.string());
+    entityManager_.Setup();
     PreLoad();
     resources_.shaderManager.LoadStandardShaders();
     renderer_.UpdateVideoSettings(resources_.videoSettings);
@@ -53,9 +54,7 @@ void Game::GameThreadInit() {
 }
 
 void Game::StartEntities() {
-    for (const auto& entity : entityManager_.entities_) {
-        entity->Start();
-    }
+    entityManager_.StartAll();
     renderer_.Start();
 }
 
@@ -73,8 +72,8 @@ void Game::GameThreadCleanUp() {
     window_.eventHandler.ClearEvents();
     window_.keyboardEventHandler.ClearEvents();
     resources_.stageManager.UnloadAllStages();
-    entityManager_.ClearEntities();
-    renderer_.CleanUpEntities();
+    renderer_.CleanUp();
+    entityManager_.ClearEverything();
 }
 
 void Game::GameThreadPrepareUpdate() {
@@ -131,14 +130,10 @@ void Game::GameThreadUpdate() {
     window_.Update();
     if (isFixedUpdate_) {
         FixedUpdate();
-        for (const auto& entity : entityManager_.entities_) {
-            entity->FixedUpdate();
-        }
+        entityManager_.FixedUpdateAll();
     }
     Update();
-    for (const auto& entity : entityManager_.entities_) {
-        entity->Update();
-    }
+    entityManager_.UpdateAll();
     Camera& cam = renderer_.GetCamera();
     glm::vec3 direction;
     direction.x = cos(glm::radians(cam.yaw)) * cos(glm::radians(cam.pitch));

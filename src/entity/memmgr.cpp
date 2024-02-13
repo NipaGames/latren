@@ -12,16 +12,22 @@ const ComponentPoolContainer& ComponentMemoryManager::GetAllPools() {
     return componentPools_;
 }
 
-GeneralComponentReference ComponentMemoryManager::AllocNewComponent(std::type_index t, EntityIndex i) {
-    return GetPool(t).AllocNewComponent(i);
+GeneralComponentReference ComponentMemoryManager::AllocNewComponent(EntityIndex entity, std::type_index t) {
+    return GetPool(t).AllocNewComponent(entity);
 }
 
-void ComponentMemoryManager::DeleteComponent(std::type_index t, EntityIndex i) {
-    GetPool(t).DeleteComponent(i);
+void ComponentMemoryManager::DeleteComponent(EntityIndex entity, std::type_index t) {
+    GetPool(t).DeleteComponent(entity);
 }
 
-void ComponentMemoryManager::ForEachPool(const std::function<void(IComponent&)>& fn) {
+void ComponentMemoryManager::ForEachPool(const std::function<void(IComponentMemoryPool&)>& fn) {
     for (const auto& [t, pool] : GetAllPools()) {
-        pool->ForEach(fn);
+        fn(*pool);
     }
+}
+
+void ComponentMemoryManager::ForAllComponents(const std::function<void(IComponent&)>& fn) {
+    ForEachPool([fn](IComponentMemoryPool& pool) {
+        pool.ForEach(fn);
+    });
 }

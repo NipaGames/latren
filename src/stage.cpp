@@ -5,7 +5,6 @@
 #include <latren/io/resourcemanager.h>
 
 #include <fstream>
-#include <unordered_map>
 #include <spdlog/spdlog.h>
 
 std::optional<Stage> Resources::StageManager::LoadResource(const std::fs::path& path) {
@@ -31,20 +30,20 @@ bool Resources::StageManager::LoadStage(const std::string& id) {
 
     for (const DeserializedEntity& e : s.entities) {
         if (e.id.empty()) {
-            Entity& instantiated = Game::GetGameInstanceBase()->GetEntityManager().CreateEntity();
-            instantiated.OverrideComponentValues(e);
-            s.instantiatedEntities.insert(instantiated.GetID());
-            instantiated.Start();
+            Entity instantiated = Game::GetGameInstanceBase()->GetEntityManager().CreateEntity();
+            // instantiated.OverrideComponentValues(e);
+            s.instantiatedEntities.insert(instantiated.GetIndex());
+            // instantiated.Start();
         }
-        else {
-            bool hasEntityAlready = Game::GetGameInstanceBase()->GetEntityManager().CountEntities(e.id) > 0;
+        /*else {
+            bool hasEntityAlready = Game::GetGameInstanceBase()->GetEntityManager()._CountEntities(e.id) > 0;
             Entity& entity = Game::GetGameInstanceBase()->GetEntityManager()[e.id];
             entity.OverrideComponentValues(e);
             if (!hasEntityAlready) {
                 s.instantiatedEntities.insert(entity.GetID());
             }
             entity.Start();
-        }
+        }*/
     }
     loadedStages_.insert(loadedStages_.begin(), s.id);
     spdlog::info("Loaded stage '" + id + "' (" + std::to_string(s.entities.size()) + " entities modified)");
@@ -59,7 +58,7 @@ bool Resources::StageManager::UnloadStage(const std::string& id) {
         return false;
     const Stage& s = items_.at(id);
     for (size_t hash : s.instantiatedEntities) {
-        Game::GetGameInstanceBase()->GetEntityManager().RemoveEntity(hash);
+        // Game::GetGameInstanceBase()->GetEntityManager().RemoveEntity(hash);
     }
     loadedStages_.erase(idIt);
     Game::GetGameInstanceBase()->GetRenderer().UpdateLighting();

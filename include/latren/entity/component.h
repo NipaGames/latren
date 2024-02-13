@@ -8,6 +8,7 @@
 #include <latren/latren.h>
 #include "mempool.h"
 #include "serializable.h"
+#include "entity.h"
 
 class IComponent;
 struct ComponentType {
@@ -21,22 +22,37 @@ class Entity;
 class IForwardComponent;
 class LATREN_API IComponent {
 friend class Entity;
-private:
+protected:
     bool hasStarted_ = false;
-    bool hasHadFirstUpdate_ = false;
 public:
     ComponentData data;
-    Entity* parent;
+    Entity parent;
+    IComponentMemoryPool* pool;
     virtual IComponent* Clone() const = 0;
     virtual ~IComponent() { }
     IComponent() { }
     IComponent(const IComponent&);
     virtual void IStart() = 0;
-    virtual void IFirstUpdate() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
     virtual bool ForwardType(std::type_index, const std::function<IComponent*(const IComponent*)>&) = 0;
     virtual std::type_index GetType() const { return typeid(IComponent); }
+    virtual ComponentData& GetData() { return data; }
+    virtual bool HasStarted() { return hasStarted_; }
+
+    operator EntityIndex() const {
+        return parent.GetIndex();
+    }
+    template <typename C>
+    ComponentReference<C> CreateReference() const {
+        return { pool, *this };
+    }
+    GeneralComponentReference CreateReference() const {
+        return { pool, *this };
+    }
+    template <typename C>
+    operator ComponentReference<C>() const { return CreateReference<C>(); }
+    operator GeneralComponentReference() const { return CreateReference(); }
 
     template <typename C>
     static IComponent* CreateInstance(const ComponentData& data) {
@@ -102,10 +118,16 @@ public:
     virtual IComponent* Clone() const override {
         return cloneFn_(this);
     }
-    void IStart() override { dynamic_cast<Derived*>(this)->Start(); }
-    void IUpdate() override { dynamic_cast<Derived*>(this)->Update(); }
-    void IFirstUpdate() override { dynamic_cast<Derived*>(this)->FirstUpdate(); }
-    void IFixedUpdate() override { dynamic_cast<Derived*>(this)->FixedUpdate(); }
+    void IStart() override {
+        hasStarted_ = true;
+        dynamic_cast<Derived*>(this)->Start();
+    }
+    void IUpdate() override {
+        dynamic_cast<Derived*>(this)->Update();
+    }
+    void IFixedUpdate() override {
+        dynamic_cast<Derived*>(this)->FixedUpdate();
+    }
     virtual bool ForwardType(std::type_index t, const std::function<IComponent*(const IComponent*)>& clone) override {
         type_ = t;
         cloneFn_ = clone;
@@ -127,5 +149,4 @@ public:
     virtual void Start() { }
     virtual void Update() { }
     virtual void FixedUpdate() { }
-    virtual void FirstUpdate() { }
 };

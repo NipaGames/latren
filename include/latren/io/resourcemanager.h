@@ -143,7 +143,7 @@ namespace Resources {
         LATREN_API ShaderManager();
         LATREN_API virtual void LoadStandardShaders();
         LATREN_API GLuint& Get(Shaders::ShaderID);
-        GLuint& Get(const std::string& s) { return ResourceManager::Get(s); }
+        GLuint& Get(const std::string& s) override { return ResourceManager::Get(s); }
     };
 
     #define BASE_FONT_SIZE 48

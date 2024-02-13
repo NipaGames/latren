@@ -40,19 +40,9 @@ namespace Lights {
         glUseProgram(0);
     }
 
-    void ILight::AssignToRenderer() {
-        Game::GetGameInstanceBase()->GetRenderer().AddLight(this);
-        isAssignedToRenderer_ = true;
-    }
-
-    void ILight::RemoveFromRenderer() {
-        Game::GetGameInstanceBase()->GetRenderer().RemoveLight(this);
-        isAssignedToRenderer_ = false;
-    }
-
     void PointLight::ApplyLight(GLuint shader) const {
         Light::ApplyLight(shader);
-        glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".pos").c_str()), parent->transform->position.x, parent->transform->position.y, parent->transform->position.z);
+        glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".pos").c_str()), parent.GetTransform().position.x, parent.GetTransform().position.y, parent.GetTransform().position.z);
         glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".range").c_str()), range);
     }
 
@@ -64,14 +54,14 @@ namespace Lights {
     void DirectionalLightPlane::ApplyLight(GLuint shader) const {
         Light::ApplyLight(shader);
         glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".dir").c_str()), dir.x, dir.y, dir.z);
-        glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".y").c_str()), parent->transform->position.y);
+        glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".y").c_str()), parent.GetTransform().position.y);
         glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".range").c_str()), range);
     }
 
     void Spotlight::ApplyLight(GLuint shader) const {
         Light::ApplyLight(shader);
         glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".dir").c_str()), dir.x, dir.y, dir.z);
-        glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".pos").c_str()), parent->transform->position.x, parent->transform->position.y, parent->transform->position.z);
+        glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".pos").c_str()), parent.GetTransform().position.x, parent.GetTransform().position.y, parent.GetTransform().position.z);
         glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".range").c_str()), range);
         glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".cutOffMin").c_str()), cutOffMin);
         glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".cutOffMax").c_str()), cutOffMax);

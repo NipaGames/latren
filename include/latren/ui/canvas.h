@@ -6,6 +6,7 @@
 #include <latren/graphics/shader.h>
 #include <latren/graphics/shape.h>
 #include <latren/graphics/material.h>
+#include <latren/entity/mempool.h>
 
 namespace UI {
     enum class CanvasBackgroundVerticalAnchor {
@@ -15,7 +16,7 @@ namespace UI {
     class UIComponent;
     class Canvas {
     protected:
-        std::map<int, std::vector<UI::UIComponent*>> components_;
+        std::map<int, std::vector<GeneralComponentReference>> components_;
         Shape bgShape_;
         void UpdateComponentsOnWindowSize(float);
     public:
@@ -34,8 +35,8 @@ namespace UI {
         LATREN_API virtual ~Canvas();
         LATREN_API virtual void GenerateBackgroundShape();
         LATREN_API virtual void Draw();
-        LATREN_API virtual void AddUIComponent(UI::UIComponent*, int = 0);
-        LATREN_API virtual void RemoveUIComponent(const UI::UIComponent*);
+        LATREN_API virtual void AddUIComponent(GeneralComponentReference, int = 0);
+        LATREN_API virtual void RemoveUIComponent(const GeneralComponentReference&);
         LATREN_API virtual void UpdateWindowSize(int, int);
         LATREN_API virtual glm::mat4 GetProjectionMatrix() const;
         LATREN_API virtual glm::vec2 GetOffset() const;

@@ -7,52 +7,84 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <typeindex>
-#include <latren/util/idfactory.h>
 
 typedef size_t EntityIndex;
 
 class IComponent;
+template <typename C>
+using VerifyComponent = std::enable_if_t<std::is_base_of_v<IComponent, C>>;
+template <typename C>
+using VerifyNonVirtualComponent = std::enable_if_t<std::is_base_of_v<IComponent, C> && !std::is_same_v<C, IComponent>>;
+
 struct GeneralComponentReference;
 class IComponentMemoryPool {
+protected:
+    virtual IComponent* GetFirstComponent() = 0;
 public:
     virtual GeneralComponentReference AllocNewComponent(EntityIndex) = 0;
     virtual void DeleteComponent(EntityIndex) = 0;
-    virtual IComponent& GetComponent(EntityIndex) = 0;
-    template <typename C>
+    virtual void ClearAllComponents() = 0;
+    virtual IComponent& GetComponentBase(EntityIndex) = 0;
+    template <typename C, typename = VerifyComponent<C>>
     C& GetComponent(EntityIndex i) {
-        return static_cast<C&>(GetComponent(i));
+        return static_cast<C&>(GetComponentBase(i));
+    }
+    template <typename C>
+    bool CanCastComponentsTo() {
+        return dynamic_cast<C*>(GetFirstComponent()) != nullptr;
     }
     virtual void ForEach(const std::function<void(IComponent&)>&) = 0;
+    virtual size_t GetAllocatedBytes() const = 0;
+    virtual size_t GetReferenceOverheadBytes() const = 0;
+    size_t GetTotalBytes() { return GetAllocatedBytes() + GetReferenceOverheadBytes(); }
 };
 typedef std::unordered_map<std::type_index, std::unique_ptr<IComponentMemoryPool>> ComponentPoolContainer;
 
 struct GeneralComponentReference {
     IComponentMemoryPool* pool;
     EntityIndex index;
-    IComponent& GetComponent() const {
-        return pool->GetComponent(index);
+    IComponent& GetComponentBase() {
+        return pool->GetComponentBase(index);
     };
-    operator IComponent&() const { return GetComponent(); }
-    IComponent* operator->() const { return &GetComponent(); }
+    template <typename C>
+    C& CastComponent() {
+        return dynamic_cast<C&>(pool->GetComponentBase(index));
+    };
+    operator IComponent&() { return GetComponentBase(); }
+    IComponent* operator->() { return &GetComponentBase(); }
+    void Delete() {
+        pool->DeleteComponent(index);
+    }
+    bool operator==(const GeneralComponentReference& cmp) const {
+        return (pool == cmp.pool) && (index == cmp.index);
+    }
+    bool operator!=(const GeneralComponentReference& cmp) const { return !operator==(cmp); }
 };
 
-template <typename C, typename = std::enable_if_t<!std::is_same_v<C, IComponent>>>
+template <typename C, typename = VerifyNonVirtualComponent<C>>
 struct ComponentReference : public GeneralComponentReference {
-    C& GetComponent() const {
+    C& GetComponent() {
         return pool->GetComponent<C>(index);
     };
-    operator C&() const { return GetComponent(); }
-    C* operator->() const { return &GetComponent(); }
+    operator C&() { return GetComponent(); }
+    C* operator->() { return &GetComponent(); }
 };
 
-template <typename C, typename = std::enable_if_t<!std::is_same_v<C, IComponent>>>
-class ComponentMemoryPool : public IComponentMemoryPool, public IDFactory {
+template <typename C, typename = VerifyNonVirtualComponent<C>>
+class ComponentMemoryPool : public IComponentMemoryPool {
 private:
     std::vector<C> components_;
     std::unordered_map<EntityIndex, size_t> references_;
+protected:
+    IComponent* GetFirstComponent() override {
+        if (components_.empty())
+            return nullptr;
+        return &components_.front();
+    }
 public:
     GeneralComponentReference AllocNewComponent(EntityIndex i) override {
-        C& c = components_.emplace_back(C());
+        C& c = components_.emplace_back();
+        c.pool = this;
         references_[i] = components_.size() - 1;
         return ComponentReference<C> { this, i };
     }
@@ -69,13 +101,27 @@ public:
                 v--;
         }
     }
-    IComponent& GetComponent(EntityIndex i) override {
+    void ClearAllComponents() override {
+        references_.clear();
+        components_.clear();
+    }
+    IComponent& GetComponentBase(EntityIndex i) override {
         return components_.at(references_.at(i));
+    }
+    C& GetComponent(EntityIndex i) {
+        return static_cast<C&>(GetComponentBase(i));
     }
     void ForEach(const std::function<void(C&)>& fn) {
         std::for_each(components_.begin(), components_.end(), fn);
     }
     void ForEach(const std::function<void(IComponent&)>& fn) override {
         ForEach(static_cast<const std::function<void(C&)>&>(fn));
-    } 
+    }
+    // todo implement
+    size_t GetReferenceOverheadBytes() const override {
+        return 0;
+    }
+    size_t GetAllocatedBytes() const override {
+        return sizeof(std::vector<C>) + components_.size() * sizeof(C);
+    }
 };

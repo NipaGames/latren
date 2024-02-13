@@ -4,13 +4,8 @@
 #include "../material.h"
 #include "../camera.h"
 
-
 class Renderer;
 class IRenderable {
-protected:
-    bool isAssignedToRenderer_ = false;
-    LATREN_API virtual void AssignToRenderer();
-    LATREN_API virtual void RemoveFromRenderer();
 public:
     virtual void CalculateMatrices() = 0;
     virtual bool IsStatic() const = 0;
@@ -18,6 +13,7 @@ public:
     virtual bool IsOnFrustum(const ViewFrustum&) const = 0;
     virtual bool RenderLate() const = 0;
     virtual bool RenderAfterPostProcessing() const = 0;
+    virtual operator IComponent&() = 0;
     virtual void IRender(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const = 0;
 };
 
@@ -27,7 +23,6 @@ public:
     // enable this if the object transform doesn't update, no need to calculate model matrices every frame that way
     bool isStatic = false; LE_RCDV(isStatic)
     bool alwaysOnFrustum = false; LE_RCDV(alwaysOnFrustum)
-    bool assignToRenderer = true; LE_RCDV(assignToRenderer)
     bool disableDepthTest = false; LE_RCDV(disableDepthTest)
     Material customMaterial; LE_RCDV(customMaterial)
     bool useCustomMaterial = false; LE_RCDV(useCustomMaterial)
@@ -35,16 +30,7 @@ public:
     bool renderLate = false; LE_RCDV(renderLate)
     bool renderAfterPostProcessing = false; LE_RCDV(renderAfterPostProcessing)
 
-    virtual ~Renderable() {
-        if (isAssignedToRenderer_)
-            RemoveFromRenderer();
-    }
-
-    virtual void Start() {
-        if (assignToRenderer && !isAssignedToRenderer_)
-            AssignToRenderer();
-    }
-    virtual void FirstUpdate() {
+    virtual void Start() override {
         if (isStatic)
             CalculateMatrices();
     }
@@ -65,6 +51,7 @@ public:
         shader.SetUniform("time", (float) glfwGetTime());
     }
 
+    virtual operator IComponent&() override { return *this; }
     virtual bool IsStatic() const override { return isStatic; }
     virtual bool IsAlwaysOnFrustum() const override { return alwaysOnFrustum; }
     virtual bool IsOnFrustum(const ViewFrustum&) const override { return true; }

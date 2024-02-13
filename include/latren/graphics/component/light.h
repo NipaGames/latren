@@ -26,13 +26,9 @@ namespace Lights {
     LATREN_API void ResetIndices();
 
     class ILight {
-    protected:
-        bool isAssignedToRenderer_ = false;
     public:
         virtual void UseAsNext() = 0;
         virtual void ApplyLight(GLuint) const = 0;
-        LATREN_API virtual void AssignToRenderer();
-        LATREN_API virtual void RemoveFromRenderer();
         LATREN_API virtual void ApplyForAllShaders() const;
     };
 
@@ -47,14 +43,6 @@ namespace Lights {
         glm::vec3 color = glm::vec3(1.0f); LE_RCDV(color)
         float intensity = 1.0f; LE_RCDV(intensity)
 
-        virtual ~Light() {
-            if (isAssignedToRenderer_)
-                RemoveFromRenderer();
-        }
-        virtual void Start() {
-            if (!isAssignedToRenderer_)
-                AssignToRenderer();
-        }
         LightType GetType() { return lightType_; }
         virtual void UseAsNext() override {
             lightUniform_ = "lights[" + std::to_string(GetNextLightIndex()) + "]";
@@ -85,7 +73,7 @@ namespace Lights {
 
     class DirectionalLightPlane : public Light<DirectionalLightPlane> {
     public:
-        glm::vec3 dir; LE_RCDV(dir);
+        glm::vec3 dir; LE_RCDV(dir)
         float range = 20.0f; LE_RCDV(range)
         
         DirectionalLightPlane() { Light::SetLightType(LightType::DIRECTIONAL_PLANE); }
