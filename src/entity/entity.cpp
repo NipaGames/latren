@@ -32,3 +32,7 @@ IComponent& Entity::GetComponent(std::type_index t) const {
 Transform& Entity::GetTransform() const {
     return GetComponent<Transform>();
 }
+
+const std::string& Entity::GetName() const {
+    return entityManager_->GetEntityData(*this).name;
+}

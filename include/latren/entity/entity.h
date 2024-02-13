@@ -32,4 +32,5 @@ public:
         return GetComponentMemoryManager().GetPool<C>().GetComponent(GetIndex());
     }
     Transform& GetTransform() const;
+    const std::string& GetName() const;
 };

@@ -26,10 +26,24 @@ ComponentMemoryManager& EntityManager::GetComponentMemory() {
     return componentMemoryManager_;
 }
 
-Entity EntityManager::CreateEntity() {
+Entity EntityManager::CreateEntity(const std::string& name) {
     Entity e = Entity(this, NextID());
     e.AddComponent<Transform>();
+    if (!name.empty()) {
+        entityNames_[name] = e;
+    }
+    entityData_[e] = {
+        name
+    };
     return e;
+}
+
+Entity EntityManager::GetNamedEntity(const std::string& name) {
+    return Entity(this, entityNames_.at(name));
+}
+
+const GlobalEntityData& EntityManager::GetEntityData(EntityIndex entity) {
+    return entityData_.at(entity);
 }
 
 GeneralComponentReference EntityManager::AddComponent(EntityIndex entity, std::type_index type) {
@@ -38,12 +52,14 @@ GeneralComponentReference EntityManager::AddComponent(EntityIndex entity, std::t
 
 void EntityManager::DeleteComponent(EntityIndex entity, std::type_index type) {
     componentMemoryManager_.DeleteComponent(entity, type);
+    entityData_.erase(entity);
 }
 
 void EntityManager::ClearEverything() {
     componentMemoryManager_.ForEachPool([](IComponentMemoryPool& pool) {
         pool.ClearAllComponents();
     });
+    entityNames_.clear();
 }
 
 size_t EntityManager::GetTotalPoolBytes() {
