@@ -59,6 +59,7 @@ void EntityManager::ClearEverything() {
     componentMemoryManager_.ForEachPool([](IComponentMemoryPool& pool) {
         pool.ClearAllComponents();
     });
+    entityData_.clear();
     entityNames_.clear();
 }
 

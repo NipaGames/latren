@@ -1,14 +1,16 @@
 #include <latren/entity/component.h>
 #include <latren/entity/entity.h>
 
-IComponent::IComponent(const IComponent& c) {
-    hasStarted_ = c.hasStarted_;
+IComponent::IComponent(const IComponent& c) :
+    hasStarted_(c.hasStarted_),
+    parent(c.parent),
+    pool(c.pool)
+{
     for (const auto& [k, v] : c.data.vars) {
         if (data.vars.count(k) != 0)
             v->CloneValuesTo(data.vars.at(k));
     }
     data = c.data;
-    parent = c.parent;
 }
 
 std::vector<ComponentType>& GetComponentTypes() {
@@ -91,7 +93,8 @@ TypedComponentData IComponent::CreateComponentData(const std::type_index type) {
     return data;
 }
 
-bool IComponent::RegisterComponent(const type_info& type,
+bool IComponent::RegisterComponent(
+    const type_info& type,
     const std::function<IComponent*(const ComponentData&)>& componentInitializer,
     const std::function<std::unique_ptr<IComponentMemoryPool>()>& memPoolInitializer)
 {
