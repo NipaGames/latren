@@ -9,16 +9,16 @@ using namespace Physics;
 // https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=7802
 // (this even comes with 16 bit optimizations!!!)
 std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
-    meshData_ = std::make_shared<btTriangleIndexVertexArray>();
+    meshData_ = std::make_shared<RAIIBtTriangleIndexVertexArray>();
     const std::vector<std::shared_ptr<Mesh>>& meshes = parent.GetComponent<MeshRenderer>().meshes;
     for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++) {
         if (colliderMeshes.size() > 0 && std::find(colliderMeshes.begin(), colliderMeshes.end(), meshIndex) == colliderMeshes.end())
             continue;
         const std::shared_ptr<Mesh>& m = meshes.at(meshIndex);
         btIndexedMesh tempMesh;
-        meshData_->addIndexedMesh(tempMesh, PHY_FLOAT);
+        meshData_->Get()->addIndexedMesh(tempMesh, PHY_FLOAT);
 
-        btIndexedMesh& mesh = meshData_->getIndexedMeshArray()[meshIndex];
+        btIndexedMesh& mesh = meshData_->Get()->getIndexedMeshArray()[meshIndex];
 
         size_t numIndices = m->indices.size();
         mesh.m_numTriangles = (int) numIndices / 3;
@@ -65,7 +65,7 @@ std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
         mesh.m_vertexBase = vertices;
         mesh.m_triangleIndexBase = indices;
     }
-    std::shared_ptr<btBvhTriangleMeshShape> colliderShape = std::make_shared<btBvhTriangleMeshShape>(meshData_.get(), true);
+    std::shared_ptr<btBvhTriangleMeshShape> colliderShape = std::make_shared<btBvhTriangleMeshShape>(meshData_->Get(), true);
     return colliderShape;
 }
 
@@ -73,9 +73,6 @@ void RigidBody::Start() {
     Transform& t = parent.GetTransform();
     btTransform transform;
     transform.setIdentity();
-    meshData_ = nullptr;
-    rigidBody = nullptr;
-
     if (collider == nullptr) {
         switch (colliderFrom) {
             case ColliderConstructor::TRANSFORM:
