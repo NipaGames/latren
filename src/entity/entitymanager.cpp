@@ -8,7 +8,8 @@ void EntityManager::Setup() {
 
 void EntityManager::StartAll() {
     componentMemoryManager_.ForAllComponents([](IComponent& c) {
-        c.IStart();
+        if (!c.HasStarted())
+            c.IStart();
     });
 }
 void EntityManager::UpdateAll() {
@@ -44,6 +45,12 @@ Entity EntityManager::GetNamedEntity(const std::string& name) {
     return Entity(this, entityNames_.at(name));
 }
 
+bool EntityManager::HasNamedEntity(const std::string& name) {
+    if (name.empty())
+        return false;
+    return entityNames_.find(name) != entityNames_.end();
+}
+
 const GlobalEntityData& EntityManager::GetEntityData(EntityIndex entity) {
     return entityData_.at(entity);
 }
@@ -71,9 +78,8 @@ void EntityManager::DestroyEntity(EntityIndex entity) {
     auto it = entityData_.find(entity);
     if (it == entityData_.end())
         return;
-    std::unordered_set<ComponentType> components = it->second.components;
-    for (ComponentType type : components) {
-        DestroyComponent(entity, type);
+    for (ComponentType type : it->second.components) {
+        componentMemoryManager_.DestroyComponent(entity, type);
     }
     entityData_.erase(entity);
 }

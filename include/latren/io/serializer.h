@@ -211,7 +211,7 @@ namespace Serializer {
             return items_.at(item);
         }
         bool HasItem(const std::string& item) const {
-            return items_.count(item) > 0;
+            return items_.find(item) != items_.end();
         }
         // copy all items into an external container
         virtual void Register(ItemsContainer& container) {

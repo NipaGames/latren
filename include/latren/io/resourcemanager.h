@@ -74,7 +74,7 @@ namespace Resources {
         ResourceManager(const std::fs::path& p, const std::string& t = "resource") : path_(p), typeStr_(t) { }
         virtual void Load(const std::fs::path& p) {
             onResourceLoad.Dispatch(itemID_);
-            if (items_.count(itemID_) > 0)
+            if (items_.find(itemID_) != items_.end())
                 return;
             std::string fileName = std::fs::proximate(p, path_.parent_path()).generic_string();
             spdlog::info("Loading {} '{}'", typeStr_, fileName);
@@ -105,11 +105,11 @@ namespace Resources {
         virtual T& Get(const std::string& item) {
             return items_.at(item);
         }
-        bool HasLoaded(const std::string& item) {
-            return items_.count(item) > 0;
+        bool HasLoaded(const std::string& item) const {
+            return items_.find(item) != items_.end();
         }
-        T& operator [](const std::string& item) {
-            if (items_.count(item) == 0) {
+        T& operator[](const std::string& item) {
+            if (!HasLoaded(item)) {
                 T t;
                 items_[item] = t;
             }

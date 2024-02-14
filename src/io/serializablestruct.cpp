@@ -59,7 +59,7 @@ CFGObject* SerializableStruct::CFGSerialize() const {
             field = meta;
         }
         else {
-            if (CFG_TYPES_.count(m.type->hash_code()) == 0) {
+            if (CFG_TYPES_.find(m.type->hash_code()) == CFG_TYPES_.end()) {
                 spdlog::warn("Cannot serialize member '{}' ({})", m.name, m.type->name());
                 continue;
             }
@@ -128,7 +128,7 @@ CFG::CFGStructuredFields SerializableStruct::CreateCFGTemplate() const {
     /*for (const auto& m : members_) {
         if (m.metaType != MetaType::NONE)
             continue;
-        if (CFG_TYPES_.count(m.type->hash_code()) == 0) {
+        if (CFG_TYPES_.find(m.type->hash_code()) == CFG_TYPES_.end()) {
             spdlog::warn("Unsupported serializable type for {}!", m.name);
             continue;
         }

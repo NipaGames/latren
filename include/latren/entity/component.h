@@ -36,7 +36,7 @@ public:
     virtual bool ForwardType(ComponentType, const std::function<IComponent*(const IComponent*)>&) = 0;
     virtual ComponentType GetType() const { return typeid(IComponent); }
     virtual ComponentData& GetData() { return data; }
-    virtual bool HasStarted() { return hasStarted_; }
+    virtual bool HasStarted() const { return hasStarted_; }
 
     operator EntityIndex() const;
     template <typename C>

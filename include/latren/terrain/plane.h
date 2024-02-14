@@ -14,5 +14,5 @@ public:
     Plane() : tiling_(1, 1) { }
     Plane(const glm::ivec2& t) : tiling_(t) { }
     LATREN_API  void GenerateVertices();
-    LATREN_API btHeightfieldTerrainShape* CreateBtCollider() const;
+    LATREN_API std::shared_ptr<btHeightfieldTerrainShape> CreateBtCollider() const;
 };

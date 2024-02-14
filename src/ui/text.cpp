@@ -29,10 +29,10 @@ Character EMPTY_CHAR = {
 WCHAR MISSING_CHAR = 0x25a1;
 
 const Character& Font::GetChar(WCHAR c) const {
-    if (charMap.count(c) != 0) {
+    if (charMap.find(c) != charMap.end()) {
         return charMap.at(c);
     }
-    if (charMap.count(MISSING_CHAR) != 0) {
+    if (charMap.find(MISSING_CHAR) != charMap.end()) {
         return charMap.at(MISSING_CHAR);
     }
     return EMPTY_CHAR;

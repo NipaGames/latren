@@ -20,33 +20,49 @@ std::optional<Stage> Resources::StageManager::LoadResource(const std::fs::path& 
     return s;
 }
 
+void CloneComponentValuesFromData(IComponent& c, const TypedComponentData& data) {
+    for (const auto& [k, v] : data.vars) {
+        v->CloneValuesTo(c.data.vars[k]);
+    }
+}
+
 bool Resources::StageManager::LoadStage(const std::string& id) {
     if (items_.empty())
         return false;
-    if (items_.count(id) == 0)
+    if (items_.find(id) == items_.end())
         return false;
     Stage& s = items_.at(id);
     s.instantiatedEntities.clear();
 
+    std::vector<GeneralComponentReference> newComponents;
+    EntityManager& entityManager = Game::GetGameInstanceBase()->GetEntityManager();
     for (const DeserializedEntity& e : s.entities) {
-        if (e.id.empty()) {
-            Entity instantiated = Game::GetGameInstanceBase()->GetEntityManager().CreateEntity();
-            // instantiated.OverrideComponentValues(e);
-            s.instantiatedEntities.insert(instantiated.GetIndex());
-            // instantiated.Start();
+        Entity entity;
+        if (entityManager.HasNamedEntity(e.id)) {
+            entity = entityManager.GetNamedEntity(e.id);
         }
-        /*else {
-            bool hasEntityAlready = Game::GetGameInstanceBase()->GetEntityManager()._CountEntities(e.id) > 0;
-            Entity& entity = Game::GetGameInstanceBase()->GetEntityManager()[e.id];
-            entity.OverrideComponentValues(e);
-            if (!hasEntityAlready) {
-                s.instantiatedEntities.insert(entity.GetID());
+        else {
+            entity = entityManager.CreateEntity(e.id);
+            s.instantiatedEntities.insert(entity);
+        }
+        for (const auto& data : e.components) {
+            if (!entity.HasComponent(data.type)) {
+                newComponents.push_back(entity.AddComponent(data.type));
             }
-            // entity.Start();
-        }*/
+            IComponent& c = entity.GetComponent(data.type);
+            CloneComponentValuesFromData(c, data);
+        }
     }
     loadedStages_.insert(loadedStages_.begin(), s.id);
     spdlog::info("Loaded stage '" + id + "' (" + std::to_string(s.entities.size()) + " entities modified)");
+    for (GeneralComponentReference& c : newComponents) {
+        c->IStart();
+    }
+    int i = 0;
+    Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachComponent<Transform>([&](Transform& c) {
+        i++;
+    });
+    std::cout << i << std::endl;
     Game::GetGameInstanceBase()->GetRenderer().UpdateLighting();
     Game::GetGameInstanceBase()->GetRenderer().UpdateFrustum();
     return true;

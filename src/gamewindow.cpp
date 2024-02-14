@@ -27,14 +27,14 @@ namespace Input {
 
     bool IsKeyDown(int key) {
         std::lock_guard<std::mutex> lock(KEYS_MUTEX_);
-        if (!KEYS_.count(key))
+        if (KEYS_.find(key) == KEYS_.end())
             return false;
         return KEYS_[key];
     }
 
     bool IsKeyPressedDown(int key) {
         std::lock_guard<std::mutex> lock(KEYS_MUTEX_);
-        if (!KEYS_PRESSED_.count(key))
+        if (KEYS_PRESSED_.find(key) == KEYS_PRESSED_.end())
             return false;
         bool val = KEYS_PRESSED_[key];
         return val;
@@ -69,14 +69,14 @@ namespace Input {
 
     bool IsMouseButtonDown(int mouseButton) {
         std::lock_guard<std::mutex> lock(MOUSE_BUTTON_MUTEX_);
-        if (!MOUSE_BUTTONS_.count(mouseButton))
+        if (MOUSE_BUTTONS_.find(mouseButton) == MOUSE_BUTTONS_.end())
             return false;
         return MOUSE_BUTTONS_[mouseButton];
     }
 
     bool IsMouseButtonPressedDown(int mouseButton) {
         std::lock_guard<std::mutex> lock(MOUSE_BUTTON_MUTEX_);
-        if (!MOUSE_BUTTONS_PRESSED_.count(mouseButton))
+        if (MOUSE_BUTTONS_PRESSED_.find(mouseButton) == MOUSE_BUTTONS_PRESSED_.end())
             return false;
         bool val = MOUSE_BUTTONS_PRESSED_[mouseButton];
         return val;

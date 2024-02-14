@@ -7,7 +7,7 @@ IComponent::IComponent(const IComponent& c) :
     pool(c.pool)
 {
     for (const auto& [k, v] : c.data.vars) {
-        if (data.vars.count(k) != 0)
+        if (data.vars.find(k) != data.vars.end())
             v->CloneValuesTo(data.vars.at(k));
     }
     data = c.data;

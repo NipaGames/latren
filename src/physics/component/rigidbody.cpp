@@ -5,31 +5,11 @@
 
 using namespace Physics;
 
-RigidBody::~RigidBody() {
-    if (meshData_ != nullptr) {
-        for (int i = 0; i < meshData_->getIndexedMeshArray().size(); i++) {
-            delete[] meshData_->getIndexedMeshArray()[i].m_vertexBase;
-            delete[] meshData_->getIndexedMeshArray()[i].m_triangleIndexBase;
-        }
-        meshData_->getIndexedMeshArray().clear();
-    }
-    if (rigidBody != nullptr && GLOBAL_DYNAMICS_WORLD_ != nullptr) {
-        GLOBAL_DYNAMICS_WORLD_->removeRigidBody(rigidBody);
-    }
-    delete rigidBody;
-    delete collider;
-    delete meshData_;
-    collider = nullptr;
-    rigidBody = nullptr;
-    meshData_ = nullptr;
-}
-
-
 // really not feeling it right now, just copied from here
 // https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=7802
 // (this even comes with 16 bit optimizations!!!)
-btCollisionShape* RigidBody::CreateMeshCollider() {
-    meshData_ = new btTriangleIndexVertexArray();
+std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
+    meshData_ = std::make_shared<btTriangleIndexVertexArray>();
     const std::vector<std::shared_ptr<Mesh>>& meshes = parent.GetComponent<MeshRenderer>().meshes;
     for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++) {
         if (colliderMeshes.size() > 0 && std::find(colliderMeshes.begin(), colliderMeshes.end(), meshIndex) == colliderMeshes.end())
@@ -85,7 +65,7 @@ btCollisionShape* RigidBody::CreateMeshCollider() {
         mesh.m_vertexBase = vertices;
         mesh.m_triangleIndexBase = indices;
     }
-    btBvhTriangleMeshShape* colliderShape = new btBvhTriangleMeshShape(meshData_, true);
+    std::shared_ptr<btBvhTriangleMeshShape> colliderShape = std::make_shared<btBvhTriangleMeshShape>(meshData_.get(), true);
     return colliderShape;
 }
 
@@ -99,10 +79,10 @@ void RigidBody::Start() {
     if (collider == nullptr) {
         switch (colliderFrom) {
             case ColliderConstructor::TRANSFORM:
-                collider = new btBoxShape(btVector3(.5f, .5f, .5f));
+                collider = std::make_shared<btBoxShape>(btVector3(.5f, .5f, .5f));
                 break;
             case ColliderConstructor::AABB:
-                collider = new btBoxShape(Physics::GLMVectorToBtVector3(parent.GetComponent<MeshRenderer>().GetAABB().extents));
+                collider = std::make_shared<btBoxShape>(Physics::GLMVectorToBtVector3(parent.GetComponent<MeshRenderer>().GetAABB().extents));
                 colliderOriginOffset_ = parent.GetComponent<MeshRenderer>().GetAABB().center * t.size;
                 transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation * colliderOriginOffset_));
                 break;
@@ -119,20 +99,22 @@ void RigidBody::Start() {
     transform.setOrigin(transform.getOrigin() + Physics::GLMVectorToBtVector3(t.position));
     transform.setRotation(Physics::GLMQuatToBtQuat(t.rotation));
 
-    btDefaultMotionState* motionState = new btDefaultMotionState(transform);
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, collider, localInertia);
-    rbInfo.m_restitution = 0.0f;
-    rigidBody = new btRigidBody(rbInfo);
-    GLOBAL_DYNAMICS_WORLD_->addRigidBody(rigidBody);
+    if (rigidBody == nullptr) {
+        btDefaultMotionState* motionState = new btDefaultMotionState(transform);
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, collider.get(), localInertia);
+        rbInfo.m_restitution = 0.0f;
+        rigidBody = std::make_shared<RAIIBtCollisionObject<btRigidBody>>(rbInfo);
+    }
+
     EnableDebugVisualization(enableDebugVisualization_);
     EnableRotation(enableRotation_);
-    rigidBody->setRestitution(0.0f);
-    rigidBody->setDamping(0.0f, 1.0f);
-    rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+    rigidBody->Get()->setRestitution(0.0f);
+    rigidBody->Get()->setDamping(0.0f, 1.0f);
+    rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
     if (doesMassAffectGravity)
-        rigidBody->setGravity(rigidBody->getGravity() * mass);
+        rigidBody->Get()->setGravity(rigidBody->Get()->getGravity() * mass);
     if (disableCollisions)
-        rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+        rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
     if (overwriteTransform)
         UpdateTransform();
 }
@@ -140,7 +122,7 @@ void RigidBody::Start() {
 void RigidBody::UpdateTransform() {
     Transform& t = parent.GetTransform();
     btTransform transform;
-    rigidBody->getMotionState()->getWorldTransform(transform);
+    rigidBody->Get()->getMotionState()->getWorldTransform(transform);
     glm::quat rot = Physics::BtQuatToGLMQuat(transform.getRotation());
 
     t.position = Physics::BtVectorToGLMVector3(transform.getOrigin()) - rot * colliderOriginOffset_;
@@ -150,14 +132,14 @@ void RigidBody::UpdateTransform() {
 void RigidBody::CopyTransform() {
     Transform& t = parent.GetTransform();
     btTransform transform;
-    btMotionState* ms = rigidBody->getMotionState();
+    btMotionState* ms = rigidBody->Get()->getMotionState();
     ms->getWorldTransform(transform);
     
     transform.setOrigin(Physics::GLMVectorToBtVector3(t.position + t.rotation * colliderOriginOffset_));
     transform.setRotation(t.btGetRotation());
 
     ms->setWorldTransform(transform);
-    rigidBody->setMotionState(ms);
+    rigidBody->Get()->setMotionState(ms);
 }
 
 void RigidBody::Update() {
@@ -181,11 +163,11 @@ void RigidBody::FixedUpdate() {
 
 void RigidBody::SetPos(const glm::vec3& pos) {
     btTransform transform;
-    btMotionState* ms = rigidBody->getMotionState();
+    btMotionState* ms = rigidBody->Get()->getMotionState();
     ms->getWorldTransform(transform);
     transform.setOrigin(btVector3(pos.x, pos.y, pos.z));
     ms->setWorldTransform(transform);
-    rigidBody->setMotionState(ms);
+    rigidBody->Get()->setMotionState(ms);
     parent.GetTransform().position = pos;
 }
 
@@ -195,16 +177,16 @@ void RigidBody::EnableDebugVisualization(bool enabled) {
         return;
     
     if (enableDebugVisualization_)
-        rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+        rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() & ~btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
     else
-        rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+        rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
 }
 
 void RigidBody::EnableRotation(bool enabled) {
     enableRotation_ = enabled;
     if (rigidBody == nullptr)
         return;
-    rigidBody->setAngularFactor(1.0f * enableRotation_);
+    rigidBody->Get()->setAngularFactor(1.0f * enableRotation_);
 }
 
 

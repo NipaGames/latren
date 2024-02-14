@@ -57,7 +57,7 @@ bool SerializeCFGVector(Serializer::SerializationArgs& args, const CFG::ICFGFiel
 template <size_t S, typename T>
 bool SerializeCFGVectorAuto(Serializer::SerializationArgs& args, const CFG::ICFGField* field) {
     size_t typeHash = typeid(T).hash_code();
-    if (CFG::CFG_TYPES_.count(typeHash) == 0)
+    if (CFG::CFG_TYPES_.find(typeHash) == CFG::CFG_TYPES_.end())
         return false;
     return SerializeCFGVector<S, T>(args, field, CFG::CFG_TYPES_.at(typeHash).front());
 }

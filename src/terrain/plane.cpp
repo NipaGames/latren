@@ -102,7 +102,7 @@ void Plane::GenerateVertices() {
     }
 }
 
-btHeightfieldTerrainShape* Plane::CreateBtCollider() const {
+std::shared_ptr<btHeightfieldTerrainShape> Plane::CreateBtCollider() const {
     size_t w = (tiling_.x + 1);
     size_t h = (tiling_.y + 1);
     float* map = new float[w * h];
@@ -111,7 +111,17 @@ btHeightfieldTerrainShape* Plane::CreateBtCollider() const {
             map[y * w + x] = heightGrid_.at(x).at(y);
         }
     }
-    auto* c = new btHeightfieldTerrainShape((int) w, (int) h, map, 0, -.5f * variation, .5f * variation, 1, PHY_ScalarType::PHY_FLOAT, false);
+    std::shared_ptr<btHeightfieldTerrainShape> c = std::make_shared<btHeightfieldTerrainShape>(
+        (int) w,
+        (int) h,
+        map,
+        0.0f,
+        -.5f * variation,
+        .5f * variation,
+        1,
+        PHY_ScalarType::PHY_FLOAT,
+        false
+    );
     c->setLocalScaling(btVector3(1.0f / (float) tiling_.x, 1.0f, 1.0f / (float) tiling_.y));
     return c;
 }

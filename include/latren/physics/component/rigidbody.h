@@ -10,18 +10,38 @@ namespace Physics {
         MESH
     };
 
+    template <typename BtObj>
+    class RAIIBtCollisionObject {
+    public:
+        BtObj obj;
+
+        template <typename... T>
+        RAIIBtCollisionObject(T... args) : obj(args...) {
+            if constexpr(std::is_base_of_v<btRigidBody, BtObj>)
+                GetGlobalDynamicsWorld()->addRigidBody(&obj);
+            else
+                GetGlobalDynamicsWorld()->addCollisionObject(&obj);
+        }
+        ~RAIIBtCollisionObject() {
+            if (GetGlobalDynamicsWorld() != nullptr)
+                GetGlobalDynamicsWorld()->removeCollisionObject(&obj);
+        }
+        BtObj* Get() {
+            return &obj;
+        }
+    };
+
     // would be great to have a separate collider component
     class RigidBody : public Component<RigidBody> {
     private:
         bool enableDebugVisualization_ = true;
         bool enableRotation_ = true;
         glm::vec3 colliderOriginOffset_ = glm::vec3(0.0f);
-        btTriangleIndexVertexArray* meshData_ = nullptr;
-        btCollisionShape* CreateMeshCollider();
+        std::shared_ptr<btTriangleIndexVertexArray> meshData_ = nullptr;
+        std::shared_ptr<btBvhTriangleMeshShape> CreateMeshCollider();
     public:
-        btRigidBody* rigidBody = nullptr;
-
-        btCollisionShape* collider = nullptr; LE_RCDV(collider)
+        std::shared_ptr<RAIIBtCollisionObject<btRigidBody>> rigidBody = nullptr;
+        std::shared_ptr<btCollisionShape> collider = nullptr; LE_RCDV(collider)
         ColliderConstructor colliderFrom = ColliderConstructor::TRANSFORM; LE_RCDV(colliderFrom)
         std::vector<int> colliderMeshes; LE_RCDV(colliderMeshes)
         float mass = 1.0f; LE_RCDV(mass)
@@ -29,7 +49,7 @@ namespace Physics {
         bool overwriteTransform = true; LE_RCDV(overwriteTransform)
         bool doesMassAffectGravity = false; LE_RCDV(doesMassAffectGravity)
         bool disableCollisions = false; LE_RCDV(disableCollisions)
-        LATREN_API ~RigidBody();
+        RigidBody() = default;
         LATREN_API void Start();
         LATREN_API void Update();
         LATREN_API void FixedUpdate();

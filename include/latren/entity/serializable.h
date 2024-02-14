@@ -29,7 +29,7 @@ public:
     VariableMap vars;
     template <typename T>
     const T& Get(const std::string& key) {
-        if (!vars.count(key))
+        if (vars.find(key) == vars.end())
             ComponentDataValue<T>::Create(key, nullptr, vars);
         std::shared_ptr<ComponentDataValue<T>> data = std::static_pointer_cast<ComponentDataValue<T>>(vars.at(key));
         if (data->ptr == nullptr)
@@ -39,7 +39,7 @@ public:
     }
     template <typename T>
     void Set(const std::string& key, const T& val) {
-        if (!vars.count(key))
+        if (vars.find(key) == vars.end())
             ComponentDataValue<T>::Create(key, nullptr, vars);
         std::shared_ptr<ComponentDataValue<T>> data = std::static_pointer_cast<ComponentDataValue<T>>(vars.at(key));
         data->val = val;
@@ -47,7 +47,7 @@ public:
             *data->ptr = val;
     }
     const std::shared_ptr<IComponentDataValue> GetComponentDataValue(const std::string& key) {
-        if (!vars.count(key))
+        if (vars.find(key) == vars.end())
             return nullptr;
         return vars.at(key);
     }

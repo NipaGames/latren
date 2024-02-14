@@ -34,6 +34,11 @@ public:
     C& GetComponent() const {
         return GetManager()->GetComponent<C>(*this);
     }
+    bool HasComponent(ComponentType) const;
+    template <typename C>
+    C& HasComponent() const {
+        return HasComponent(typeid(C));
+    }
     Transform& GetTransform() const;
     const std::string& GetName() const;
 };

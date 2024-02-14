@@ -25,6 +25,7 @@ public:
     LATREN_API void UpdateAll();
     LATREN_API void FixedUpdateAll();
     LATREN_API Entity GetNamedEntity(const std::string&);
+    LATREN_API bool HasNamedEntity(const std::string&);
     LATREN_API const GlobalEntityData& GetEntityData(EntityIndex);
     LATREN_API ComponentMemoryManager& GetComponentMemory();
     LATREN_API Entity CreateEntity(const std::string& = "");

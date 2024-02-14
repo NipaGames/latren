@@ -29,6 +29,11 @@ IComponent& Entity::GetComponent(ComponentType t) const {
     return GetManager()->GetComponent(*this, t);
 }
 
+bool Entity::HasComponent(ComponentType t) const {
+    const auto& components = GetManager()->GetEntityData(*this).components;
+    return components.find(t) != components.end();
+}
+
 Transform& Entity::GetTransform() const {
     return GetComponent<Transform>();
 }

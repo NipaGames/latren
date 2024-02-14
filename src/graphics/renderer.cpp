@@ -306,7 +306,7 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
 }
 
 std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) {
-    if (materials_.count(mat) == 0)
+    if (materials_.find(mat) == materials_.end())
         return materials_.at(MATERIAL_MISSING);
     return materials_.at(mat);
 }

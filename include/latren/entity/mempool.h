@@ -83,20 +83,20 @@ protected:
         return &components_.front();
     }
 public:
-    GeneralComponentReference AllocNewComponent(EntityIndex i) override {
+    GeneralComponentReference AllocNewComponent(EntityIndex entity) override {
         C& c = components_.emplace_back();
         c.pool = this;
-        references_[i] = components_.size() - 1;
-        return ComponentReference<C> { this, i };
+        references_[entity] = components_.size() - 1;
+        return ComponentReference<C> { this, entity };
     }
-    void DestroyComponent(EntityIndex i) override {
-        if (references_.count(i) == 0)
+    void DestroyComponent(EntityIndex entity) override {
+        if (references_.find(entity) == references_.end())
             return;
-        size_t pos = references_.at(i);
+        size_t pos = references_.at(entity);
         if (pos >= components_.size())
             return;
         components_.erase(components_.begin() + pos);
-        references_.erase(i);
+        references_.erase(entity);
         for (auto& [k, v] : references_) {
             if (v > pos)
                 v--;
@@ -106,11 +106,11 @@ public:
         references_.clear();
         components_.clear();
     }
-    IComponent& GetComponentBase(EntityIndex i) override {
-        return components_.at(references_.at(i));
+    IComponent& GetComponentBase(EntityIndex entity) override {
+        return components_.at(references_.at(entity));
     }
-    C& GetComponent(EntityIndex i) {
-        return static_cast<C&>(GetComponentBase(i));
+    C& GetComponent(EntityIndex entity) {
+        return static_cast<C&>(GetComponentBase(entity));
     }
     void ForEach(const std::function<void(C&)>& fn) {
         std::for_each(components_.begin(), components_.end(), fn);
