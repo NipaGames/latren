@@ -9,6 +9,7 @@
 #include <typeindex>
 
 typedef size_t EntityIndex;
+typedef std::type_index ComponentType;
 
 class IComponent;
 template <typename C>
@@ -22,7 +23,7 @@ protected:
     virtual IComponent* GetFirstComponent() = 0;
 public:
     virtual GeneralComponentReference AllocNewComponent(EntityIndex) = 0;
-    virtual void DeleteComponent(EntityIndex) = 0;
+    virtual void DestroyComponent(EntityIndex) = 0;
     virtual void ClearAllComponents() = 0;
     virtual IComponent& GetComponentBase(EntityIndex) = 0;
     template <typename C, typename = VerifyComponent<C>>
@@ -38,7 +39,7 @@ public:
     virtual size_t GetReferenceOverheadBytes() const = 0;
     size_t GetTotalBytes() { return GetAllocatedBytes() + GetReferenceOverheadBytes(); }
 };
-typedef std::unordered_map<std::type_index, std::unique_ptr<IComponentMemoryPool>> ComponentPoolContainer;
+typedef std::unordered_map<ComponentType, std::unique_ptr<IComponentMemoryPool>> ComponentPoolContainer;
 
 struct GeneralComponentReference {
     IComponentMemoryPool* pool;
@@ -53,7 +54,7 @@ struct GeneralComponentReference {
     operator IComponent&() { return GetComponentBase(); }
     IComponent* operator->() { return &GetComponentBase(); }
     void Delete() {
-        pool->DeleteComponent(index);
+        pool->DestroyComponent(index);
     }
     bool operator==(const GeneralComponentReference& cmp) const {
         return (pool == cmp.pool) && (index == cmp.index);
@@ -88,7 +89,7 @@ public:
         references_[i] = components_.size() - 1;
         return ComponentReference<C> { this, i };
     }
-    void DeleteComponent(EntityIndex i) override {
+    void DestroyComponent(EntityIndex i) override {
         if (references_.count(i) == 0)
             return;
         size_t pos = references_.at(i);

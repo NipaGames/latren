@@ -1,5 +1,6 @@
 #include <latren/entity/entitymanager.h>
 #include <latren/entity/transform.h>
+#include <latren/entity/entity.h>
 
 void EntityManager::Setup() {
     componentMemoryManager_.MovePools(IComponent::CreateComponentMemoryPools());
@@ -28,13 +29,14 @@ ComponentMemoryManager& EntityManager::GetComponentMemory() {
 
 Entity EntityManager::CreateEntity(const std::string& name) {
     Entity e = Entity(this, NextID());
-    e.AddComponent<Transform>();
+    entityData_[e] = {
+        name,
+        { }
+    };
     if (!name.empty()) {
         entityNames_[name] = e;
     }
-    entityData_[e] = {
-        name
-    };
+    e.AddComponent<Transform>();
     return e;
 }
 
@@ -46,12 +48,33 @@ const GlobalEntityData& EntityManager::GetEntityData(EntityIndex entity) {
     return entityData_.at(entity);
 }
 
-GeneralComponentReference EntityManager::AddComponent(EntityIndex entity, std::type_index type) {
-    return componentMemoryManager_.AllocNewComponent(entity, type);
+GeneralComponentReference EntityManager::AddComponent(EntityIndex entity, ComponentType type) {
+    GeneralComponentReference ref = componentMemoryManager_.AllocNewComponent(entity, type);
+    entityData_.at(entity).components.insert(type);
+    return ref;
 }
 
-void EntityManager::DeleteComponent(EntityIndex entity, std::type_index type) {
-    componentMemoryManager_.DeleteComponent(entity, type);
+IComponent& EntityManager::GetComponent(EntityIndex entity, ComponentType type) {
+    return componentMemoryManager_.GetPool(type).GetComponentBase(entity);
+}
+
+IComponentMemoryPool& EntityManager::GetComponentPool(ComponentType type) {
+    return componentMemoryManager_.GetPool(type);
+}
+
+void EntityManager::DestroyComponent(EntityIndex entity, ComponentType type) {
+    componentMemoryManager_.DestroyComponent(entity, type);
+    entityData_.at(entity).components.erase(type);
+}
+
+void EntityManager::DestroyEntity(EntityIndex entity) {
+    auto it = entityData_.find(entity);
+    if (it == entityData_.end())
+        return;
+    std::unordered_set<ComponentType> components = it->second.components;
+    for (ComponentType type : components) {
+        DestroyComponent(entity, type);
+    }
     entityData_.erase(entity);
 }
 

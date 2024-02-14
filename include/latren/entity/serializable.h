@@ -14,7 +14,7 @@ class ComponentData;
 class IComponentDataValue {
 public:
     std::string name;
-    std::type_index type;
+    ComponentType type;
     ComponentDataContainerType containerType;
     IComponentDataValue() : type(typeid(IComponentDataValue)) { }
     virtual void CloneValuesTo(const std::shared_ptr<IComponentDataValue>&) const = 0;
@@ -55,8 +55,8 @@ public:
 
 class TypedComponentData : public ComponentData {
 public:
-    std::type_index type;
-    TypedComponentData(std::type_index t) : type(t) { }
+    ComponentType type;
+    TypedComponentData(ComponentType t) : type(t) { }
 };
 
 template <typename T, ComponentDataContainerType Container>

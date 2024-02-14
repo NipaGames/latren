@@ -7,26 +7,26 @@
 Entity::Entity() { }
 Entity::Entity(EntityManager* mgr, EntityIndex i) : entityManager_(mgr), index_(i) { }
 
-ComponentMemoryManager& Entity::GetComponentMemoryManager() const {
-    return entityManager_->GetComponentMemory();
-}
-
 EntityIndex Entity::GetIndex() const {
     return index_;
 }
 
-GeneralComponentReference Entity::GetComponentReference(std::type_index t) const {
-    return { &GetComponentMemoryManager().GetPool(t), GetIndex() };
+EntityManager* Entity::GetManager() const {
+    return entityManager_;
 }
 
-IComponent& Entity::AddComponent(std::type_index t) const {
-    GeneralComponentReference ref = GetComponentMemoryManager().AllocNewComponent(GetIndex(), t);
+GeneralComponentReference Entity::GetComponentReference(ComponentType t) const {
+    return { &GetManager()->GetComponentPool(t), *this };
+}
+
+IComponent& Entity::AddComponent(ComponentType t) const {
+    GeneralComponentReference ref = GetManager()->AddComponent(*this, t);
     ref->parent = *this;
     return ref;
 }
 
-IComponent& Entity::GetComponent(std::type_index t) const {
-    return GetComponentMemoryManager().GetPool(t).GetComponentBase(GetIndex());
+IComponent& Entity::GetComponent(ComponentType t) const {
+    return GetManager()->GetComponent(*this, t);
 }
 
 Transform& Entity::GetTransform() const {
@@ -34,5 +34,5 @@ Transform& Entity::GetTransform() const {
 }
 
 const std::string& Entity::GetName() const {
-    return entityManager_->GetEntityData(*this).name;
+    return GetManager()->GetEntityData(*this).name;
 }

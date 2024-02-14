@@ -10,21 +10,21 @@ private:
     ComponentPoolContainer componentPools_;
 public:
     LATREN_API void MovePools(ComponentPoolContainer&&);
-    LATREN_API IComponentMemoryPool& GetPool(std::type_index);
+    LATREN_API IComponentMemoryPool& GetPool(ComponentType);
     template <typename C>
     ComponentMemoryPool<C>& GetPool() {
         return static_cast<ComponentMemoryPool<C>&>(GetPool(typeid(C)));
     }
     LATREN_API const ComponentPoolContainer& GetAllPools();
-    LATREN_API GeneralComponentReference AllocNewComponent(EntityIndex, std::type_index);
+    LATREN_API GeneralComponentReference AllocNewComponent(EntityIndex, ComponentType);
     template <typename C>
     ComponentReference<C> AllocNewComponent(EntityIndex entity) {
         return static_cast<const ComponentReference<C>&>(AllocNewComponent(entity, typeid(C)));
     }
-    LATREN_API void DeleteComponent(EntityIndex, std::type_index);
+    LATREN_API void DestroyComponent(EntityIndex, ComponentType);
     template <typename C>
-    void DeleteComponent(EntityIndex entity) {
-        DeleteComponent(entity, typeid(C));
+    void DestroyComponent(EntityIndex entity) {
+        DestroyComponent(entity, typeid(C));
     }
     template <typename C>
     void ForEachComponent(const std::function<void(C&)>& fn) {

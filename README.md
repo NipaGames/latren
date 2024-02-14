@@ -27,7 +27,7 @@ the reincarnation of the great opengl-game
 - [fmt (utility; formatting)](https://github.com/fmtlib/fmt)
 - [glew-cmake (utility; opengl)](https://github.com/Perlmint/glew-cmake)
 - [spdlog (utility; logging)](https://github.com/gabime/spdlog)
-header-only includes *(not submodules)*:
+header-only includes *(not submodules)*:  
 - [stb_image (texture importing)](https://github.com/nothings/stb/blob/master/stb_image.h)
 - [nlohmann/json (json parsing)](https://github.com/nlohmann/json)
 - [magic_enum (utility; serialization)](https://github.com/Neargye/magic_enum)

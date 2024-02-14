@@ -1,11 +1,13 @@
 #pragma once
 
-#include "component.h"
 #include "memmgr.h"
 #include <latren/util/idfactory.h>
+#include <unordered_set>
 
+class Entity;
 struct GlobalEntityData {
     std::string name;
+    std::unordered_set<ComponentType> components;
 };
 
 class EntityManager : public IDFactory<EntityIndex> {
@@ -26,8 +28,19 @@ public:
     LATREN_API const GlobalEntityData& GetEntityData(EntityIndex);
     LATREN_API ComponentMemoryManager& GetComponentMemory();
     LATREN_API Entity CreateEntity(const std::string& = "");
-    LATREN_API GeneralComponentReference AddComponent(EntityIndex, std::type_index);
-    LATREN_API void DeleteComponent(EntityIndex, std::type_index);
+    LATREN_API GeneralComponentReference AddComponent(EntityIndex, ComponentType);
+    LATREN_API IComponent& GetComponent(EntityIndex, ComponentType);
+    LATREN_API IComponentMemoryPool& GetComponentPool(ComponentType);
+    template <typename C>
+    ComponentMemoryPool<C>& GetComponentPool() {
+        return GetComponentMemory().GetPool<C>();
+    }
+    template <typename C>
+    C& GetComponent(EntityIndex entity) {
+        return GetComponentPool<C>().GetComponent(entity);
+    }
+    LATREN_API void DestroyComponent(EntityIndex, ComponentType);
+    LATREN_API void DestroyEntity(EntityIndex);
     LATREN_API void ClearEverything();
     LATREN_API size_t GetTotalPoolBytes();
 };

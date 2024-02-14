@@ -4,7 +4,7 @@ void ComponentMemoryManager::MovePools(ComponentPoolContainer&& pools) {
     componentPools_ = std::move(pools);
 }
 
-IComponentMemoryPool& ComponentMemoryManager::GetPool(std::type_index t) {
+IComponentMemoryPool& ComponentMemoryManager::GetPool(ComponentType t) {
     return *componentPools_.at(t).get();
 }
 
@@ -12,12 +12,12 @@ const ComponentPoolContainer& ComponentMemoryManager::GetAllPools() {
     return componentPools_;
 }
 
-GeneralComponentReference ComponentMemoryManager::AllocNewComponent(EntityIndex entity, std::type_index t) {
+GeneralComponentReference ComponentMemoryManager::AllocNewComponent(EntityIndex entity, ComponentType t) {
     return GetPool(t).AllocNewComponent(entity);
 }
 
-void ComponentMemoryManager::DeleteComponent(EntityIndex entity, std::type_index t) {
-    GetPool(t).DeleteComponent(entity);
+void ComponentMemoryManager::DestroyComponent(EntityIndex entity, ComponentType t) {
+    GetPool(t).DestroyComponent(entity);
 }
 
 void ComponentMemoryManager::ForEachPool(const std::function<void(IComponentMemoryPool&)>& fn) {

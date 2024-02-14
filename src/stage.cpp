@@ -42,7 +42,7 @@ bool Resources::StageManager::LoadStage(const std::string& id) {
             if (!hasEntityAlready) {
                 s.instantiatedEntities.insert(entity.GetID());
             }
-            entity.Start();
+            // entity.Start();
         }*/
     }
     loadedStages_.insert(loadedStages_.begin(), s.id);
@@ -57,8 +57,8 @@ bool Resources::StageManager::UnloadStage(const std::string& id) {
     if (idIt == loadedStages_.end())
         return false;
     const Stage& s = items_.at(id);
-    for (size_t hash : s.instantiatedEntities) {
-        // Game::GetGameInstanceBase()->GetEntityManager().RemoveEntity(hash);
+    for (EntityIndex entity : s.instantiatedEntities) {
+        Game::GetGameInstanceBase()->GetEntityManager().DestroyEntity(entity);
     }
     loadedStages_.erase(idIt);
     Game::GetGameInstanceBase()->GetRenderer().UpdateLighting();

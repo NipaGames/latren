@@ -54,7 +54,7 @@ namespace Serializer {
         bool CompareToComponentType(std::shared_ptr<IComponentDataValue> d) const override {
             bool found = false;
             ([&] {
-                std::type_index type = typeid(T);
+                ComponentType type = typeid(T);
                 switch (d->containerType) {
                     case ComponentDataContainerType::SINGLE:
                         type = typeid(T);

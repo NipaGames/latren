@@ -13,12 +13,16 @@ IComponent::IComponent(const IComponent& c) :
     data = c.data;
 }
 
-std::vector<ComponentType>& GetComponentTypes() {
-    static std::vector<ComponentType> componentTypes;
+IComponent::operator EntityIndex() const {
+    return parent.GetIndex();
+}
+
+std::vector<ComponentTypeData>& GetComponentTypes() {
+    static std::vector<ComponentTypeData> componentTypes;
     return componentTypes;
 }
 
-std::optional<ComponentType> IComponent::GetComponentType(const std::string& name) {
+std::optional<ComponentTypeData> IComponent::GetComponentType(const std::string& name) {
     auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
         return t.name == name;
     });
@@ -27,7 +31,7 @@ std::optional<ComponentType> IComponent::GetComponentType(const std::string& nam
     else
         return *it;
 }
-std::optional<ComponentType> IComponent::GetComponentType(std::type_index type) {
+std::optional<ComponentTypeData> IComponent::GetComponentType(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
         return t.type == type;
     });
@@ -37,7 +41,7 @@ std::optional<ComponentType> IComponent::GetComponentType(std::type_index type) 
         return *it;
 }
 
-std::optional<std::string> IComponent::GetComponentName(std::type_index type) {
+std::optional<std::string> IComponent::GetComponentName(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
         return t.type == type;
     });
@@ -47,7 +51,7 @@ std::optional<std::string> IComponent::GetComponentName(std::type_index type) {
         return it->name;
 }
 
-std::unique_ptr<IComponentMemoryPool> IComponent::CreateComponentMemoryPool(std::type_index type) {
+std::unique_ptr<IComponentMemoryPool> IComponent::CreateComponentMemoryPool(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
         return t.type == type;
     });
@@ -58,13 +62,13 @@ std::unique_ptr<IComponentMemoryPool> IComponent::CreateComponentMemoryPool(std:
 
 ComponentPoolContainer IComponent::CreateComponentMemoryPools() {
     ComponentPoolContainer pools;
-    for (const ComponentType& t : GetComponentTypes()) {
+    for (const ComponentTypeData& t : GetComponentTypes()) {
         pools.insert({ t.type, t.memPoolInitializer() });
     }
     return pools;
 }
 
-IComponent* IComponent::CreateComponent(std::type_index type, const ComponentData& data) {
+IComponent* IComponent::CreateComponent(ComponentType type, const ComponentData& data) {
     auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
         return t.type == type;
     });
@@ -82,7 +86,7 @@ IComponent* IComponent::CreateComponent(const std::string& name, const Component
     return CreateComponent(it->type, data);
 }
 
-TypedComponentData IComponent::CreateComponentData(const std::type_index type) {
+TypedComponentData IComponent::CreateComponentData(ComponentType type) {
     TypedComponentData data = TypedComponentData(type);
     IComponent* dummy = CreateComponent(type);
     for (const auto& [k, v] : dummy->data.vars) {

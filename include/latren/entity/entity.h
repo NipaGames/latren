@@ -1,11 +1,14 @@
 #pragma once
 
-#include <latren/defines/opengl.h>
+#include "entitymanager.h"
 #include "memmgr.h"
+#include <latren/defines/opengl.h>
 
 class IComponent;
 class Transform;
-class EntityManager;
+
+// basically a wrapper around entitymanager, doesn't store anything by itself
+// you could also think this as a pointer to entitymanager which actually stores the data
 class LATREN_API Entity {
 private:
     EntityManager* entityManager_;
@@ -14,22 +17,22 @@ public:
     Entity();
     Entity(EntityManager*, EntityIndex);
     EntityIndex GetIndex() const;
+    EntityManager* GetManager() const;
     operator EntityIndex() const { return GetIndex(); }
-    GeneralComponentReference GetComponentReference(std::type_index) const;
-    ComponentMemoryManager& GetComponentMemoryManager() const;
+    GeneralComponentReference GetComponentReference(ComponentType) const;
     template <typename C>
     ComponentReference<C> GetComponentReference() const {
-        return { &GetComponentMemoryManager().GetPool<C>(), GetIndex() };
+        return { &GetManager()->GetComponentPool<C>(), *this };
     }
-    IComponent& AddComponent(std::type_index) const;
+    IComponent& AddComponent(ComponentType) const;
     template <typename C>
     C& AddComponent() const {
         return static_cast<C&>(AddComponent(typeid(C)));
     }
-    IComponent& GetComponent(std::type_index) const;
+    IComponent& GetComponent(ComponentType) const;
     template <typename C>
     C& GetComponent() const {
-        return GetComponentMemoryManager().GetPool<C>().GetComponent(GetIndex());
+        return GetManager()->GetComponent<C>(*this);
     }
     Transform& GetTransform() const;
     const std::string& GetName() const;
