@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../physics.h"
+#include "../raii.h"
 #include <latren/entity/component.h>
 
 namespace Physics {
@@ -8,44 +9,6 @@ namespace Physics {
         TRANSFORM,
         AABB,
         MESH
-    };
-
-    template <typename BtObj>
-    class RAIIBtCollisionObject {
-    private:
-        BtObj obj_;
-    public:
-        template <typename... T>
-        RAIIBtCollisionObject(T... args) : obj_(args...) {
-            if constexpr(std::is_base_of_v<btRigidBody, BtObj>)
-                GetGlobalDynamicsWorld()->addRigidBody(&obj_);
-            else
-                GetGlobalDynamicsWorld()->addCollisionObject(&obj_);
-        }
-        ~RAIIBtCollisionObject() {
-            if (GetGlobalDynamicsWorld() != nullptr)
-                GetGlobalDynamicsWorld()->removeCollisionObject(&obj_);
-        }
-        BtObj* Get() {
-            return &obj_;
-        }
-    };
-
-    class RAIIBtTriangleIndexVertexArray {
-    private:
-        btTriangleIndexVertexArray arr_;
-    public:
-        template <typename... T>
-        RAIIBtTriangleIndexVertexArray(T... args) : arr_(args...) { }
-        ~RAIIBtTriangleIndexVertexArray() {
-            for (int i = 0; i < arr_.getIndexedMeshArray().size(); i++) {
-                delete[] arr_.getIndexedMeshArray()[i].m_vertexBase;
-                delete[] arr_.getIndexedMeshArray()[i].m_triangleIndexBase;
-            }
-        }
-        btTriangleIndexVertexArray* Get() {
-            return &arr_;
-        }
     };
 
     // would be great to have a separate collider component
