@@ -24,14 +24,40 @@ IComponent& Entity::AddComponent(ComponentType t) const {
     ref->parent = *this;
     return ref;
 }
+IComponent& Entity::AddComponent(const std::string& t) const {
+    return AddComponent(IComponent::GetComponentType(t)->type);
+}
+
+void Entity::RemoveComponent(ComponentType t) const {
+    GetManager()->DestroyComponent(*this, t);
+}
+void Entity::RemoveComponent(const std::string& t) const {
+    auto ct = IComponent::GetComponentType(t);
+    if (!ct.has_value()) {
+        spdlog::warn("Component {} doesn't exist!", t);
+        return;
+    }
+    RemoveComponent(ct->type);
+}
 
 IComponent& Entity::GetComponent(ComponentType t) const {
     return GetManager()->GetComponent(*this, t);
+}
+IComponent& Entity::GetComponent(const std::string& t) const {
+    return GetComponent(IComponent::GetComponentType(t)->type);
 }
 
 bool Entity::HasComponent(ComponentType t) const {
     const auto& components = GetManager()->GetEntityData(*this).components;
     return components.find(t) != components.end();
+}
+bool Entity::HasComponent(const std::string& t) const {
+    auto ct = IComponent::GetComponentType(t);
+    if (!ct.has_value()) {
+        spdlog::warn("Component {} doesn't exist!", t);
+        return false;
+    }
+    return HasComponent(ct->type);
 }
 
 Transform& Entity::GetTransform() const {
@@ -40,4 +66,8 @@ Transform& Entity::GetTransform() const {
 
 const std::string& Entity::GetName() const {
     return GetManager()->GetEntityData(*this).name;
+}
+
+void Entity::Destroy() {
+    GetManager()->DestroyEntity(*this);
 }

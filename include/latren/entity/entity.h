@@ -24,21 +24,35 @@ public:
     ComponentReference<C> GetComponentReference() const {
         return { &GetManager()->GetComponentPool<C>(), *this };
     }
+
     IComponent& AddComponent(ComponentType) const;
+    IComponent& AddComponent(const std::string&) const;
     template <typename C>
     C& AddComponent() const {
         return static_cast<C&>(AddComponent(typeid(C)));
     }
+
+    void RemoveComponent(ComponentType) const;
+    void RemoveComponent(const std::string&) const;
+    template <typename C>
+    void RemoveComponent() const {
+        RemoveComponent(typeid(C));
+    }
+
     IComponent& GetComponent(ComponentType) const;
+    IComponent& GetComponent(const std::string&) const;
     template <typename C>
     C& GetComponent() const {
         return GetManager()->GetComponent<C>(*this);
     }
+
     bool HasComponent(ComponentType) const;
+    bool HasComponent(const std::string&) const;
     template <typename C>
-    C& HasComponent() const {
+    bool HasComponent() const {
         return HasComponent(typeid(C));
     }
     Transform& GetTransform() const;
     const std::string& GetName() const;
+    void Destroy();
 };

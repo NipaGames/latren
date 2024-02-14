@@ -81,6 +81,8 @@ void EntityManager::DestroyEntity(EntityIndex entity) {
     for (ComponentType type : it->second.components) {
         componentMemoryManager_.DestroyComponent(entity, type);
     }
+    if (!it->second.name.empty())
+        entityNames_.erase(it->second.name);
     entityData_.erase(entity);
 }
 

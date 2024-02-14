@@ -58,11 +58,6 @@ bool Resources::StageManager::LoadStage(const std::string& id) {
     for (GeneralComponentReference& c : newComponents) {
         c->IStart();
     }
-    int i = 0;
-    Game::GetGameInstanceBase()->GetEntityManager().GetComponentMemory().ForEachComponent<Transform>([&](Transform& c) {
-        i++;
-    });
-    std::cout << i << std::endl;
     Game::GetGameInstanceBase()->GetRenderer().UpdateLighting();
     Game::GetGameInstanceBase()->GetRenderer().UpdateFrustum();
     return true;
