@@ -1,4 +1,4 @@
-#include <latren/ui/component/listcomponent.h>
+#include <latren/ui/component/containercomponent.h>
 
 using namespace UI;
 
@@ -20,8 +20,8 @@ void ContainerComponent::Render(const glm::mat4& proj) {
 
 void ContainerComponent::Update() {
     for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            c.CastComponent<UI::UIComponent>().Update();
+        for (ComponentReference<UI::UIComponent>& c : components) {
+            c->Update();
         }
     }
 }
@@ -31,17 +31,16 @@ void ContainerComponent::UpdateWindowSize() {
 }
 
 glm::vec2 ContainerComponent::GetOffset() const {
-    return canvas->GetOffset() + GetTransform().pos + offset;
+    return GetTransform().pos + offset;
 }
 
 size_t ContainerComponent::GetChildCount() {
     return children_.size();
 }
 
-void ContainerComponent::AddChild(GeneralComponentReference c) {
-    c.CastComponent<UI::UIComponent>().AddToCanvas(this);
+void ContainerComponent::AddChild(const std::shared_ptr<UIComponent>& c) {
     children_.push_back(c);
-    c.CastComponent<UI::UIComponent>().Start();
+    c->Start();
 }
 
 Rect ContainerComponent::GetLocalBounds() const {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "component/uicomponent.h"
+
 #include <latren/defines/opengl.h>
 #include <map>
 #include <memory>
@@ -16,7 +18,7 @@ namespace UI {
     class UIComponent;
     class Canvas {
     protected:
-        std::map<int, std::vector<GeneralComponentReference>> components_;
+        std::map<int, std::vector<ComponentReference<UIComponent>>> components_;
         Shape bgShape_;
         void UpdateComponentsOnWindowSize(float);
     public:
@@ -27,16 +29,10 @@ namespace UI {
         glm::vec2 bgSize = glm::vec2(1280.0f, 720.0f);
         bool bgOverflow = true;
         CanvasBackgroundVerticalAnchor bgVerticalAnchor = CanvasBackgroundVerticalAnchor::UNDER;
-        Canvas() { }
-        Canvas(const Canvas&) = delete;
-        LATREN_API Canvas(Canvas&&);
-        Canvas& operator=(const Canvas&) = delete;
-        LATREN_API Canvas& operator=(Canvas&&);
-        LATREN_API virtual ~Canvas();
         LATREN_API virtual void GenerateBackgroundShape();
         LATREN_API virtual void Draw();
-        LATREN_API virtual void AddUIComponent(GeneralComponentReference, int = 0);
-        LATREN_API virtual void RemoveUIComponent(const GeneralComponentReference&);
+        LATREN_API virtual void AddUIComponent(ComponentReference<UIComponent>, int = 0);
+        LATREN_API virtual void RemoveUIComponent(const ComponentReference<UIComponent>&);
         LATREN_API virtual void UpdateWindowSize(int, int);
         LATREN_API virtual glm::mat4 GetProjectionMatrix() const;
         LATREN_API virtual glm::vec2 GetOffset() const;

@@ -13,10 +13,9 @@ namespace UI {
         float itemSpacing = 30.0f;
         LATREN_API virtual ~ListComponent();
         ListComponent() : ContainerComponent() { bgOverflow = false; }
-        ListComponent(UI::Canvas* c, int p = 0) : ContainerComponent(c, p) { bgOverflow = false; }
 
         LATREN_API void Start() override;
-        LATREN_API void AddListItem(GeneralComponentReference);
+        LATREN_API void AddListItem(const std::shared_ptr<UIComponent>&);
         LATREN_API void SetScrollPos(float);
     };
 

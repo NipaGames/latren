@@ -2,6 +2,7 @@
 
 #include "uicomponent.h"
 #include "../materials.h"
+#include <latren/graphics/shape.h>
 
 namespace UI {
     class ImageComponent : public UIComponent, RegisterComponent<ImageComponent> {

@@ -4,48 +4,6 @@
 
 using namespace UI;
 
-Canvas::Canvas(Canvas&& other) : 
-    bgShape_(other.bgShape_),
-    bgMaterial(other.bgMaterial),
-    isVisible(other.isVisible),
-    offset(other.offset),
-    bgSize(other.bgSize),
-    bgVerticalAnchor(other.bgVerticalAnchor),
-    components_(std::move(other.components_))
-{
-    for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            c.CastComponent<UI::UIComponent>().canvas = this;
-        }
-    }
-}
-
-Canvas& Canvas::operator=(Canvas&& other) {
-    bgShape_ = other.bgShape_;
-    bgMaterial = other.bgMaterial;
-    isVisible = other.isVisible;
-    offset = other.offset;
-    bgSize = other.bgSize;
-    bgVerticalAnchor = other.bgVerticalAnchor;
-    components_ = std::move(other.components_);
-    for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            c.CastComponent<UI::UIComponent>().canvas = this;
-        }
-    }
-    return *this;
-}
-
-Canvas::~Canvas() {
-    for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            if (c.CastComponent<UI::UIComponent>().canvas == this)
-                c.CastComponent<UI::UIComponent>().canvas = nullptr;
-        }
-    }
-    components_.clear();
-}
-
 Canvas* Canvas::GetCanvas() {
     return static_cast<Canvas*>(this);
 }
@@ -93,11 +51,11 @@ void Canvas::Draw() {
     }
     
     for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            if (c.CastComponent<UI::UIComponent>().isVisible) {
+        for (ComponentReference<UIComponent>& c : components) {
+            if (c->isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
-                c.CastComponent<UI::UIComponent>().Render(proj);
+                c->Render(proj);
             }
         }
     }
@@ -120,9 +78,8 @@ glm::vec2 Canvas::GetOffset() const {
     return offset;
 }
 
-void Canvas::AddUIComponent(GeneralComponentReference c, int priority) {
+void Canvas::AddUIComponent(ComponentReference<UIComponent> c, int priority) {
     components_[priority].push_back(c);
-    c.CastComponent<UI::UIComponent>().canvas = this;
 }
 
 void Canvas::UpdateComponentsOnWindowSize(float m) {
@@ -139,7 +96,7 @@ void Canvas::UpdateWindowSize(int w, int h) {
     UpdateComponentsOnWindowSize(aspectRatioModifier);
 }
 
-void Canvas::RemoveUIComponent(const GeneralComponentReference& c) {
+void Canvas::RemoveUIComponent(const ComponentReference<UIComponent>& c) {
     for (auto& [p, components] : components_) {
         const auto it = std::find(components.begin(), components.end(), c);
         if (it == components.end())

@@ -1,30 +1,8 @@
 #include <latren/ui/component/uicomponent.h>
+#include <latren/ui/canvas.h>
 #include <latren/entity/entity.h>
 
 using namespace UI;
-
-UIComponent::UIComponent(Canvas* c, int p) :
-    canvas(c),
-    priority_(p)
-{ }
-
-UIComponent::~UIComponent() {
-    if (isAddedToCanvas_ && canvas != nullptr)
-        canvas->RemoveUIComponent(*this);
-    isAddedToCanvas_ = false;
-}
-
-void UIComponent::AddToCanvas() {
-    if (canvas == nullptr)
-        return;
-    canvas->AddUIComponent({ pool, parent }, priority_);
-    isAddedToCanvas_ = true;
-}
-
-void UIComponent::AddToCanvas(Canvas* canvas) {
-    canvas = canvas;
-    AddToCanvas();
-}
 
 UITransform UIComponent::GetTransform() const {
     if (transformFrom == UITransformFrom::ENTITY_TRANSFORM_2D) {
@@ -47,9 +25,9 @@ void UIComponent::SetTransform(const UITransform& trans) {
 }
 
 Rect UIComponent::GetBounds() const {
-    if (!isAddedToCanvas_)
+    // if (!isAddedToCanvas_)
         return GetLocalBounds();
-    Rect bounds = GetLocalBounds();
+    /*Rect bounds = GetLocalBounds();
     glm::vec2 canvasOffset = canvas->GetOffset();
     bounds.left += canvasOffset.x;
     bounds.right += canvasOffset.x;
@@ -63,5 +41,5 @@ Rect UIComponent::GetBounds() const {
         bounds.left = std::min(bounds.left, canvasOffset.x);
         bounds.right = std::max(bounds.right, canvasOffset.x + canvas->bgSize.x);
     }
-    return bounds;
+    return bounds;*/
 }

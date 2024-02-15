@@ -12,8 +12,8 @@ ListComponent::~ListComponent() {
 void ListComponent::SetScrollPos(float pos) {
     scrollPos_ = pos;
     for (int i = 0; i < children_.size(); i++) {
-        GeneralComponentReference& c = children_.at(i);
-        c.CastComponent<UI::UIComponent>().transform.pos.y = i * -itemSpacing + pos;
+        const std::shared_ptr<UIComponent>& c = children_.at(i);
+        c->transform.pos.y = i * -itemSpacing + pos;
     }
 }
 
@@ -31,31 +31,29 @@ void ListComponent::Start() {
     });
 }
 
-void ListComponent::AddListItem(GeneralComponentReference c) {
-    c.CastComponent<UI::UIComponent>().transform.pos.y = GetChildCount() * -itemSpacing + scrollPos_;
+void ListComponent::AddListItem(const std::shared_ptr<UIComponent>& c) {
+    c->transform.pos.y = GetChildCount() * -itemSpacing + scrollPos_;
     AddChild(c);
 }
 
 void TextListComponent::AddListItem(const std::string& str) {
-    Entity entity = Game::GetGameInstanceBase()->GetEntityManager().CreateEntity();
-    TextComponent& textItem = entity.AddComponent<TextComponent>();
-    textItem.canvas = this;
-    textItem.transformFrom = UITransformFrom::UI_TRANSFORM;
-    textItem.font = "FONT_FIRACODE";
-    textItem.transform.size = .5f;
-    textItem.verticalAlignment = VerticalAlignment::TOP;
+    std::shared_ptr<TextComponent> textItem = std::make_shared<TextComponent>();
+    textItem->transformFrom = UITransformFrom::UI_TRANSFORM;
+    textItem->font = "FONT_FIRACODE";
+    textItem->transform.size = .5f;
+    textItem->verticalAlignment = VerticalAlignment::TOP;
     switch (itemAlignment) {
         case HorizontalAlignment::LEFT:
-            textItem.transform.pos.x = 0.0f;
+            textItem->transform.pos.x = 0.0f;
             break;
         case HorizontalAlignment::RIGHT:
-            textItem.transform.pos.x = bgSize.x;
+            textItem->transform.pos.x = bgSize.x;
             break;
         case HorizontalAlignment::CENTER:
-            textItem.transform.pos.x = bgSize.x / 2.0f;
+            textItem->transform.pos.x = bgSize.x / 2.0f;
             break;
     }
-    textItem.horizontalAlignment = itemAlignment;
-    textItem.SetText(str);
+    textItem->horizontalAlignment = itemAlignment;
+    textItem->SetText(str);
     ListComponent::AddListItem(textItem);
 }
