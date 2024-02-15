@@ -180,7 +180,14 @@ void Renderer::Render() {
     // will have to write a render pass enum, this is just plain dumb
     std::vector<GeneralComponentReference> lateRenderables;
     std::vector<GeneralComponentReference> renderablesAfterPostProcessing;
-    for (GeneralComponentReference& ref : renderablesOnFrustum_) {
+    auto it = renderablesOnFrustum_.begin();
+    while (it != renderablesOnFrustum_.end()) {
+        GeneralComponentReference& ref = *it;
+        if (ref.IsNull()) {
+            it = renderablesOnFrustum_.erase(it);
+            continue;
+        }
+        ++it;
         IRenderable& renderable = ref.CastComponent<IRenderable>();
         if (renderable.RenderLate()) {
             lateRenderables.push_back(ref);

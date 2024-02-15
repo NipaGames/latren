@@ -26,6 +26,7 @@ public:
     virtual void DestroyComponent(EntityIndex) = 0;
     virtual void ClearAllComponents() = 0;
     virtual IComponent& GetComponentBase(EntityIndex) = 0;
+    virtual bool HasComponent(EntityIndex i) const = 0;
     template <typename C, typename = VerifyComponent<C>>
     C& GetComponent(EntityIndex i) {
         return static_cast<C&>(GetComponentBase(i));
@@ -55,6 +56,9 @@ struct GeneralComponentReference {
     IComponent* operator->() { return &GetComponentBase(); }
     void Delete() {
         pool->DestroyComponent(index);
+    }
+    bool IsNull() {
+        return !pool->HasComponent(index);
     }
     bool operator==(const GeneralComponentReference& cmp) const {
         return (pool == cmp.pool) && (index == cmp.index);
@@ -99,7 +103,7 @@ public:
         references_.erase(entity);
         for (auto& [k, v] : references_) {
             if (v > pos)
-                v--;
+                --v;
         }
     }
     void ClearAllComponents() override {
@@ -111,6 +115,10 @@ public:
     }
     C& GetComponent(EntityIndex entity) {
         return static_cast<C&>(GetComponentBase(entity));
+    }
+    bool HasComponent(EntityIndex entity) const override {
+        auto it = references_.find(entity);
+        return it != references_.end() && it->second < components_.size();
     }
     void ForEach(const std::function<void(C&)>& fn) {
         std::for_each(components_.begin(), components_.end(), fn);
