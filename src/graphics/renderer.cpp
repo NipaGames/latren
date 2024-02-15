@@ -177,9 +177,8 @@ void Renderer::Render() {
         if (!r.IsStatic())
             r.CalculateMatrices();
     });
-    // will have to write a render pass enum, this is just plain dumb
-    std::vector<GeneralComponentReference> lateRenderables;
-    std::vector<GeneralComponentReference> renderablesAfterPostProcessing;
+    // todo: cache these
+    std::array<std::vector<GeneralComponentReference>, RenderPass::TOTAL_RENDER_PASSES> passes;
     auto it = renderablesOnFrustum_.begin();
     while (it != renderablesOnFrustum_.end()) {
         GeneralComponentReference& ref = *it;
@@ -187,17 +186,12 @@ void Renderer::Render() {
             it = renderablesOnFrustum_.erase(it);
             continue;
         }
+        passes[ref.CastComponent<IRenderable>().GetRenderPass()].push_back(ref);
         ++it;
-        IRenderable& renderable = ref.CastComponent<IRenderable>();
-        if (renderable.RenderLate()) {
-            lateRenderables.push_back(ref);
-            continue;
-        }
-        else if (renderable.RenderAfterPostProcessing()) {
-            renderablesAfterPostProcessing.push_back(ref);
-            continue;
-        }
-        renderable.IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+    }
+
+    for (GeneralComponentReference& ref : passes[RenderPass::NORMAL]) {
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
 
     // draw skybox
@@ -225,7 +219,7 @@ void Renderer::Render() {
         glDisable(GL_DEPTH_CLAMP);
     }
 
-    for (GeneralComponentReference& ref : lateRenderables) {
+    for (GeneralComponentReference& ref : passes[RenderPass::LATE]) {
         ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
     
@@ -256,7 +250,7 @@ void Renderer::Render() {
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
-    for (GeneralComponentReference& ref : renderablesAfterPostProcessing) {
+    for (GeneralComponentReference& ref : passes[RenderPass::AFTER_POST_PROCESSING]) {
         ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
     }
     glDisable(GL_DEPTH_TEST);

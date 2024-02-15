@@ -1,18 +1,32 @@
 #pragma once
 
 #include <latren/entity/component.h>
+#include <latren/io/serializer.h>
+#include <latren/io/serializetypes.h>
 #include "../material.h"
 #include "../camera.h"
+
+namespace RenderPass {
+    enum Enum : size_t {
+        // until i fix transparency all transparent objects should be rendered late
+        NORMAL,
+        LATE,
+        AFTER_POST_PROCESSING,
+        // doesn't render in the renderer pipeline
+        CUSTOM
+    };
+    inline constexpr size_t TOTAL_RENDER_PASSES = magic_enum::enum_count<Enum>();
+};
+JSON_SERIALIZE_ENUM(RenderPass::Enum);
 
 class Renderer;
 class IRenderable {
 public:
+    virtual RenderPass::Enum GetRenderPass() const = 0;
     virtual void CalculateMatrices() = 0;
     virtual bool IsStatic() const = 0;
     virtual bool IsAlwaysOnFrustum() const = 0;
     virtual bool IsOnFrustum(const ViewFrustum&) const = 0;
-    virtual bool RenderLate() const = 0;
-    virtual bool RenderAfterPostProcessing() const = 0;
     virtual operator IComponent&() = 0;
     virtual void IRender(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const = 0;
 };
@@ -27,8 +41,7 @@ public:
     Material customMaterial; LE_RCDV(customMaterial)
     bool useCustomMaterial = false; LE_RCDV(useCustomMaterial)
     // render over skybox and any other entities
-    bool renderLate = false; LE_RCDV(renderLate)
-    bool renderAfterPostProcessing = false; LE_RCDV(renderAfterPostProcessing)
+    RenderPass::Enum renderPass = RenderPass::NORMAL; LE_RCDV(renderPass)
 
     virtual void Start() override {
         if (isStatic)
@@ -55,8 +68,7 @@ public:
     virtual bool IsStatic() const override { return isStatic; }
     virtual bool IsAlwaysOnFrustum() const override { return alwaysOnFrustum; }
     virtual bool IsOnFrustum(const ViewFrustum&) const override { return true; }
-    virtual bool RenderLate() const override { return renderLate; }
-    virtual bool RenderAfterPostProcessing() const override { return renderAfterPostProcessing; }
+    virtual RenderPass::Enum GetRenderPass() const override { return renderPass; }
 
     virtual void CalculateMatrices() override { }
     virtual void IRender(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader = nullptr, bool aabbDebug = false) const override {
