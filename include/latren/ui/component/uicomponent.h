@@ -23,6 +23,7 @@ namespace UI {
     friend class Canvas;
     protected:
         float aspectRatioModifier_ = 1.0f;
+        bool renderGlobally_ = true;
     public:
         UITransform transform { glm::vec2(0.0f), 1.0f };
         UITransformFrom transformFrom = UITransformFrom::ENTITY_TRANSFORM_2D;
@@ -34,6 +35,7 @@ namespace UI {
         virtual void Render(const glm::mat4&) { }
         virtual void UpdateWindowSize() { }
         virtual Rect GetLocalBounds() const { return Rect{ }; }
+        bool ShouldRenderGlobally() const { return renderGlobally_; }
         LATREN_API Rect GetBounds() const;
     };
 };

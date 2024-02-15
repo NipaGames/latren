@@ -11,10 +11,10 @@ ListComponent::~ListComponent() {
 
 void ListComponent::SetScrollPos(float pos) {
     scrollPos_ = pos;
-    for (int i = 0; i < children_.size(); i++) {
+    /*for (int i = 0; i < children_.size(); i++) {
         const std::shared_ptr<UIComponent>& c = children_.at(i);
         c->transform.pos.y = i * -itemSpacing + pos;
-    }
+    }*/
 }
 
 void ListComponent::Start() {
@@ -22,18 +22,18 @@ void ListComponent::Start() {
         if (!isActive)
             return;
         // nothing to scroll; the rendered area is smaller than the viewport
-        if (GetChildCount() * itemSpacing < bgSize.y)
+        if (GetComponentCount() * itemSpacing < bgSize.y)
             return;
         float pos = scrollPos_ - delta * scrollSensitivity;
         pos = std::max(pos, 0.0f);
-        pos = std::min(pos, GetChildCount() * itemSpacing - bgSize.y);
+        pos = std::min(pos, GetComponentCount() * itemSpacing - bgSize.y);
         SetScrollPos(pos);
     });
 }
 
 void ListComponent::AddListItem(const std::shared_ptr<UIComponent>& c) {
-    c->transform.pos.y = GetChildCount() * -itemSpacing + scrollPos_;
-    AddChild(c);
+    c->transform.pos.y = GetComponentCount() * -itemSpacing + scrollPos_;
+    AddUIComponent(c);
 }
 
 void TextListComponent::AddListItem(const std::string& str) {

@@ -50,18 +50,29 @@ void Canvas::Draw() {
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     
-    for (auto& [p, components] : components_) {
-        for (ComponentReference<UIComponent>& c : components) {
-            if (c->isVisible) {
+    for (auto& [p, layer] : components_) {
+        layer.ForEach([&](UIComponent& c) {
+            if (c.isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
-                c->Render(proj);
+                c.Render(proj);
             }
-        }
+        });
     }
     if (!bgOverflow) {
         glDisable(GL_SCISSOR_TEST);
     }
+}
+
+void Canvas::ClearComponents() {
+    for (auto& [p, layer] : components_) {
+        layer.Clear();
+    }
+    componentCount_ = 0;
+}
+
+size_t Canvas::GetComponentCount() const {
+    return componentCount_;
 }
 
 glm::mat4 Canvas::GetProjectionMatrix() const {
@@ -78,30 +89,16 @@ glm::vec2 Canvas::GetOffset() const {
     return offset;
 }
 
-void Canvas::AddUIComponent(ComponentReference<UIComponent> c, int priority) {
-    components_[priority].push_back(c);
-}
-
 void Canvas::UpdateComponentsOnWindowSize(float m) {
-    for (auto& [p, components] : components_) {
-        for (GeneralComponentReference& c : components) {
-            c.CastComponent<UI::UIComponent>().aspectRatioModifier_ = m;
-            c.CastComponent<UI::UIComponent>().UpdateWindowSize();
-        }
+    for (auto& [p, layer] : components_) {
+        layer.ForEach([&](UIComponent& c) {
+            c.aspectRatioModifier_ = m;
+            c.UpdateWindowSize();
+        });
     }
 }
 
 void Canvas::UpdateWindowSize(int w, int h) {
     float aspectRatioModifier = ((float) h * 1280.0f) / ((float) w * 720.0f);
     UpdateComponentsOnWindowSize(aspectRatioModifier);
-}
-
-void Canvas::RemoveUIComponent(const ComponentReference<UIComponent>& c) {
-    for (auto& [p, components] : components_) {
-        const auto it = std::find(components.begin(), components.end(), c);
-        if (it == components.end())
-            continue;
-        components.erase(it);
-        return;
-    }
 }
