@@ -20,10 +20,10 @@ namespace UI {
         std::shared_ptr<Material> caretMaterial = DEFAULE_CARET_MATERIAL;
         int maxLength = -1;
         std::string value;
-        LATREN_API virtual ~TextInputComponent();
         LATREN_API void Focus();
         LATREN_API void Unfocus();
         LATREN_API void Start();
+        LATREN_API void Delete();
         LATREN_API void Update();
         LATREN_API void SetValue(const std::string&);
         LATREN_API void UpdateCaretPos();

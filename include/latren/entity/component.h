@@ -22,21 +22,23 @@ class IForwardComponent;
 class LATREN_API IComponent {
 protected:
     bool hasStarted_ = false;
+    bool useDeleteDestructor_ = false;
 public:
     ComponentData data;
     Entity parent;
     IComponentMemoryPool* pool;
-    virtual IComponent* Clone() const = 0;
-    virtual ~IComponent() { }
+    
     IComponent() { }
     IComponent(const IComponent&);
     virtual void IStart() = 0;
+    virtual void IDelete() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
-    virtual bool ForwardType(ComponentType, const std::function<IComponent*(const IComponent*)>&) = 0;
+    virtual bool ForwardType(ComponentType) = 0;
     virtual ComponentType GetType() const { return typeid(IComponent); }
     virtual ComponentData& GetData() { return data; }
     virtual bool HasStarted() const { return hasStarted_; }
+    virtual void UseDeleteDestructor(bool use) { useDeleteDestructor_ = use; }
 
     operator EntityIndex() const;
     template <typename C>
@@ -49,15 +51,6 @@ public:
     template <typename C>
     operator ComponentReference<C>() const { return CreateReference<C>(); }
     operator GeneralComponentReference() const { return CreateReference(); }
-
-    template <typename C>
-    static IComponent* CreateInstance(const ComponentData& data) {
-        IComponent* c = new C();
-        for (const auto& [k, v] : data.vars) {
-            v->CloneValuesTo(c->data.vars[k]);
-        }
-        return c;
-    }
 
     static std::optional<ComponentTypeData> GetComponentType(const std::string&);
     static std::optional<ComponentTypeData> GetComponentType(ComponentType);
@@ -78,6 +71,23 @@ public:
     template <typename T>
     static IComponent* CreateComponent(const ComponentData& data = ComponentData()) { return CreateComponent(typeid(T), data); }
 
+    template <typename C>
+    static IComponent* CreateRawInstance(const ComponentData& data) {
+        IComponent* c = new C();
+        for (const auto& [k, v] : data.vars) {
+            v->CloneValuesTo(c->data.vars[k]);
+        }
+        return c;
+    }
+
+    template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<IComponent, T>>>
+    static std::shared_ptr<T> CreateInstance(Args... args) {
+        std::shared_ptr<T> instance = std::make_shared<T>(args...);
+        std::static_pointer_cast<IComponent>(instance)->UseDeleteDestructor(true);
+        return instance;
+    }
+
+
     static TypedComponentData CreateComponentData(ComponentType);
     template <typename T>
     static TypedComponentData CreateComponentData() { return CreateComponentData(typeid(T)); }
@@ -89,7 +99,7 @@ public:
     static bool RegisterComponent() {
         return RegisterComponent(
             typeid(C),
-            CreateInstance<C>,
+            CreateRawInstance<C>,
             std::make_unique<ComponentMemoryPool<C>>
         );
     }
@@ -105,28 +115,27 @@ template <class Derived>
 class Component : public IComponent, public RegisterComponent<Derived> {
 friend class Entity;
 private:
-    std::function<IComponent*(const IComponent*)> cloneFn_ = [](const IComponent* c) {
-        return new Derived(dynamic_cast<const Derived&>(*c));
-    };
     ComponentType type_ = typeid(Derived);
 public:
-    virtual ~Component() = default;
-    virtual IComponent* Clone() const override {
-        return cloneFn_(this);
+    virtual ~Component() {
+        if (useDeleteDestructor_)
+            IDelete();
     }
     void IStart() override {
         hasStarted_ = true;
-        dynamic_cast<Derived*>(this)->Start();
+        static_cast<Derived*>(this)->Start();
+    }
+    void IDelete() override {
+        static_cast<Derived*>(this)->Delete();
     }
     void IUpdate() override {
-        dynamic_cast<Derived*>(this)->Update();
+        static_cast<Derived*>(this)->Update();
     }
     void IFixedUpdate() override {
-        dynamic_cast<Derived*>(this)->FixedUpdate();
+        static_cast<Derived*>(this)->FixedUpdate();
     }
-    virtual bool ForwardType(ComponentType t, const std::function<IComponent*(const IComponent*)>& clone) override {
+    virtual bool ForwardType(ComponentType t) override {
         type_ = t;
-        cloneFn_ = clone;
         return true;
     }
     virtual ComponentType GetType() const override {
@@ -141,8 +150,9 @@ public:
     void SetValue(const std::string& key, T val) {
         data.Set(key, val);
     }
-
+    
     virtual void Start() { }
+    virtual void Delete() { }
     virtual void Update() { }
     virtual void FixedUpdate() { }
 };

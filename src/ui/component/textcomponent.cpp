@@ -7,7 +7,7 @@
 
 using namespace UI;
 
-TextComponent::~TextComponent() {
+void TextComponent::Delete() {
     if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE) {
         if (fbo_ != NULL)
             glDeleteFramebuffers(1, &fbo_);

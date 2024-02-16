@@ -75,6 +75,7 @@ IComponent* IComponent::CreateComponent(ComponentType type, const ComponentData&
     if (it == GetComponentTypes().cend())
         return nullptr;
     IComponent* c = it->componentInitializer(data);
+    c->UseDeleteDestructor(true);
     return c;
 }
 IComponent* IComponent::CreateComponent(const std::string& name, const ComponentData& data) {

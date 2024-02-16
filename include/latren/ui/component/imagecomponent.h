@@ -19,7 +19,6 @@ namespace UI {
         bool flipHorizontally = false;
         bool flipVertically = false;
 
-        LATREN_API virtual ~ImageComponent();
         LATREN_API void Start();
         LATREN_API void Render(const glm::mat4&);
     };

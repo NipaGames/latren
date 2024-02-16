@@ -3,10 +3,6 @@
 
 using namespace UI;
 
-ImageComponent::~ImageComponent() {
-    
-}
-
 void ImageComponent::Start() {
     quadShape_ = Shapes::RECTANGLE_VEC4;
     float texLeft = (float) flipHorizontally;

@@ -339,7 +339,7 @@ void Renderer::MoveCanvas(const std::string& id, UI::Canvas* c) {
 void Renderer::CleanUp() {
     for (const auto& [k, v] : canvases_) {
         if (v->isOwnedByRenderer)
-                delete v;
+            delete v;
     }
     canvases_.clear();
     renderablesOnFrustum_.clear();

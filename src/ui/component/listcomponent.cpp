@@ -4,7 +4,7 @@
 
 using namespace UI;
 
-ListComponent::~ListComponent() {
+void ListComponent::Delete() {
     if (scrollEvent_ != -1)
         Game::GetGameInstanceBase()->GetGameWindow().eventHandler.Unsubscribe(WindowEventType::MOUSE_SCROLL, scrollEvent_);
 }

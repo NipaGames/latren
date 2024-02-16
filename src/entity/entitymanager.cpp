@@ -70,6 +70,7 @@ IComponentMemoryPool& EntityManager::GetComponentPool(ComponentType type) {
 }
 
 void EntityManager::DestroyComponent(EntityIndex entity, ComponentType type) {
+    GetComponent(entity, type).IDelete();
     componentMemoryManager_.DestroyComponent(entity, type);
     entityData_.at(entity).components.erase(type);
 }
@@ -79,6 +80,7 @@ void EntityManager::DestroyEntity(EntityIndex entity) {
     if (it == entityData_.end())
         return;
     for (ComponentType type : it->second.components) {
+        GetComponent(entity, type).IDelete();
         componentMemoryManager_.DestroyComponent(entity, type);
     }
     if (!it->second.name.empty())
@@ -87,6 +89,9 @@ void EntityManager::DestroyEntity(EntityIndex entity) {
 }
 
 void EntityManager::ClearEverything() {
+    componentMemoryManager_.ForAllComponents([](IComponent& c) {
+        c.IDelete();
+    });
     componentMemoryManager_.ForEachPool([](IComponentMemoryPool& pool) {
         pool.ClearAllComponents();
     });

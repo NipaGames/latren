@@ -2,7 +2,7 @@
 
 using namespace UI;
 
-TextInputComponent::~TextInputComponent() {
+void TextInputComponent::Delete() {
     if (specialKeyEvent_ != -1)
         Game::GetGameInstanceBase()->GetGameWindow().keyboardEventHandler.Unsubscribe(Input::KeyboardEventType::TEXT_INPUT_SPECIAL, specialKeyEvent_);
     if (asciiKeyEvent_ != -1)

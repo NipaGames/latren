@@ -47,8 +47,8 @@ namespace UI {
         VerticalAlignment verticalAlignment = VerticalAlignment::BOTTOM;
         float textureResolutionModifier = 1.0f;
         
-        LATREN_API virtual ~TextComponent();
         LATREN_API void Start() override;
+        LATREN_API void Delete() override;
         LATREN_API void Render(const glm::mat4&) override;
         LATREN_API void UpdateWindowSize() override;
         LATREN_API void SetText(const std::string&);

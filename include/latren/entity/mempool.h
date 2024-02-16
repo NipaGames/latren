@@ -58,7 +58,7 @@ struct GeneralComponentReference {
         pool->DestroyComponent(index);
     }
     bool IsNull() {
-        return !pool->HasComponent(index);
+        return pool == nullptr || !pool->HasComponent(index);
     }
     bool operator==(const GeneralComponentReference& cmp) const {
         return (pool == cmp.pool) && (index == cmp.index);

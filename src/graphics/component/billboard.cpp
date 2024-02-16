@@ -1,7 +1,7 @@
 #include <latren/graphics/component/billboard.h>
 #include <latren/game.h>
 
-BillboardRenderer::~BillboardRenderer() {
+void BillboardRenderer::Delete() {
     if (vao_ != NULL)
         glDeleteVertexArrays(1, &vao_);
     if (vbo_ != NULL)

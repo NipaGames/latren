@@ -11,10 +11,10 @@ namespace UI {
     public:
         float scrollSensitivity = 20.0f;
         float itemSpacing = 30.0f;
-        LATREN_API virtual ~ListComponent();
         ListComponent() : ContainerComponent() { bgOverflow = false; }
 
         LATREN_API void Start() override;
+        LATREN_API void Delete() override;
         LATREN_API void AddListItem(const std::shared_ptr<UIComponent>&);
         LATREN_API void SetScrollPos(float);
     };
