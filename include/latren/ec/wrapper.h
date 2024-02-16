@@ -4,14 +4,17 @@
 
 class IComponent;
 
-class IComponentWrapper { };
+class IComponentWrapper {
+public:
+    virtual ~IComponentWrapper() { }
+};
 
 template <typename T, typename = std::enable_if_t<std::is_base_of_v<IComponent, T>>>
 class ComponentWrapper : public IComponentWrapper {
 public:
     T component;
 
-    ~ComponentWrapper() {
+    virtual ~ComponentWrapper() {
         component.IDelete();
     }
     template <typename... Args>
@@ -22,9 +25,13 @@ public:
     T& Get() {
         return component;
     }
-    template <typename Cast, typename = std::enable_if_t<std::is_base_of_v<Cast, T>>>
+    /*template <typename Cast, typename = std::enable_if_t<std::is_base_of_v<Cast, T>>>
     operator ComponentWrapper<Cast>&() {
         return static_cast<ComponentWrapper<Cast>&>(static_cast<IComponentWrapper&>(*this));
+    }*/
+
+    operator T&() {
+        return component;
     }
 
     template <typename... Args>

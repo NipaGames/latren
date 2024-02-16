@@ -56,6 +56,5 @@ void TextListComponent::AddListItem(const std::string& str) {
     }
     textItem.horizontalAlignment = itemAlignment;
     textItem.SetText(str);
-    ListComponent::AddListItem(SharedComponentPtr<UIComponent>(&static_cast<ComponentWrapper<UIComponent>&>(*wrapper.get())));
-    wrapper.reset();
+    ListComponent::AddListItem(std::static_pointer_cast<ComponentWrapper<UIComponent>>(std::static_pointer_cast<IComponentWrapper>(wrapper)));
 }

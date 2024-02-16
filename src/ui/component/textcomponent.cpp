@@ -8,7 +8,6 @@
 using namespace UI;
 
 void TextComponent::Delete() {
-    std::cout << text_ << std::endl;
     if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE) {
         if (fbo_ != NULL)
             glDeleteFramebuffers(1, &fbo_);
