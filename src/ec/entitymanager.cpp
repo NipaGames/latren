@@ -1,6 +1,6 @@
-#include <latren/entity/entitymanager.h>
-#include <latren/entity/transform.h>
-#include <latren/entity/entity.h>
+#include <latren/ec/entitymanager.h>
+#include <latren/ec/transform.h>
+#include <latren/ec/entity.h>
 
 void EntityManager::Setup() {
     componentMemoryManager_.MovePools(IComponent::CreateComponentMemoryPools());

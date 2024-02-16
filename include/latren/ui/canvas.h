@@ -6,7 +6,8 @@
 #include <latren/graphics/shader.h>
 #include <latren/graphics/shape.h>
 #include <latren/graphics/material.h>
-#include <latren/entity/mempool.h>
+#include <latren/ec/mempool.h>
+#include <latren/ec/wrapper.h>
 
 #include <map>
 #include <memory>
@@ -20,16 +21,16 @@ namespace UI {
     class UIComponent;
     struct UIComponentContainer {
     private:
-        std::vector<std::shared_ptr<UIComponent>> owned_;
+        std::vector<SharedComponentPtr<UIComponent>> owned_;
         std::vector<ComponentReference<UIComponent>> referenced_;
     public:
-        void Add(const std::shared_ptr<UIComponent>& c) {
+        void Add(const SharedComponentPtr<UIComponent>& c) {
             owned_.push_back(c);
         }
         void Add(const ComponentReference<UIComponent>& c) {
             referenced_.push_back(c);
         }
-        bool Remove(const std::shared_ptr<UIComponent>& c) {
+        bool Remove(const SharedComponentPtr<UIComponent>& c) {
             const auto it = std::find(owned_.begin(), owned_.end(), c);
             if (it == owned_.end())
                 return false;
@@ -48,8 +49,8 @@ namespace UI {
             referenced_.clear();
         }
         void ForEachOwned(const std::function<void(UIComponent&)>& fn) {
-            for (const std::shared_ptr<UIComponent>& c : owned_) {
-                fn(*c);
+            for (const std::shared_ptr<ComponentWrapper<UIComponent>>& c : owned_) {
+                fn(c->component);
             }
         }
         void ForEachReferenced(const std::function<void(UIComponent&)>& fn) {
@@ -96,8 +97,8 @@ namespace UI {
         LATREN_API virtual void GenerateBackgroundShape();
         LATREN_API virtual void Draw();
 
-        void AddUIComponent(const std::shared_ptr<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
-        void RemoveUIComponent(const std::shared_ptr<UIComponent>& c) { _RemoveUIComponent(c); }
+        void AddUIComponent(const SharedComponentPtr<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
+        void RemoveUIComponent(const SharedComponentPtr<UIComponent>& c) { _RemoveUIComponent(c); }
         void AddUIComponent(const ComponentReference<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
         void RemoveUIComponent(const ComponentReference<UIComponent>& c) { _RemoveUIComponent(c); }
 

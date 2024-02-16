@@ -1,6 +1,6 @@
 #pragma once
 
-#include <latren/entity/component.h>
+#include <latren/ec/component.h>
 #include <latren/io/serializer.h>
 #include <latren/io/serializetypes.h>
 #include "../material.h"

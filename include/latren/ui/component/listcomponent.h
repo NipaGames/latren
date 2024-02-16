@@ -15,7 +15,7 @@ namespace UI {
 
         LATREN_API void Start() override;
         LATREN_API void Delete() override;
-        LATREN_API void AddListItem(const std::shared_ptr<UIComponent>&);
+        LATREN_API void AddListItem(const SharedComponentPtr<UIComponent>&);
         LATREN_API void SetScrollPos(float);
     };
 

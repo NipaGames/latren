@@ -32,6 +32,7 @@ public:
     IComponent(const IComponent&);
     virtual void IStart() = 0;
     virtual void IDelete() = 0;
+    virtual void Delete() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
     virtual bool ForwardType(ComponentType) = 0;
@@ -87,7 +88,6 @@ public:
         return instance;
     }
 
-
     static TypedComponentData CreateComponentData(ComponentType);
     template <typename T>
     static TypedComponentData CreateComponentData() { return CreateComponentData(typeid(T)); }
@@ -117,10 +117,6 @@ friend class Entity;
 private:
     ComponentType type_ = typeid(Derived);
 public:
-    virtual ~Component() {
-        if (useDeleteDestructor_)
-            IDelete();
-    }
     void IStart() override {
         hasStarted_ = true;
         static_cast<Derived*>(this)->Start();

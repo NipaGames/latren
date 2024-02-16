@@ -6,8 +6,8 @@
 #include <latren/defines/opengl.h>
 #include <nlohmann/json.hpp>
 
-#include "entity/entity.h"
-#include "entity/serializable.h"
+#include "ec/entity.h"
+#include "ec/serializable.h"
 
 struct DeserializedEntity {
     std::string id;

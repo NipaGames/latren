@@ -2,8 +2,8 @@
 
 #include <latren/defines/opengl.h>
 
-#include <latren/entity/component.h>
-#include <latren/entity/transform.h>
+#include <latren/ec/component.h>
+#include <latren/ec/transform.h>
 #include <latren/event/eventhandler.h>
 
 namespace UI {

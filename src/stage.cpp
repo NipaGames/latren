@@ -1,6 +1,6 @@
 #include <latren/stage.h>
 #include <latren/game.h>
-#include <latren/entity/entitymanager.h>
+#include <latren/ec/entitymanager.h>
 #include <latren/io/files/stage.h>
 #include <latren/io/resourcemanager.h>
 

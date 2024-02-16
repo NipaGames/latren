@@ -31,29 +31,31 @@ void ListComponent::Start() {
     });
 }
 
-void ListComponent::AddListItem(const std::shared_ptr<UIComponent>& c) {
-    c->transform.pos.y = GetComponentCount() * -itemSpacing + scrollPos_;
+void ListComponent::AddListItem(const SharedComponentPtr<UIComponent>& c) {
+    c->Get().transform.pos.y = GetComponentCount() * -itemSpacing + scrollPos_;
     AddUIComponent(c);
 }
 
 void TextListComponent::AddListItem(const std::string& str) {
-    std::shared_ptr<TextComponent> textItem = std::make_shared<TextComponent>();
-    textItem->transformFrom = UITransformFrom::UI_TRANSFORM;
-    textItem->font = "FONT_FIRACODE";
-    textItem->transform.size = .5f;
-    textItem->verticalAlignment = VerticalAlignment::TOP;
+    SharedComponentPtr<TextComponent> wrapper = ComponentWrapper<TextComponent>::CreateInstance();
+    TextComponent& textItem = wrapper->Get();
+    textItem.transformFrom = UITransformFrom::UI_TRANSFORM;
+    textItem.font = "FONT_FIRACODE";
+    textItem.transform.size = .5f;
+    textItem.verticalAlignment = VerticalAlignment::TOP;
     switch (itemAlignment) {
         case HorizontalAlignment::LEFT:
-            textItem->transform.pos.x = 0.0f;
+            textItem.transform.pos.x = 0.0f;
             break;
         case HorizontalAlignment::RIGHT:
-            textItem->transform.pos.x = bgSize.x;
+            textItem.transform.pos.x = bgSize.x;
             break;
         case HorizontalAlignment::CENTER:
-            textItem->transform.pos.x = bgSize.x / 2.0f;
+            textItem.transform.pos.x = bgSize.x / 2.0f;
             break;
     }
-    textItem->horizontalAlignment = itemAlignment;
-    textItem->SetText(str);
-    ListComponent::AddListItem(textItem);
+    textItem.horizontalAlignment = itemAlignment;
+    textItem.SetText(str);
+    ListComponent::AddListItem(SharedComponentPtr<UIComponent>(&static_cast<ComponentWrapper<UIComponent>&>(*wrapper.get())));
+    wrapper.reset();
 }

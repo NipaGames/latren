@@ -1,6 +1,6 @@
 #include <latren/ui/component/uicomponent.h>
 #include <latren/ui/canvas.h>
-#include <latren/entity/entity.h>
+#include <latren/ec/entity.h>
 
 using namespace UI;
 

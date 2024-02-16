@@ -1,5 +1,5 @@
-#include <latren/entity/component.h>
-#include <latren/entity/entity.h>
+#include <latren/ec/component.h>
+#include <latren/ec/entity.h>
 
 IComponent::IComponent(const IComponent& c) :
     hasStarted_(c.hasStarted_),

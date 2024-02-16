@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include <nlohmann/json.hpp>
-#include <latren/entity/component.h>
+#include <latren/ec/component.h>
 
 // this is just messed up, sorry
 // may god have mercy on anyone who has chosen to read the following code

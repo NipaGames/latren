@@ -1,6 +1,6 @@
 #include <latren/physics/component/rigidbody.h>
 #include <latren/physics/utils.h>
-#include <latren/entity/entity.h>
+#include <latren/ec/entity.h>
 #include <latren/graphics/component/meshrenderer.h>
 
 using namespace Physics;

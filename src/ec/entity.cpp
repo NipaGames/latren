@@ -1,4 +1,4 @@
-#include <latren/entity/component.h>
+#include <latren/ec/component.h>
 #include <latren/util/idfactory.h>
 #include <latren/gamewindow.h>
 #include <latren/graphics/renderer.h>

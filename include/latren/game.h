@@ -4,7 +4,7 @@
 
 #include "gamewindow.h"
 #include "graphics/renderer.h"
-#include "entity/entitymanager.h"
+#include "ec/entitymanager.h"
 #include "io/resourcemanager.h"
 
 class Game {

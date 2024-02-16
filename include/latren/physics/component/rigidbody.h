@@ -2,7 +2,7 @@
 
 #include "../physics.h"
 #include "../raii.h"
-#include <latren/entity/component.h>
+#include <latren/ec/component.h>
 
 namespace Physics {
     enum class ColliderConstructor {

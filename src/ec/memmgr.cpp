@@ -1,4 +1,4 @@
-#include <latren/entity/memmgr.h>
+#include <latren/ec/memmgr.h>
 
 void ComponentMemoryManager::MovePools(ComponentPoolContainer&& pools) {
     componentPools_ = std::move(pools);

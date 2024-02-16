@@ -1,9 +1,9 @@
 #pragma once
 
 #include <latren/defines/opengl.h>
-#include <latren/entity/component.h>
-#include <latren/entity/entity.h>
-#include <latren/entity/serializable.h>
+#include <latren/ec/component.h>
+#include <latren/ec/entity.h>
+#include <latren/ec/serializable.h>
 
 namespace Lights {
     enum class LightType {

@@ -1,5 +1,5 @@
 #include <latren/graphics/component/meshrenderer.h>
-#include <latren/entity/entity.h>
+#include <latren/ec/entity.h>
 #include <latren/game.h>
 
 #include <limits>

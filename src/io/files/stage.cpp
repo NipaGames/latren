@@ -1,7 +1,7 @@
 #include <latren/io/files/stage.h>
 #include <latren/io/fs.h>
 #include <latren/io/paths.h>
-#include <latren/entity/transform.h>
+#include <latren/ec/transform.h>
 
 using namespace Serializer;
 using json = nlohmann::json;

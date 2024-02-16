@@ -3,7 +3,7 @@
 #include "mesh.h"
 
 #include <unordered_map>
-#include <latren/entity/transform.h>
+#include <latren/ec/transform.h>
 
 struct Object {
     std::shared_ptr<Material> defaultMaterial = nullptr;

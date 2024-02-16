@@ -6,7 +6,7 @@
 #include "../text.h"
 #include "../canvas.h"
 #include "../alignment.h"
-#include <latren/entity/component.h>
+#include <latren/ec/component.h>
 #include <latren/graphics/component/meshrenderer.h>
 #include <latren/graphics/shape.h>
 
