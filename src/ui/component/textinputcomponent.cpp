@@ -77,8 +77,8 @@ void TextInputComponent::Start() {
     });
 }
 
-void TextInputComponent::Update() {
-    TextButtonComponent::Update();
+void TextInputComponent::UIUpdate(const Canvas& c) {
+    TextButtonComponent::UIUpdate(c);
     if (!isActive) {
         Unfocus();
         return;
@@ -88,12 +88,12 @@ void TextInputComponent::Update() {
     }
 }
 
-void TextInputComponent::Render(const glm::mat4& proj) {
-    TextButtonComponent::Render(proj);
+void TextInputComponent::Render(const Canvas& c) {
+    TextButtonComponent::Render(c);
     if (inputFocus_) {
         caretMaterial->Use();
         caretMaterial->GetShader().SetUniform("time", (float) glfwGetTime() - blinkStart_);
-        caretMaterial->GetShader().SetUniform("projection", proj);
+        caretMaterial->GetShader().SetUniform("projection", c.GetProjectionMatrix());
         
         float caretTop = GetBounds().top + caretOffset.y;
         float caretBottom = GetBounds().bottom + caretOffset.y;

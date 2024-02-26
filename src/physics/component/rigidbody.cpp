@@ -6,7 +6,7 @@
 using namespace Physics;
 
 // really not feeling it right now, just copied from here
-// https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=7802
+// https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=11519
 // (this even comes with 16 bit optimizations!!!)
 std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
     meshData_ = std::make_shared<RAIIBtTriangleIndexVertexArray>();
@@ -108,6 +108,8 @@ void RigidBody::Start() {
     rigidBody->Get()->setRestitution(0.0f);
     rigidBody->Get()->setDamping(0.0f, 1.0f);
     rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+    if (mass == 0.0f)
+        rigidBody->Get()->setCollisionFlags(rigidBody->Get()->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     if (doesMassAffectGravity)
         rigidBody->Get()->setGravity(rigidBody->Get()->getGravity() * mass);
     if (disableCollisions)

@@ -15,7 +15,7 @@ void Canvas::GenerateBackgroundShape() {
 void Canvas::Draw() {
     if (!isVisible)
         return;
-    auto proj = GetProjectionMatrix();
+    glm::mat4 proj = GetProjectionMatrix();
     
     float w = bgSize.x;
     float h = bgSize.y;
@@ -55,12 +55,22 @@ void Canvas::Draw() {
             if (c.isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
-                c.Render(proj);
+                c.Render(*this);
             }
         });
     }
     if (!bgOverflow) {
         glDisable(GL_SCISSOR_TEST);
+    }
+}
+
+void Canvas::Update() {
+    for (auto& [p, layer] : components_) {
+        layer.ForEach([&](UIComponent& c) {
+            if (c.isActive) {
+                c.UIUpdate(*this);
+            }
+        });
     }
 }
 

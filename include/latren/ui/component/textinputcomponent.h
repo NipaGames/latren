@@ -24,10 +24,10 @@ namespace UI {
         LATREN_API void Unfocus();
         LATREN_API void Start();
         LATREN_API void Delete();
-        LATREN_API void Update();
+        LATREN_API void UIUpdate(const Canvas&);
         LATREN_API void SetValue(const std::string&);
         LATREN_API void UpdateCaretPos();
-        LATREN_API void Render(const glm::mat4&);
+        LATREN_API void Render(const Canvas&);
         LATREN_API void UpdateWindowSize();
     };
 };

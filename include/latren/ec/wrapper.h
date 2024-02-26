@@ -25,13 +25,8 @@ public:
     T& Get() {
         return component;
     }
-    /*template <typename Cast, typename = std::enable_if_t<std::is_base_of_v<Cast, T>>>
-    operator ComponentWrapper<Cast>&() {
-        return static_cast<ComponentWrapper<Cast>&>(static_cast<IComponentWrapper&>(*this));
-    }*/
-
     operator T&() {
-        return component;
+        return Get();
     }
 
     template <typename... Args>
@@ -42,3 +37,9 @@ public:
 
 template <typename T>
 using SharedComponentPtr = std::shared_ptr<ComponentWrapper<T>>;
+
+template <typename Cast, typename T>
+SharedComponentPtr<Cast> SharedComponentPtrCast(const SharedComponentPtr<T>& ptr) {
+    // cover your eyes
+    return std::static_pointer_cast<ComponentWrapper<Cast>>(std::static_pointer_cast<IComponentWrapper>(ptr));
+}

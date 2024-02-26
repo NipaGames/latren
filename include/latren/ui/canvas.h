@@ -96,9 +96,17 @@ namespace UI {
         CanvasBackgroundVerticalAnchor bgVerticalAnchor = CanvasBackgroundVerticalAnchor::UNDER;
         LATREN_API virtual void GenerateBackgroundShape();
         LATREN_API virtual void Draw();
+        LATREN_API virtual void Update();
 
-        void AddUIComponent(const SharedComponentPtr<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
-        void RemoveUIComponent(const SharedComponentPtr<UIComponent>& c) { _RemoveUIComponent(c); }
+        template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
+        void AddUIComponent(const SharedComponentPtr<T>& c, int p = 0) {
+            _AddUIComponent(SharedComponentPtrCast<UIComponent>(c), p);
+        };
+        template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
+        void RemoveUIComponent(const SharedComponentPtr<T>& c) {
+            _RemoveUIComponent(SharedComponentPtrCast<UIComponent>(c));
+        }
+
         void AddUIComponent(const ComponentReference<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
         void RemoveUIComponent(const ComponentReference<UIComponent>& c) { _RemoveUIComponent(c); }
 

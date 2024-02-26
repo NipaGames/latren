@@ -12,8 +12,8 @@ namespace UI {
         bool prevHovered_ = false;
         bool isHoveredOver_ = false;
     public:
-        void Update() {
-            T::Update();
+        void UIUpdate(const Canvas& c) {
+            T::UIUpdate(c);
             if (!isActive)
                 return;
             const glm::vec2& mousePos = Game::GetGameInstanceBase()->GetGameWindow().GetRelativeMousePosition();
@@ -46,6 +46,6 @@ namespace UI {
         std::shared_ptr<Material> bgMaterial = nullptr;
         
         LATREN_API void Start();
-        LATREN_API void Render(const glm::mat4&);
+        LATREN_API void Render(const Canvas&);
     };
 };

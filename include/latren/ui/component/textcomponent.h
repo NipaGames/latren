@@ -49,7 +49,7 @@ namespace UI {
         
         LATREN_API void Start() override;
         LATREN_API void Delete() override;
-        LATREN_API void Render(const glm::mat4&) override;
+        LATREN_API void Render(const Canvas&) override;
         LATREN_API void UpdateWindowSize() override;
         LATREN_API void SetText(const std::string&);
         LATREN_API void SetShader(const Shader&);

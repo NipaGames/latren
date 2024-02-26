@@ -2,14 +2,14 @@
 
 using namespace UI;
 
-void ContainerComponent::Render(const glm::mat4& proj) {
+void ContainerComponent::Render(const Canvas& c) {
     Canvas::Draw();
 }
 
-void ContainerComponent::Update() {
+void ContainerComponent::UIUpdate(const Canvas& c) {
     for (auto& [p, layer] : components_) {
-        layer.ForEachOwned([](UI::UIComponent& c) {
-            c.Update();
+        layer.ForEachOwned([this](UI::UIComponent& c) {
+            c.UIUpdate(*this);
         });
     }
 }

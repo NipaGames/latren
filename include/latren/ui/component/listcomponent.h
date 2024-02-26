@@ -15,7 +15,11 @@ namespace UI {
 
         LATREN_API void Start() override;
         LATREN_API void Delete() override;
-        LATREN_API void AddListItem(const SharedComponentPtr<UIComponent>&);
+        template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
+        void AddListItem(const SharedComponentPtr<T>& c) {
+            c->Get().transform.pos.y = GetComponentCount() * -itemSpacing + scrollPos_;
+            AddUIComponent(SharedComponentPtrCast<UIComponent>(c));
+        }
         LATREN_API void SetScrollPos(float);
     };
 

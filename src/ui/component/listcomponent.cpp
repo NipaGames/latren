@@ -11,10 +11,12 @@ void ListComponent::Delete() {
 
 void ListComponent::SetScrollPos(float pos) {
     scrollPos_ = pos;
-    /*for (int i = 0; i < children_.size(); i++) {
-        const std::shared_ptr<UIComponent>& c = children_.at(i);
-        c->transform.pos.y = i * -itemSpacing + pos;
-    }*/
+    int i = 0;
+    for (auto& [p, layer] : components_) {
+        layer.ForEach([&](UIComponent& c) {
+            c.transform.pos.y = i++ * -itemSpacing + pos;
+        });
+    }
 }
 
 void ListComponent::Start() {
@@ -29,11 +31,6 @@ void ListComponent::Start() {
         pos = std::min(pos, GetComponentCount() * itemSpacing - bgSize.y);
         SetScrollPos(pos);
     });
-}
-
-void ListComponent::AddListItem(const SharedComponentPtr<UIComponent>& c) {
-    c->Get().transform.pos.y = GetComponentCount() * -itemSpacing + scrollPos_;
-    AddUIComponent(c);
 }
 
 void TextListComponent::AddListItem(const std::string& str) {
@@ -56,5 +53,5 @@ void TextListComponent::AddListItem(const std::string& str) {
     }
     textItem.horizontalAlignment = itemAlignment;
     textItem.SetText(str);
-    ListComponent::AddListItem(std::static_pointer_cast<ComponentWrapper<UIComponent>>(std::static_pointer_cast<IComponentWrapper>(wrapper)));
+    ListComponent::AddListItem(wrapper);
 }

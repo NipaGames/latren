@@ -1,5 +1,6 @@
 #include <latren/ui/component/imagecomponent.h>
 #include <latren/ui/materials.h>
+#include <latren/ui/canvas.h>
 
 using namespace UI;
 
@@ -21,9 +22,9 @@ void ImageComponent::Start() {
     quadShape_.SetVertexData(vertices);
 }
 
-void ImageComponent::Render(const glm::mat4& proj) {
+void ImageComponent::Render(const Canvas& c) {
     material->Use();
-    material->GetShader().SetUniform("projection", proj);
+    material->GetShader().SetUniform("projection", c.GetProjectionMatrix());
     if (texture != TEXTURE_NONE) {
         material->GetShader().SetUniform("material.hasTexture", true);
         glBindTexture(GL_TEXTURE_2D, texture);

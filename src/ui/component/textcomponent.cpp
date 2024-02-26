@@ -97,12 +97,12 @@ void TextComponent::SetShader(const Shader& s) {
         RenderTexture();
 }
 
-void TextComponent::Render(const glm::mat4& projection) {
+void TextComponent::Render(const Canvas& c) {
     if (color.w == 0.0f)
         return;
     shader_.Use();
     shader_.SetUniform("textColor", color);
-    shader_.SetUniform("projection", projection);
+    shader_.SetUniform("projection", c.GetProjectionMatrix());
     shader_.SetUniform("time", (float) glfwGetTime());
     float size = GetTransform().size;
 

@@ -16,6 +16,7 @@ void Physics::Init() {
     GLOBAL_COLLISION_CONFIGURATION_ = new btDefaultCollisionConfiguration();
     GLOBAL_COLLISION_DISPATCHER_ = new btCollisionDispatcher(GLOBAL_COLLISION_CONFIGURATION_);
     GLOBAL_AXIS_SWEEP_ = new btAxisSweep3(-worldSize / 2, worldSize / 2);
+    GLOBAL_AXIS_SWEEP_->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
     GLOBAL_CONSTRAINT_SOLVER_ = new btSequentialImpulseConstraintSolver;
     GLOBAL_DYNAMICS_WORLD_ = new btDiscreteDynamicsWorld(GLOBAL_COLLISION_DISPATCHER_, GLOBAL_AXIS_SWEEP_, GLOBAL_CONSTRAINT_SOLVER_, GLOBAL_COLLISION_CONFIGURATION_);
     GLOBAL_DYNAMICS_WORLD_->setGravity(btVector3(0, -10, 0));

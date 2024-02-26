@@ -255,6 +255,7 @@ void Renderer::Render() {
     }
     glDisable(GL_DEPTH_TEST);
     for (auto& c : canvases_) {
+        c.second->Update();
         c.second->Draw();
     }
 
