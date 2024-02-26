@@ -12,7 +12,7 @@ void TextButtonComponent::Render(const Canvas& c) {
         bgMaterial->Use();
         bgMaterial->GetShader().SetUniform("projection", c.GetProjectionMatrix());
         
-        const Rect& bounds = GetBounds();
+        const Rect& bounds = c.FromLocalBounds(GetLocalBounds());
         float vertices[] = {
             // pos      // texCoords
             bounds.left, bounds.top,     0.0f, 0.0f,

@@ -85,6 +85,7 @@ namespace UI {
         std::map<int, UIComponentContainer> components_;
         size_t componentCount_;
         Shape bgShape_;
+        bool breakUpdates_ = false;
         void UpdateComponentsOnWindowSize(float);
     public:
         bool isOwnedByRenderer = false;
@@ -95,8 +96,8 @@ namespace UI {
         bool bgOverflow = true;
         CanvasBackgroundVerticalAnchor bgVerticalAnchor = CanvasBackgroundVerticalAnchor::UNDER;
         LATREN_API virtual void GenerateBackgroundShape();
-        LATREN_API virtual void Draw();
-        LATREN_API virtual void Update();
+        LATREN_API virtual void Draw(const Canvas* = nullptr);
+        LATREN_API virtual void Update(const Canvas* = nullptr);
 
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
         void AddUIComponent(const SharedComponentPtr<T>& c, int p = 0) {
@@ -112,9 +113,12 @@ namespace UI {
 
         LATREN_API void ClearComponents();
         LATREN_API size_t GetComponentCount() const;
+        LATREN_API Canvas* GetCanvas();
+        LATREN_API void BreakUpdates();
+        
         LATREN_API virtual void UpdateWindowSize(int, int);
         LATREN_API virtual glm::mat4 GetProjectionMatrix() const;
         LATREN_API virtual glm::vec2 GetOffset() const;
-        LATREN_API Canvas* GetCanvas();
+        LATREN_API virtual Rect FromLocalBounds(Rect) const;
     };
 };

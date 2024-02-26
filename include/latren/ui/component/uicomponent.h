@@ -13,6 +13,11 @@ namespace UI {
     };
     struct Rect {
         float left, right, top, bottom;
+        void operator+=(const glm::vec2&);
+        Rect operator+(const glm::vec2&) const;
+        void operator-=(const glm::vec2&);
+        Rect operator-(const glm::vec2&) const;
+        operator glm::vec2() const;
     };
     enum class UITransformFrom {
         ENTITY_TRANSFORM_2D,
@@ -37,6 +42,5 @@ namespace UI {
         virtual void UpdateWindowSize() { }
         virtual Rect GetLocalBounds() const { return Rect{ }; }
         bool ShouldRenderGlobally() const { return renderGlobally_; }
-        LATREN_API Rect GetBounds() const;
     };
 };

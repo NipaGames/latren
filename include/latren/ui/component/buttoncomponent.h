@@ -17,7 +17,7 @@ namespace UI {
             if (!isActive)
                 return;
             const glm::vec2& mousePos = Game::GetGameInstanceBase()->GetGameWindow().GetRelativeMousePosition();
-            const UI::Rect& rect = GetBounds();
+            const UI::Rect& rect = c.FromLocalBounds(GetLocalBounds());
             isHoveredOver_ = (mousePos.x > rect.left && mousePos.x < rect.right && mousePos.y > rect.bottom && mousePos.y < rect.top);
             if (isHoveredOver_) {
                 if (!prevHovered_) {

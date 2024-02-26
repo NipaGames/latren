@@ -9,7 +9,7 @@ namespace UI {
     private:
         bool inputFocus_ = false;
         bool overflow_ = false;
-        float caretPos_;
+        float textWidth_ = 0.0f;
         Shape caretShape_;
         float blinkStart_;
         EventID specialKeyEvent_ = -1;
@@ -26,8 +26,6 @@ namespace UI {
         LATREN_API void Delete();
         LATREN_API void UIUpdate(const Canvas&);
         LATREN_API void SetValue(const std::string&);
-        LATREN_API void UpdateCaretPos();
         LATREN_API void Render(const Canvas&);
-        LATREN_API void UpdateWindowSize();
     };
 };

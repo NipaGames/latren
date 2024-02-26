@@ -3,15 +3,11 @@
 using namespace UI;
 
 void ContainerComponent::Render(const Canvas& c) {
-    Canvas::Draw();
+    Canvas::Draw(&c);
 }
 
 void ContainerComponent::UIUpdate(const Canvas& c) {
-    for (auto& [p, layer] : components_) {
-        layer.ForEachOwned([this](UI::UIComponent& c) {
-            c.UIUpdate(*this);
-        });
-    }
+    Canvas::Update(&c);
 }
 
 void ContainerComponent::UpdateWindowSize() {
@@ -30,4 +26,10 @@ Rect ContainerComponent::GetLocalBounds() const {
     bounds.bottom = pos.y - bgSize.y;
     bounds.top = pos.y;
     return bounds;
+}
+
+Rect ContainerComponent::FromLocalBounds(Rect bounds) const {
+    Rect r = Canvas::FromLocalBounds(bounds);
+    r += GetLocalBounds();
+    return r;
 }

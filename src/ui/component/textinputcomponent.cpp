@@ -9,14 +9,6 @@ void TextInputComponent::Delete() {
         Game::GetGameInstanceBase()->GetGameWindow().keyboardEventHandler.Unsubscribe(Input::KeyboardEventType::TEXT_INPUT_ASCII_CHAR, asciiKeyEvent_);
 }
 
-void TextInputComponent::UpdateCaretPos() {
-    float w = Text::GetTextWidth(Game::GetGameInstanceBase()->GetResources().fontManager.Get(font), value) * GetTransform().size;
-    caretPos_ = GetBounds().left + w * aspectRatioModifier_;
-    if (forceTextSize.x != -1 && overflow_) {
-        caretPos_ = GetBounds().right;
-    }
-}
-
 void TextInputComponent::SetValue(const std::string& val) {
     blinkStart_ = (float) glfwGetTime();
     if (maxLength != -1 && val.length() > maxLength)
@@ -33,7 +25,7 @@ void TextInputComponent::SetValue(const std::string& val) {
         }
     }
     SetText(val);
-    UpdateCaretPos();
+    textWidth_ = Text::GetTextWidth(Game::GetGameInstanceBase()->GetResources().fontManager.Get(font), value) * GetTransform().size;
 }
 
 void TextInputComponent::Focus() {
@@ -48,7 +40,6 @@ void TextInputComponent::Unfocus() {
 
 void TextInputComponent::Start() {
     TextButtonComponent::Start();
-    caretPos_ = GetTransform().pos.x;
     caretShape_ = Shapes::RECTANGLE_VEC4;
 
     specialKeyEvent_ = Game::GetGameInstanceBase()->GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_SPECIAL, [&](Input::KeyboardEvent e) {
@@ -94,11 +85,16 @@ void TextInputComponent::Render(const Canvas& c) {
         caretMaterial->Use();
         caretMaterial->GetShader().SetUniform("time", (float) glfwGetTime() - blinkStart_);
         caretMaterial->GetShader().SetUniform("projection", c.GetProjectionMatrix());
-        
-        float caretTop = GetBounds().top + caretOffset.y;
-        float caretBottom = GetBounds().bottom + caretOffset.y;
-        float caretLeft = caretPos_ + caretOffset.x;
-        float caretRight = caretPos_ + caretWidth * aspectRatioModifier_ + caretOffset.x;
+        Rect bounds = c.FromLocalBounds(GetLocalBounds());
+        float caretTop = bounds.top + caretOffset.y;
+        float caretBottom = bounds.bottom + caretOffset.y;
+
+        float caretPos = bounds.left + textWidth_ * aspectRatioModifier_;
+        if (forceTextSize.x != -1 && overflow_) {
+            caretPos = bounds.right;
+        }
+        float caretLeft = caretPos + caretOffset.x;
+        float caretRight = caretPos + caretWidth * aspectRatioModifier_ + caretOffset.x;
 
         float vertices[] = {
             // pos      // texCoords
@@ -113,9 +109,4 @@ void TextInputComponent::Render(const Canvas& c) {
         caretShape_.Bind();
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
-}
-
-void TextInputComponent::UpdateWindowSize() {
-    TextButtonComponent::UpdateWindowSize();
-    UpdateCaretPos();
 }

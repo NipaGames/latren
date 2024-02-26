@@ -4,7 +4,7 @@
 #include "../canvas.h"
 
 namespace UI {
-    // basically the <div>-equivelant with display: block
+    // basically the <div>-equivelant
     class ContainerComponent : public UIComponent, public Canvas {
     using UIComponent::UIComponent;
     public:
@@ -13,5 +13,6 @@ namespace UI {
         LATREN_API void UpdateWindowSize() override;
         LATREN_API glm::vec2 GetOffset() const override;
         LATREN_API Rect GetLocalBounds() const override;
+        LATREN_API Rect FromLocalBounds(Rect) const override;
     };
 };

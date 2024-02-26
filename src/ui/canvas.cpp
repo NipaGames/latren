@@ -12,10 +12,13 @@ void Canvas::GenerateBackgroundShape() {
     bgShape_ = Shapes::RECTANGLE_VEC4;
 }
 
-void Canvas::Draw() {
+void Canvas::Draw(const Canvas* parent) {
     if (!isVisible)
         return;
     glm::mat4 proj = GetProjectionMatrix();
+    if (parent != nullptr) {
+        proj = glm::translate(proj, glm::vec3(parent->GetOffset(), 0.0f));
+    }
     
     float w = bgSize.x;
     float h = bgSize.y;
@@ -64,14 +67,17 @@ void Canvas::Draw() {
     }
 }
 
-void Canvas::Update() {
+void Canvas::Update(const Canvas* parent) {
     for (auto& [p, layer] : components_) {
         layer.ForEach([&](UIComponent& c) {
+            if (breakUpdates_)
+                return;
             if (c.isActive) {
                 c.UIUpdate(*this);
             }
         });
     }
+    breakUpdates_ = false;
 }
 
 void Canvas::ClearComponents() {
@@ -111,4 +117,25 @@ void Canvas::UpdateComponentsOnWindowSize(float m) {
 void Canvas::UpdateWindowSize(int w, int h) {
     float aspectRatioModifier = ((float) h * 1280.0f) / ((float) w * 720.0f);
     UpdateComponentsOnWindowSize(aspectRatioModifier);
+}
+
+void Canvas::BreakUpdates() {
+    breakUpdates_ = true;
+}
+
+Rect Canvas::FromLocalBounds(Rect bounds) const {
+    glm::vec2 canvasOffset = GetOffset();
+    bounds.left += canvasOffset.x;
+    bounds.right += canvasOffset.x;
+    bounds.top += canvasOffset.y;
+    bounds.bottom += canvasOffset.y;
+    if (!bgOverflow) {
+        float bottom = bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -bgSize.y;
+        bounds.top = std::min(bounds.top, canvasOffset.y + bottom + bgSize.y);
+        bounds.bottom = std::max(bounds.bottom, canvasOffset.y + bottom);
+
+        bounds.left = std::min(bounds.left, canvasOffset.x);
+        bounds.right = std::max(bounds.right, canvasOffset.x + bgSize.x);
+    }
+    return bounds;
 }
