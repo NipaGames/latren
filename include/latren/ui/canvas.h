@@ -96,20 +96,30 @@ namespace UI {
         bool bgOverflow = true;
         CanvasBackgroundVerticalAnchor bgVerticalAnchor = CanvasBackgroundVerticalAnchor::UNDER;
         LATREN_API virtual void GenerateBackgroundShape();
-        LATREN_API virtual void Draw(const Canvas* = nullptr);
-        LATREN_API virtual void Update(const Canvas* = nullptr);
+        LATREN_API virtual void Draw();
+        LATREN_API virtual void Update();
 
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
-        void AddUIComponent(const SharedComponentPtr<T>& c, int p = 0) {
-            _AddUIComponent(SharedComponentPtrCast<UIComponent>(c), p);
+        void AddUIComponent(const SharedComponentPtr<T>& gen, int p = 0) {
+            auto c = SharedComponentPtrCast<UIComponent>(gen);
+            c->Get().parent_ = this;
+            _AddUIComponent(c, p);
         };
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
-        void RemoveUIComponent(const SharedComponentPtr<T>& c) {
-            _RemoveUIComponent(SharedComponentPtrCast<UIComponent>(c));
+        void RemoveUIComponent(const SharedComponentPtr<T>& gen) {
+            auto c = SharedComponentPtrCast<UIComponent>(gen);
+            c->Get().parent = nullptr;
+            _RemoveUIComponent(c);
         }
 
-        void AddUIComponent(const ComponentReference<UIComponent>& c, int p = 0) { _AddUIComponent(c, p); };
-        void RemoveUIComponent(const ComponentReference<UIComponent>& c) { _RemoveUIComponent(c); }
+        void AddUIComponent(ComponentReference<UIComponent> c, int p = 0) {
+            c->parent_ = this;
+            _AddUIComponent(c, p);
+        };
+        void RemoveUIComponent(ComponentReference<UIComponent> c) {
+            c->parent_ = nullptr;
+            _RemoveUIComponent(c);
+        }
 
         LATREN_API void ClearComponents();
         LATREN_API size_t GetComponentCount() const;

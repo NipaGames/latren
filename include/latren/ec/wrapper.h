@@ -19,7 +19,7 @@ public:
     }
     template <typename... Args>
     ComponentWrapper(Args... args) : component(args...) { }
-    T* operator->() {
+    T* operator->() const {
         return &component;
     }
     T& Get() {

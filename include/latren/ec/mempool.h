@@ -20,7 +20,7 @@ using VerifyNonVirtualComponent = std::enable_if_t<std::is_base_of_v<IComponent,
 struct GeneralComponentReference;
 class IComponentMemoryPool {
 protected:
-    virtual IComponent* GetFirstComponent() = 0;
+    virtual const IComponent* GetFirstComponent() const = 0;
 public:
     virtual GeneralComponentReference AllocNewComponent(EntityIndex) = 0;
     virtual void DestroyComponent(EntityIndex) = 0;
@@ -32,8 +32,8 @@ public:
         return static_cast<C&>(GetComponentBase(i));
     }
     template <typename C>
-    bool CanCastComponentsTo() {
-        return dynamic_cast<C*>(GetFirstComponent()) != nullptr;
+    bool CanCastComponentsTo() const {
+        return dynamic_cast<const C*>(GetFirstComponent()) != nullptr;
     }
     virtual void ForEach(const std::function<void(IComponent&)>&) = 0;
     virtual size_t GetAllocatedBytes() const = 0;
@@ -81,7 +81,7 @@ private:
     std::vector<C> components_;
     std::unordered_map<EntityIndex, size_t> references_;
 protected:
-    IComponent* GetFirstComponent() override {
+    const IComponent* GetFirstComponent() const override {
         if (components_.empty())
             return nullptr;
         return &components_.front();

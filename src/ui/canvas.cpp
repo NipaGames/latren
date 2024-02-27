@@ -12,13 +12,10 @@ void Canvas::GenerateBackgroundShape() {
     bgShape_ = Shapes::RECTANGLE_VEC4;
 }
 
-void Canvas::Draw(const Canvas* parent) {
+void Canvas::Draw() {
     if (!isVisible)
         return;
     glm::mat4 proj = GetProjectionMatrix();
-    if (parent != nullptr) {
-        proj = glm::translate(proj, glm::vec3(parent->GetOffset(), 0.0f));
-    }
     
     float w = bgSize.x;
     float h = bgSize.y;
@@ -67,7 +64,7 @@ void Canvas::Draw(const Canvas* parent) {
     }
 }
 
-void Canvas::Update(const Canvas* parent) {
+void Canvas::Update() {
     for (auto& [p, layer] : components_) {
         layer.ForEach([&](UIComponent& c) {
             if (breakUpdates_)

@@ -3,11 +3,11 @@
 using namespace UI;
 
 void ContainerComponent::Render(const Canvas& c) {
-    Canvas::Draw(&c);
+    Canvas::Draw();
 }
 
 void ContainerComponent::UIUpdate(const Canvas& c) {
-    Canvas::Update(&c);
+    Canvas::Update();
 }
 
 void ContainerComponent::UpdateWindowSize() {
@@ -15,7 +15,7 @@ void ContainerComponent::UpdateWindowSize() {
 }
 
 glm::vec2 ContainerComponent::GetOffset() const {
-    return GetTransform().pos + offset;
+    return parent_->GetOffset() + GetTransform().pos + offset;
 }
 
 Rect ContainerComponent::GetLocalBounds() const {
