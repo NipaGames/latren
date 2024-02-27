@@ -37,9 +37,10 @@ namespace UI {
         bool isVisible = true;
         LATREN_API UITransform GetTransform() const;
         LATREN_API virtual void SetTransform(const UITransform&);
-        virtual void Render(const Canvas&) { }
-        virtual void UIUpdate(const Canvas&) { }
+        virtual void Render(const glm::mat4&) { }
+        virtual void UIUpdate() { }
         virtual void UpdateWindowSize() { }
         virtual Rect GetLocalBounds() const { return Rect{ }; }
+        LATREN_API virtual Rect GetBounds() const;
     };
 };

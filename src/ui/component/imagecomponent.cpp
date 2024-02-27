@@ -22,9 +22,9 @@ void ImageComponent::Start() {
     quadShape_.SetVertexData(vertices);
 }
 
-void ImageComponent::Render(const Canvas& c) {
+void ImageComponent::Render(const glm::mat4& proj) {
     material->Use();
-    material->GetShader().SetUniform("projection", c.GetProjectionMatrix());
+    material->GetShader().SetUniform("projection", proj);
     if (texture != TEXTURE_NONE) {
         material->GetShader().SetUniform("material.hasTexture", true);
         glBindTexture(GL_TEXTURE_2D, texture);

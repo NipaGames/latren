@@ -53,3 +53,20 @@ void UIComponent::SetTransform(const UITransform& trans) {
         parent.GetTransform().size.z = transform.size;
     }
 }
+
+Rect UIComponent::GetBounds() const {
+    Rect bounds = GetLocalBounds();
+    if (parent_ == nullptr)
+        return bounds;
+    glm::vec2 parentOffset = parent_->GetOffset();
+    bounds += parentOffset;
+    if (!parent_->bgOverflow) {
+        float bottom = parent_->bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -parent_->bgSize.y;
+        bounds.top = std::min(bounds.top, parentOffset.y + bottom + parent_->bgSize.y);
+        bounds.bottom = std::max(bounds.bottom, parentOffset.y + bottom);
+
+        bounds.left = std::min(bounds.left, parentOffset.x);
+        bounds.right = std::max(bounds.right, parentOffset.x + parent_->bgSize.x);
+    }
+    return bounds;
+}

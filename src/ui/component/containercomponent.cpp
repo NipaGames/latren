@@ -2,11 +2,11 @@
 
 using namespace UI;
 
-void ContainerComponent::Render(const Canvas& c) {
+void ContainerComponent::Render(const glm::mat4&) {
     Canvas::Draw();
 }
 
-void ContainerComponent::UIUpdate(const Canvas& c) {
+void ContainerComponent::UIUpdate() {
     Canvas::Update();
 }
 
@@ -26,10 +26,4 @@ Rect ContainerComponent::GetLocalBounds() const {
     bounds.bottom = pos.y - bgSize.y;
     bounds.top = pos.y;
     return bounds;
-}
-
-Rect ContainerComponent::FromLocalBounds(Rect bounds) const {
-    Rect r = Canvas::FromLocalBounds(bounds);
-    r += GetLocalBounds();
-    return r;
 }

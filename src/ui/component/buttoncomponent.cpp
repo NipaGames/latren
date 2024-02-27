@@ -7,12 +7,12 @@ void TextButtonComponent::Start() {
     bgShape_ = Shapes::RECTANGLE_VEC4;
 }
 
-void TextButtonComponent::Render(const Canvas& c) {
+void TextButtonComponent::Render(const glm::mat4& proj) {
     if (bgMaterial != nullptr) {
         bgMaterial->Use();
-        bgMaterial->GetShader().SetUniform("projection", c.GetProjectionMatrix());
+        bgMaterial->GetShader().SetUniform("projection", proj);
         
-        const Rect& bounds = c.FromLocalBounds(GetLocalBounds());
+        Rect bounds = GetBounds();
         float vertices[] = {
             // pos      // texCoords
             bounds.left, bounds.top,     0.0f, 0.0f,
@@ -27,5 +27,5 @@ void TextButtonComponent::Render(const Canvas& c) {
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
     
-    TextComponent::Render(c);
+    TextComponent::Render(proj);
 }

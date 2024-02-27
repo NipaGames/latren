@@ -129,6 +129,5 @@ namespace UI {
         LATREN_API virtual void UpdateWindowSize(int, int);
         LATREN_API virtual glm::mat4 GetProjectionMatrix() const;
         LATREN_API virtual glm::vec2 GetOffset() const;
-        LATREN_API virtual Rect FromLocalBounds(Rect) const;
     };
 };

@@ -55,7 +55,7 @@ void Canvas::Draw() {
             if (c.isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
-                c.Render(*this);
+                c.Render(proj);
             }
         });
     }
@@ -70,7 +70,7 @@ void Canvas::Update() {
             if (breakUpdates_)
                 return;
             if (c.isActive) {
-                c.UIUpdate(*this);
+                c.UIUpdate();
             }
         });
     }
@@ -118,21 +118,4 @@ void Canvas::UpdateWindowSize(int w, int h) {
 
 void Canvas::BreakUpdates() {
     breakUpdates_ = true;
-}
-
-Rect Canvas::FromLocalBounds(Rect bounds) const {
-    glm::vec2 canvasOffset = GetOffset();
-    bounds.left += canvasOffset.x;
-    bounds.right += canvasOffset.x;
-    bounds.top += canvasOffset.y;
-    bounds.bottom += canvasOffset.y;
-    if (!bgOverflow) {
-        float bottom = bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -bgSize.y;
-        bounds.top = std::min(bounds.top, canvasOffset.y + bottom + bgSize.y);
-        bounds.bottom = std::max(bounds.bottom, canvasOffset.y + bottom);
-
-        bounds.left = std::min(bounds.left, canvasOffset.x);
-        bounds.right = std::max(bounds.right, canvasOffset.x + bgSize.x);
-    }
-    return bounds;
 }

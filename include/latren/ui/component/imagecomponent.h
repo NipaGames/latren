@@ -20,6 +20,6 @@ namespace UI {
         bool flipVertically = false;
 
         LATREN_API void Start();
-        LATREN_API void Render(const Canvas&);
+        LATREN_API void Render(const glm::mat4&);
     };
 };
