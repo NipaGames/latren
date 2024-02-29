@@ -71,6 +71,7 @@ public:
     LATREN_API void AssignCanvas(const std::string&, UI::Canvas*);
     // takes the ownership
     LATREN_API void MoveCanvas(const std::string&, UI::Canvas*);
+    LATREN_API void RemoveCanvas(const std::string&);
     LATREN_API void CleanUp();
     size_t CountEntitiesOnFrustum() { return renderablesOnFrustum_.size(); }
     LATREN_API std::shared_ptr<Material> GetMaterial(const std::string&);

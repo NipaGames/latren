@@ -332,6 +332,13 @@ void Renderer::AssignCanvas(const std::string& id, UI::Canvas* c) {
     c->UpdateWindowSize(wndSize.x, wndSize.y);
 }
 
+void Renderer::RemoveCanvas(const std::string& id) {
+    auto it = canvases_.find(id);
+    if (it == canvases_.end())
+        return;
+    canvases_.erase(it);
+}
+
 void Renderer::MoveCanvas(const std::string& id, UI::Canvas* c) {
     AssignCanvas(id, c);
     c->isOwnedByRenderer = true;
