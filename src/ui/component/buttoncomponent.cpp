@@ -3,6 +3,7 @@
 using namespace UI;
 
 void TextButtonComponent::Start() {
+    isInteractable = true;
     TextComponent::Start();
     bgShape_ = Shapes::RECTANGLE_VEC4;
 }

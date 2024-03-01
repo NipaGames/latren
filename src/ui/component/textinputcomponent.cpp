@@ -74,7 +74,7 @@ void TextInputComponent::UIUpdate() {
         Unfocus();
         return;
     }
-    if (Input::IsMouseButtonPressedDown(GLFW_MOUSE_BUTTON_1) && !IsHoveredOver()) {
+    if (Input::IsMouseButtonPressedDown(GLFW_MOUSE_BUTTON_1) && !GetInteractionState().isHoveredOver) {
         Unfocus();
     }
 }

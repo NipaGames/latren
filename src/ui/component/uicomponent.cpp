@@ -70,3 +70,7 @@ Rect UIComponent::GetBounds() const {
     }
     return bounds;
 }
+
+const InteractionState& UIComponent::GetInteractionState() const {
+    return interaction_;
+}

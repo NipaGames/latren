@@ -1,6 +1,7 @@
 #include <latren/ui/canvas.h>
 #include <latren/ui/component/uicomponent.h>
 #include <latren/game.h>
+#include <latren/input.h>
 
 using namespace UI;
 
@@ -64,12 +65,36 @@ void Canvas::Draw() {
     }
 }
 
+void Canvas::UpdateInteractions(UIComponent& c) {
+    const UI::Rect& rect = c.GetBounds();
+    InteractionState& intr = c.interaction_;
+    intr.isHoveredOver = (mousePos_.x > rect.left && mousePos_.x < rect.right && mousePos_.y > rect.bottom && mousePos_.y < rect.top);
+    if (intr.isHoveredOver) {
+        if (!intr.prevHovered) {
+            c.eventHandler.Dispatch("mouseEnter");
+        }
+        intr.prevHovered = true;
+        if (Input::IsMouseButtonPressedDown(GLFW_MOUSE_BUTTON_1)) {
+            c.eventHandler.Dispatch("click");
+        }
+    }
+    else {
+        if (intr.prevHovered) {
+            c.eventHandler.Dispatch("mouseLeave");
+        }
+        intr.prevHovered = false;
+    }
+}
+
 void Canvas::Update() {
+    mousePos_ = Game::GetGameInstanceBase()->GetGameWindow().GetRelativeMousePosition();
     for (auto& [p, layer] : components_) {
         layer.ForEach([&](UIComponent& c) {
             if (breakUpdates_)
                 return;
             if (c.isActive) {
+                if (c.isInteractable)
+                    UpdateInteractions(c);
                 c.UIUpdate();
             }
         });

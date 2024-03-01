@@ -23,18 +23,24 @@ namespace UI {
         ENTITY_TRANSFORM_2D,
         UI_TRANSFORM
     };
+    struct InteractionState {
+        bool prevHovered = false;
+        bool isHoveredOver = false;
+    };
     class Canvas;
     class UIComponent : public Component<UIComponent> {
     friend class Canvas;
     protected:
         float aspectRatioModifier_ = 1.0f;
         Canvas* parent_ = nullptr;
+        InteractionState interaction_;
     public:
         UITransform transform { glm::vec2(0.0f), 1.0f };
         UITransformFrom transformFrom = UITransformFrom::ENTITY_TRANSFORM_2D;
         EventHandler<std::string> eventHandler;
         bool isActive = true;
         bool isVisible = true;
+        bool isInteractable = false;
         LATREN_API UITransform GetTransform() const;
         LATREN_API virtual void SetTransform(const UITransform&);
         virtual void Render(const glm::mat4&) { }
@@ -42,5 +48,6 @@ namespace UI {
         virtual void UpdateWindowSize() { }
         virtual Rect GetLocalBounds() const { return Rect{ }; }
         LATREN_API virtual Rect GetBounds() const;
+        LATREN_API virtual const InteractionState& GetInteractionState() const;
     };
 };

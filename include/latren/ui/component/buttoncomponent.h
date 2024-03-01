@@ -8,34 +8,6 @@ namespace UI {
     template <typename T>
     class ButtonComponent : public T {
     using T::T;
-    protected:
-        bool prevHovered_ = false;
-        bool isHoveredOver_ = false;
-    public:
-        void UIUpdate() {
-            T::UIUpdate();
-            if (!isActive)
-                return;
-            const glm::vec2& mousePos = Game::GetGameInstanceBase()->GetGameWindow().GetRelativeMousePosition();
-            const UI::Rect& rect = GetBounds();
-            isHoveredOver_ = (mousePos.x > rect.left && mousePos.x < rect.right && mousePos.y > rect.bottom && mousePos.y < rect.top);
-            if (isHoveredOver_) {
-                if (!prevHovered_) {
-                    eventHandler.Dispatch("mouseEnter");
-                }
-                prevHovered_ = true;
-                if (Input::IsMouseButtonPressedDown(GLFW_MOUSE_BUTTON_1)) {
-                    eventHandler.Dispatch("click");
-                }
-            }
-            else {
-                if (prevHovered_) {
-                    eventHandler.Dispatch("mouseLeave");
-                }
-                prevHovered_ = false;
-            }
-        }
-        bool IsHoveredOver() { return isHoveredOver_; }
     };
     
     class TextButtonComponent : public ButtonComponent<TextComponent>, RegisterComponent<TextButtonComponent> {

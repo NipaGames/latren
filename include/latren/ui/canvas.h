@@ -86,6 +86,7 @@ namespace UI {
         size_t componentCount_;
         Shape bgShape_;
         bool breakUpdates_ = false;
+        glm::vec2 mousePos_;
         void UpdateComponentsOnWindowSize(float);
     public:
         bool isOwnedByRenderer = false;
@@ -98,6 +99,7 @@ namespace UI {
         LATREN_API virtual void GenerateBackgroundShape();
         LATREN_API virtual void Draw();
         LATREN_API virtual void Update();
+        LATREN_API virtual void UpdateInteractions(UIComponent&);
 
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
         void AddUIComponent(const SharedComponentPtr<T>& gen, int p = 0) {
