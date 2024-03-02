@@ -1,11 +1,13 @@
 #pragma once
 
-#include "buttoncomponent.h"
+#include "textcomponent.h"
+#include "interactable.h"
+#include "imagecomponent.h"
+#include "subcomponent.h"
 #include "../materials.h"
 
 namespace UI {
-    class TextInputComponent : public TextButtonComponent, RegisterComponent<TextInputComponent> {
-    using TextButtonComponent::TextButtonComponent;
+    class TextInputComponent : public TextComponent, RegisterComponent<TextInputComponent> {
     private:
         bool inputFocus_ = false;
         bool overflow_ = false;
@@ -20,6 +22,7 @@ namespace UI {
         std::shared_ptr<Material> caretMaterial = DEFAULE_CARET_MATERIAL;
         int maxLength = -1;
         std::string value;
+        LATREN_API TextInputComponent();
         LATREN_API void Focus();
         LATREN_API void Unfocus();
         LATREN_API void Start();
@@ -27,5 +30,6 @@ namespace UI {
         LATREN_API void UIUpdate();
         LATREN_API void SetValue(const std::string&);
         LATREN_API void Render(const glm::mat4&);
+        LATREN_API Image& GetBackground();
     };
 };

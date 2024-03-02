@@ -2,24 +2,33 @@
 
 #include "uicomponent.h"
 #include "../materials.h"
+#include <latren/graphics/material.h>
 #include <latren/graphics/shape.h>
 
 namespace UI {
-    class ImageComponent : public UIComponent, RegisterComponent<ImageComponent> {
-    using UIComponent::UIComponent;
+    class Image : public UISubcomponent {
     private:
         Shape quadShape_;
     public:
         std::shared_ptr<Material> material = SOLID_UI_SHAPE_MATERIAL;
         Texture::TextureID texture = TEXTURE_NONE;
-        // this has to be specified before start
-        // since images don't usually move i'm not writing a dynamic setter yet
-        Rect rect;
-        // these too
+        
         bool flipHorizontally = false;
         bool flipVertically = false;
 
-        LATREN_API void Start();
-        LATREN_API void Render(const glm::mat4&);
+        LATREN_API void Start(UIComponent*) override;
+        LATREN_API void Render(UIComponent*, const glm::mat4&) override;
+    };
+
+    class ImageComponent : public ExtendedUIComponent<Image> {
+    public:
+        Image& GetImage() { return GetSubcomponent<Image>(0); }
+    };
+
+    class LayeredImageComponent : public ExtendedUIComponent<Image, Image> {
+    public:
+        Image& GetBackground() { return GetSubcomponent<Image>(0); }
+        Image& GetForeground() { return GetSubcomponent<Image>(1); }
+        Image& AddLayer() { return AddSubcomponent<Image>(); }
     };
 };

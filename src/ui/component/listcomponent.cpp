@@ -24,11 +24,11 @@ void ListComponent::Start() {
         if (!isActive)
             return;
         // nothing to scroll; the rendered area is smaller than the viewport
-        if (GetComponentCount() * itemSpacing < bgSize.y)
+        if (GetComponentCount() * itemSpacing < GetBackgroundSize().y)
             return;
         float pos = scrollPos_ - delta * scrollSensitivity;
         pos = std::max(pos, 0.0f);
-        pos = std::min(pos, GetComponentCount() * itemSpacing - bgSize.y);
+        pos = std::min(pos, GetComponentCount() * itemSpacing - GetBackgroundSize().y);
         SetScrollPos(pos);
     });
 }
@@ -45,10 +45,10 @@ void TextListComponent::AddListItem(const std::string& str) {
             textItem.transform.pos.x = 0.0f;
             break;
         case HorizontalAlignment::RIGHT:
-            textItem.transform.pos.x = bgSize.x;
+            textItem.transform.pos.x = GetBackgroundSize().x;
             break;
         case HorizontalAlignment::CENTER:
-            textItem.transform.pos.x = bgSize.x / 2.0f;
+            textItem.transform.pos.x = GetBackgroundSize().x / 2.0f;
             break;
     }
     textItem.horizontalAlignment = itemAlignment;

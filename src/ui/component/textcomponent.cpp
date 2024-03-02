@@ -19,6 +19,7 @@ void TextComponent::Delete() {
 }
 
 void TextComponent::Start() {
+    UIComponent::Start();
     renderingMethod_ = renderingMethod;
     shape_.numVertexAttributes = 4;
     shape_.stride = 4;
@@ -32,7 +33,7 @@ void TextComponent::Start() {
     }
 }
 
-void TextComponent::UpdateBounds() {
+void TextComponent::CalculateBounds() {
     glm::ivec2 windowSize;
     glfwGetWindowSize(Game::GetGameInstanceBase()->GetGameWindow().GetWindow(), &windowSize.x, &windowSize.y);
 
@@ -98,6 +99,7 @@ void TextComponent::SetShader(const Shader& s) {
 }
 
 void TextComponent::Render(const glm::mat4& proj) {
+    UIComponent::Render(proj);
     if (color.w == 0.0f)
         return;
     shader_.Use();
@@ -108,7 +110,7 @@ void TextComponent::Render(const glm::mat4& proj) {
 
     auto& f = Game::GetGameInstanceBase()->GetResources().fontManager.Get(font);
     float fontModifier = (float) BASE_FONT_SIZE / f.size.y;
-    UpdateBounds();
+    CalculateBounds();
     if (renderingMethod_ == TextRenderingMethod::RENDER_EVERY_FRAME) {
         Text::RenderText(f, text_, glm::vec2(bounds_.left, bounds_.top), size * fontModifier, aspectRatioModifier_, horizontalAlignment, lineSpacing * size);
     }

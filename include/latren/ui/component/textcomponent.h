@@ -3,6 +3,7 @@
 #include <latren/defines/opengl.h>
 
 #include "uicomponent.h"
+#include "subcomponent.h"
 #include "../text.h"
 #include "../canvas.h"
 #include "../alignment.h"
@@ -17,7 +18,6 @@ namespace UI {
     };
 
     class TextComponent : public UIComponent, RegisterComponent<TextComponent> {
-    using UIComponent::UIComponent;
     protected:
         Shader shader_ = Shader(Shaders::ShaderID::UI_TEXT);
         Shader textureShader_ = Shader(Shaders::ShaderID::UI_TEXT);
@@ -53,12 +53,12 @@ namespace UI {
         LATREN_API void UpdateWindowSize() override;
         LATREN_API void SetText(const std::string&);
         LATREN_API void SetShader(const Shader&);
-        LATREN_API void UpdateBounds();
+        LATREN_API void CalculateBounds();
         LATREN_API const std::string& GetText() const;
         LATREN_API const glm::vec2& GetTextSize() const;
         // get the "actual" text bounds (the ones that start from the actual first rendered pixels), variable height and bottom
-        LATREN_API const UI::Rect& GetActualTextBounds() const;
+        LATREN_API const Rect& GetActualTextBounds() const;
         // get the text bounds fixed to the font size, const height and bottom
-        LATREN_API UI::Rect GetLocalBounds() const override;
+        LATREN_API Rect GetLocalBounds() const override;
     };
 };

@@ -18,8 +18,8 @@ void Canvas::Draw() {
         return;
     glm::mat4 proj = GetProjectionMatrix();
     
-    float w = bgSize.x;
-    float h = bgSize.y;
+    float w = GetBackgroundSize().x;
+    float h = GetBackgroundSize().y;
     float top = bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? h : 0;
     float bottom = bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -h;
 
@@ -66,24 +66,7 @@ void Canvas::Draw() {
 }
 
 void Canvas::UpdateInteractions(UIComponent& c) {
-    const UI::Rect& rect = c.GetBounds();
-    InteractionState& intr = c.interaction_;
-    intr.isHoveredOver = (mousePos_.x > rect.left && mousePos_.x < rect.right && mousePos_.y > rect.bottom && mousePos_.y < rect.top);
-    if (intr.isHoveredOver) {
-        if (!intr.prevHovered) {
-            c.eventHandler.Dispatch("mouseEnter");
-        }
-        intr.prevHovered = true;
-        if (Input::IsMouseButtonPressedDown(GLFW_MOUSE_BUTTON_1)) {
-            c.eventHandler.Dispatch("click");
-        }
-    }
-    else {
-        if (intr.prevHovered) {
-            c.eventHandler.Dispatch("mouseLeave");
-        }
-        intr.prevHovered = false;
-    }
+    
 }
 
 void Canvas::Update() {
@@ -93,13 +76,15 @@ void Canvas::Update() {
             if (breakUpdates_)
                 return;
             if (c.isActive) {
-                if (c.isInteractable)
-                    UpdateInteractions(c);
                 c.UIUpdate();
             }
         });
     }
     breakUpdates_ = false;
+}
+
+const glm::vec2& Canvas::GetMousePosition() const {
+    return mousePos_;
 }
 
 void Canvas::ClearComponents() {
@@ -124,7 +109,19 @@ glm::mat4 Canvas::GetProjectionMatrix() const {
 }
 
 glm::vec2 Canvas::GetOffset() const {
-    return offset;
+    return offset_;
+}
+
+void Canvas::SetOffset(const glm::vec2& o) {
+    offset_ = o;
+}
+
+const glm::vec2& Canvas::GetBackgroundSize() const {
+    return bgSize_;
+}
+
+void Canvas::SetBackgroundSize(const glm::vec2& s) {
+    bgSize_ = s;
 }
 
 void Canvas::UpdateComponentsOnWindowSize(float m) {

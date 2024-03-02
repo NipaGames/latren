@@ -54,6 +54,30 @@ void UIComponent::SetTransform(const UITransform& trans) {
     }
 }
 
+void UIComponent::Start() {
+    for (const auto& e : subcomponents_) {
+        e->Start(this);
+    }
+}
+void UIComponent::Render(const glm::mat4& proj) {
+    for (const auto& e : subcomponents_) {
+        e->Render(this, proj);
+    }
+}
+void UIComponent::UIUpdate() {
+    for (const auto& e : subcomponents_) {
+        e->Update(this);
+    }
+}
+
+Rect UIComponent::GetLocalBounds() const {
+    return localBounds_;
+}
+
+void UIComponent::SetLocalBounds(const Rect& bounds) {
+    localBounds_ = bounds;
+}
+
 Rect UIComponent::GetBounds() const {
     Rect bounds = GetLocalBounds();
     if (parent_ == nullptr)
@@ -61,16 +85,20 @@ Rect UIComponent::GetBounds() const {
     glm::vec2 parentOffset = parent_->GetOffset();
     bounds += parentOffset;
     if (!parent_->bgOverflow) {
-        float bottom = parent_->bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -parent_->bgSize.y;
-        bounds.top = std::min(bounds.top, parentOffset.y + bottom + parent_->bgSize.y);
+        float bottom = parent_->bgVerticalAnchor == CanvasBackgroundVerticalAnchor::OVER ? 0 : -parent_->GetBackgroundSize().y;
+        bounds.top = std::min(bounds.top, parentOffset.y + bottom + parent_->GetBackgroundSize().y);
         bounds.bottom = std::max(bounds.bottom, parentOffset.y + bottom);
 
         bounds.left = std::min(bounds.left, parentOffset.x);
-        bounds.right = std::max(bounds.right, parentOffset.x + parent_->bgSize.x);
+        bounds.right = std::max(bounds.right, parentOffset.x + parent_->GetBackgroundSize().x);
     }
     return bounds;
 }
 
 const InteractionState& UIComponent::GetInteractionState() const {
     return interaction_;
+}
+
+Canvas* UIComponent::GetCanvas() const {
+    return parent_;
 }

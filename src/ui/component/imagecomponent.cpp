@@ -4,12 +4,13 @@
 
 using namespace UI;
 
-void ImageComponent::Start() {
+void Image::Start(UIComponent* c) {
     quadShape_ = Shapes::RECTANGLE_VEC4;
     float texLeft = (float) flipHorizontally;
     float texRight = (float) !flipHorizontally;
     float texTop = (float) flipVertically;
     float texBottom = (float) !flipVertically;
+    const Rect& rect = c->GetBounds();
     float vertices[] = {
         // pos                      // texCoords
         rect.left,  rect.top,       texLeft,   texTop,
@@ -22,7 +23,7 @@ void ImageComponent::Start() {
     quadShape_.SetVertexData(vertices);
 }
 
-void ImageComponent::Render(const glm::mat4& proj) {
+void Image::Render(UIComponent*, const glm::mat4& proj) {
     material->Use();
     material->GetShader().SetUniform("projection", proj);
     if (texture != TEXTURE_NONE) {

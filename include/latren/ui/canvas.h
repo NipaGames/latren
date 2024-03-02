@@ -87,13 +87,13 @@ namespace UI {
         Shape bgShape_;
         bool breakUpdates_ = false;
         glm::vec2 mousePos_;
+        glm::vec2 offset_ = glm::vec2(0.0f);
+        glm::vec2 bgSize_ = glm::vec2(1280.0f, 720.0f);
         void UpdateComponentsOnWindowSize(float);
     public:
         bool isOwnedByRenderer = false;
         bool isVisible = true;
-        glm::vec2 offset = glm::vec2(0.0f);
         std::shared_ptr<Material> bgMaterial = nullptr;
-        glm::vec2 bgSize = glm::vec2(1280.0f, 720.0f);
         bool bgOverflow = true;
         CanvasBackgroundVerticalAnchor bgVerticalAnchor = CanvasBackgroundVerticalAnchor::UNDER;
         LATREN_API virtual void GenerateBackgroundShape();
@@ -130,6 +130,11 @@ namespace UI {
         
         LATREN_API virtual void UpdateWindowSize(int, int);
         LATREN_API virtual glm::mat4 GetProjectionMatrix() const;
+        LATREN_API virtual const glm::vec2& GetMousePosition() const;
+
         LATREN_API virtual glm::vec2 GetOffset() const;
+        LATREN_API virtual void SetOffset(const glm::vec2&);
+        LATREN_API virtual const glm::vec2& GetBackgroundSize() const;
+        LATREN_API virtual void SetBackgroundSize(const glm::vec2&);
     };
 };

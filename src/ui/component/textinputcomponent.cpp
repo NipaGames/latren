@@ -1,6 +1,13 @@
 #include <latren/ui/component/textinputcomponent.h>
+#include <latren/game.h>
+#include <latren/input.h>
 
 using namespace UI;
+
+TextInputComponent::TextInputComponent() {
+    AddSubcomponent<Interactable>();
+    AddSubcomponent<Image>();
+}
 
 void TextInputComponent::Delete() {
     if (specialKeyEvent_ != -1)
@@ -30,7 +37,7 @@ void TextInputComponent::SetValue(const std::string& val) {
 
 void TextInputComponent::Focus() {
     inputFocus_ = true;
-    UpdateBounds();
+    CalculateBounds();
     SetValue(value);
 }
 
@@ -39,7 +46,7 @@ void TextInputComponent::Unfocus() {
 }
 
 void TextInputComponent::Start() {
-    TextButtonComponent::Start();
+    TextComponent::Start();
     caretShape_ = Shapes::RECTANGLE_VEC4;
 
     specialKeyEvent_ = Game::GetGameInstanceBase()->GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_SPECIAL, [&](Input::KeyboardEvent e) {
@@ -69,7 +76,7 @@ void TextInputComponent::Start() {
 }
 
 void TextInputComponent::UIUpdate() {
-    TextButtonComponent::UIUpdate();
+    TextComponent::UIUpdate();
     if (!isActive) {
         Unfocus();
         return;
@@ -80,7 +87,7 @@ void TextInputComponent::UIUpdate() {
 }
 
 void TextInputComponent::Render(const glm::mat4& proj) {
-    TextButtonComponent::Render(proj);
+    TextComponent::Render(proj);
     if (inputFocus_) {
         caretMaterial->Use();
         caretMaterial->GetShader().SetUniform("time", (float) glfwGetTime() - blinkStart_);
@@ -109,4 +116,8 @@ void TextInputComponent::Render(const glm::mat4& proj) {
         caretShape_.Bind();
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
+}
+
+Image& TextInputComponent::GetBackground() {
+    return GetSubcomponent<Image>(1);
 }
