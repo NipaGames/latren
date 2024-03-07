@@ -19,7 +19,6 @@ void TextComponent::Delete() {
 }
 
 void TextComponent::Start() {
-    UIComponent::Start();
     renderingMethod_ = renderingMethod;
     shape_.numVertexAttributes = 4;
     shape_.stride = 4;
@@ -31,6 +30,8 @@ void TextComponent::Start() {
         glGenTextures(1, &texture_);
         RenderTexture();
     }
+    CalculateBounds();
+    UIComponent::Start();
 }
 
 void TextComponent::CalculateBounds() {
