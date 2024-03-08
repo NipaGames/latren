@@ -1,5 +1,6 @@
 #include <latren/io/files/cfg.h>
 
+#include <algorithm>
 #include <sstream>
 #include <stack>
 #include <queue>
@@ -17,11 +18,19 @@ std::string StrReplace(const std::string& str, const std::string& from, const st
     }
     return s;
 }
-std::string TrimWhitespace(std::string val) {
-    while (!val.empty() && std::isspace(val.at(0))) {
-        val.erase(0, 1);
+void TrimLeadingWhitespace(std::string& str) {
+    while (!str.empty() && std::isspace(str.front())) {
+        str.erase(0, 1);
     }
-    return val;
+}
+void TrimTrailingWhitespace(std::string& str) {
+    while (!str.empty() && std::isspace(str.back())) {
+        str.pop_back();
+    }
+}
+void TrimWhitespace(std::string& str) {
+    TrimLeadingWhitespace(str);
+    TrimTrailingWhitespace(str);
 }
 
 bool ShouldParseAsNumber(const std::string& val, size_t first = 0) {
@@ -94,6 +103,17 @@ std::optional<std::string> ParseString(const std::string& val, size_t first = 0,
     return ParseString(val, first, val.length() - 1, nullptr, needsToBeWhole);
 }
 
+size_t RNextWithoutSpace(const std::string& val, size_t from) {
+    size_t pos = 0;
+    for (size_t i = from; i != 0; i--) {
+        if (!std::isspace(val.at(i))) {
+            pos = i;
+            break;
+        }
+    }
+    return pos;
+}
+
 size_t GetFirstNotInStringLiteral(const std::string& val, char find, size_t first = 0) {
     bool inLit = false;
     char lit;
@@ -124,7 +144,10 @@ ICFGField* ParseFieldValue(const std::string& val, size_t first = 0, size_t* nex
         ICFGField* thisNode = nullptr;
         bool isFloat = false;
         size_t last = val.length();
-        for (size_t i = first + 1; i < val.length(); i++) {
+        size_t fstnum = first;
+        if (val.at(fstnum) == '-')
+            fstnum++;
+        for (size_t i = fstnum; i < val.length(); i++) {
             if (val.at(i) == '.') {
                 if (!isFloat)
                     isFloat = true;
@@ -219,6 +242,13 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
     return root;
 }
 
+const std::unordered_set<char> TYPE_ANNOTATION_SPECIAL_SYMBOLS = {
+    '[', ']', '{', '}', '_', ','
+};
+bool IsValidTypeAnnotationSymbol(char c) {
+    return std::isspace(c) || std::isalnum(c) || TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(c) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end();
+}
+
 ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot = false) {
     std::string name = "";
     std::string val = node->value;
@@ -227,18 +257,49 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     
     size_t lastBeforeEquals = 0;
     if (equals != std::string::npos && equals > 0) {
-        for (size_t i = equals - 1; i >= 0; i--) {
-            if (!std::isspace(node->value.at(i))) {
-                lastBeforeEquals = i;
+        lastBeforeEquals = RNextWithoutSpace(node->value, equals - 1);
+    }
+    size_t lastOfName = lastBeforeEquals;
+
+    // type annotation before equals
+    std::string typeAnnotation = "";
+    if (equals != std::string::npos) {
+        size_t len = 0;
+        bool isTyped = false;
+        for (size_t i = lastBeforeEquals; i != 0; i--, len++) {
+            char c = node->value.at(i);
+            if (c == ':') {
+                isTyped = true;
                 break;
             }
+            if (!IsValidTypeAnnotationSymbol(c))
+                break;
+        }
+        if (isTyped) {
+            lastOfName = RNextWithoutSpace(node->value, lastBeforeEquals - len - 1);
+            typeAnnotation = node->value.substr(lastBeforeEquals - len + 1, len);
+            TrimWhitespace(typeAnnotation);
+            // remove spaces when necessary
+            for (size_t i = 0; i < typeAnnotation.length(); i++) {
+                if (std::isspace(typeAnnotation.at(i))) {
+                    // this should be safe since the whitespace is trimmed first
+                    if (
+                        TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i - 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end() ||
+                        TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i + 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end()
+                    ) {
+                        typeAnnotation.erase(i--, 1);
+                    }
+
+                }
+            }
+            std::cout << typeAnnotation << std::endl;
         }
     }
 
     // object or array (inline value left null)
     if (isRoot || equals == node->value.length() - 1) {
         if (!isRoot) {
-            std::optional<std::string> opt = ParseString(node->value, 0, lastBeforeEquals, nullptr, true);
+            std::optional<std::string> opt = ParseString(node->value, 0, lastOfName, nullptr, true);
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
@@ -258,9 +319,10 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
 
     // field name
     if (equals != std::string::npos) {
-        val = TrimWhitespace(node->value.substr(equals + 1));
+        val = node->value.substr(equals + 1);
+        TrimLeadingWhitespace(val);
         if (ShouldParseAsString(node->value)) {
-            std::optional<std::string> opt = ParseString(node->value, 0, lastBeforeEquals, nullptr, true);
+            std::optional<std::string> opt = ParseString(node->value, 0, lastOfName, nullptr, true);
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
