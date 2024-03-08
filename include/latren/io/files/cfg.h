@@ -35,7 +35,6 @@ namespace CFG {
     #define CFG_ARRAY(type) CFG::CFGFieldType::ARRAY, type
     #define CFG_REQUIRE(type) CFG::CFGFieldType::STRUCT_MEMBER_REQUIRED, type
     #define CFG_STRUCT(...) CFG::CFGFieldType::STRUCT, __VA_ARGS__
-    #define CFG_IMPORT CFG_REQUIRE(CFG::CFGFieldType::STRING), CFG::CFGFieldType::STRING
     #define CFG_VEC2(type) CFG_STRUCT(CFG_REQUIRE(type), CFG_REQUIRE(type))
 
     LATREN_API bool IsValidType(CFGFieldType, CFGFieldType, bool = true);
@@ -151,6 +150,7 @@ namespace CFG {
     public:
         std::string name;
         CFGFieldType type;
+        std::string customType;
         CFGField<std::vector<ICFGField*>>* parent;
         bool automaticallyCreated = false;
         ICFGField() = default;
@@ -225,85 +225,6 @@ namespace CFG {
             else
                 return std::vector<F>();
         }
-        std::vector<Resources::Import> ListImports(const std::string& name) const {
-            const CFGObject* obj = GetObjectByName(name);
-            if (obj == nullptr)
-                return { };
-            std::vector<Resources::Import> imports;
-            const std::vector<ICFGField*>& items = obj->GetItems();
-            for (const ICFGField* v : items) {
-                if (v->type != CFGFieldType::STRUCT) {
-                    spdlog::warn("'{}' cannot be parsed as a list of imports!", name);
-                    return { };
-                }
-                const CFGObject* import = static_cast<const CFGObject*>(v);
-                if (import == nullptr)
-                    continue;
-                const auto* pathField = import->GetItemByIndex<std::string>(0);
-                const auto* idField = import->GetItemByIndex<std::string>(1);
-                if (pathField == nullptr)
-                    continue;
-                Resources::Import importStruct;
-                if (idField != nullptr)
-                    importStruct.id = idField->GetValue();
-                importStruct.path = pathField->GetValue();
-                for (int i = 2; i < import->GetItems().size(); i++) {
-                    const ICFGField* additional = import->GetItemByIndex(i);
-                    if (additional->automaticallyCreated)
-                        continue;
-                    switch(additional->type) {
-                        case CFGFieldType::STRING:
-                            importStruct.additionalData.push_back(import->GetItemByIndex<std::string>(i)->GetValue());
-                            break;
-                        case CFGFieldType::NUMBER:
-                            if (import->GetItemByIndex(i)->HasType<int>())
-                                importStruct.additionalData.push_back(import->GetItemByIndex<int>(i)->GetValue());
-                            else
-                                importStruct.additionalData.push_back(import->GetItemByIndex<float>(i)->GetValue());
-                            break;
-                        case CFGFieldType::INTEGER:
-                            importStruct.additionalData.push_back(import->GetItemByIndex<int>(i)->GetValue());
-                            break;
-                        case CFGFieldType::FLOAT:
-                            importStruct.additionalData.push_back(import->GetItemByIndex<float>(i)->GetValue());
-                            break;
-                    }
-                }
-                imports.push_back(importStruct);
-            }
-            return imports;
-        }
-        std::vector<Resources::ShaderImport> ListShaderImports(const std::string& name) const {
-            const CFGObject* obj = GetObjectByName(name);
-            if (obj == nullptr)
-                return { };
-            std::vector<Resources::ShaderImport> imports;
-            const std::vector<ICFGField*>& items = obj->GetItems();
-            for (const ICFGField* v : items) {
-                if (v->type != CFGFieldType::STRUCT) {
-                    spdlog::warn("'{}' cannot be parsed as a list of shader imports!", name);
-                    return { };
-                }
-                const CFGObject* import = static_cast<const CFGObject*>(v);
-                if (import == nullptr)
-                    continue;
-                
-                const auto* idField = import->GetItemByIndex<std::string>(0);
-                const auto* vertField = import->GetItemByIndex<std::string>(1);
-                const auto* fragField = import->GetItemByIndex<std::string>(2);
-                const auto* geomField = import->GetItemByIndex<std::string>(3);
-                if (idField == nullptr || vertField == nullptr || fragField == nullptr || geomField == nullptr)
-                    continue;
-                Resources::ShaderImport importStruct;
-                importStruct.id = idField->GetValue();
-                importStruct.vertexPath = vertField->GetValue();
-                importStruct.fragmentPath = fragField->GetValue();
-                importStruct.geometryPath = geomField->GetValue();
-
-                imports.push_back(importStruct);
-            }
-            return imports;
-        }
         void CopyValueTo(void* ptr) const override {
             if (ptr == nullptr)
                 return;
@@ -347,11 +268,11 @@ namespace CFG {
     class ImportsFile : public CFGFileTemplate {
         CFGStructuredFields DefineFields() const override {
             return {
-                Optional("fonts", CFG_ARRAY(CFG_STRUCT(CFG_IMPORT, CFGFieldType::INTEGER))),
-                Optional("models", CFG_ARRAY(CFG_STRUCT(CFG_IMPORT))),
+                Optional("fonts", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::INTEGER))),
+                Optional("models", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)))),
                 Optional("shaders", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::STRING, CFGFieldType::STRING))),
                 Optional("stages", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)))),
-                Optional("textures", CFG_ARRAY(CFG_STRUCT(CFG_IMPORT)))
+                Optional("textures", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING))))
             };
         }
     };

@@ -2,13 +2,172 @@
 
 #include <sstream>
 #include <stack>
-#include <regex>
 #include <queue>
 #include <sstream>
 #include <magic_enum/magic_enum.hpp>
 
 using namespace Serializer;
 using namespace CFG;
+
+std::string StrReplace(const std::string& str, const std::string& from, const std::string& to) {
+    std::string s = str;
+    size_t pos;
+    while ((pos = s.find(from)) != std::string::npos) {
+        s.replace(pos, from.length(), to);
+    }
+    return s;
+}
+std::string TrimWhitespace(std::string val) {
+    while (!val.empty() && std::isspace(val.at(0))) {
+        val.erase(0, 1);
+    }
+    return val;
+}
+
+bool ShouldParseAsNumber(const std::string& val, size_t first = 0) {
+    if (val.length() <= first)
+        return false;
+    if (std::isdigit(val.at(first)))
+        return true;
+    if (val.at(first) == '-') {
+        if (val.length() < first + 2)
+            return false;
+        if (val.at(first + 1) == '-')
+            return false;
+        if (val.at(first + 1) == '.')
+            return val.length() > first + 2 && std::isdigit(val.at(2));
+        return std::isdigit(val.at(first + 1));
+    }
+    if (val.at(first) == '.') {
+        if (val.length() < first + 2)
+            return false;
+        return std::isdigit(val.at(first + 1));
+    }
+    return false;
+}
+bool ShouldParseAsString(const std::string& val, size_t first = 0) {
+    if (val.length() <= first)
+        return false;
+    return std::isalpha(val.at(first)) || val.at(first) == '"' || val.at(first) == '\'';
+}
+
+std::optional<std::string> ParseString(const std::string& val, size_t first, size_t last, size_t* next, bool needsToBeWhole = false) {
+    // with literals
+    if (val.at(first) == '\'' || val.at(first) == '"') {
+        char lit = val.at(first);
+        size_t endLit = std::string::npos;
+        for (size_t i = first + 1; i <= last; i++) {
+            if (val.at(i) == lit) {
+                endLit = i;
+                break;
+            }
+        }
+        if (endLit == std::string::npos)
+            return std::nullopt;
+        if (needsToBeWhole && endLit < last)
+            return std::nullopt;
+        if (next != nullptr)
+            *next = endLit + 1;
+        return val.substr(first + 1, endLit - first - 1);
+    }
+    // without literals
+    else {
+        for (size_t i = first + 1; i <= last; i++) {
+            if (!(std::isalnum(val.at(i)) || val.at(i) == '_')) {
+                if (!needsToBeWhole && std::isspace(val.at(i))) {
+                    if (next != nullptr)
+                        *next = first + i;
+                    return val.substr(first, i - first);
+                }
+                return std::nullopt;
+            }
+        }
+        if (next != nullptr)
+            *next = last + 1;
+        return val.substr(first, last - first + 1);
+    }
+    return std::nullopt;
+}
+std::optional<std::string> ParseString(const std::string& val, size_t first = 0, bool needsToBeWhole = false) {
+    if (val.empty())
+        return std::nullopt;
+    return ParseString(val, first, val.length() - 1, nullptr, needsToBeWhole);
+}
+
+size_t GetFirstNotInStringLiteral(const std::string& val, char find, size_t first = 0) {
+    bool inLit = false;
+    char lit;
+    for (size_t i = first; i < val.length(); i++) {
+        char c = val.at(i);
+        if (c == find && !inLit) {
+            return i;
+        }
+        else if (c == '\'' || c == '"') {
+            if (inLit && c == lit)
+                inLit = false;
+            else {
+                inLit = true;
+                lit = c;
+            }
+        }
+    }
+    return std::string::npos;
+}
+
+ICFGField* ParseFieldValue(const std::string& val, size_t first = 0, size_t* next = nullptr) {
+    if (next != nullptr)
+        *next = std::string::npos;
+    // number
+    if (val.length() <= first)
+        return nullptr;
+    if (ShouldParseAsNumber(val, first)) {
+        ICFGField* thisNode = nullptr;
+        bool isFloat = false;
+        size_t last = val.length();
+        for (size_t i = first + 1; i < val.length(); i++) {
+            if (val.at(i) == '.') {
+                if (!isFloat)
+                    isFloat = true;
+                else
+                    return nullptr;
+            }
+            else if (!std::isdigit(val.at(i))) {
+                last = i;
+                break;
+            }
+        }
+        try {
+            if (isFloat) {
+                CFGField<float>* floatNode = new CFGField<float>(CFGFieldType::FLOAT);
+                floatNode->value = std::stof(val.substr(first, last));
+                thisNode = floatNode;
+            }
+            else {
+                CFGField<int>* intNode = new CFGField<int>(CFGFieldType::INTEGER);
+                intNode->value = std::stoi(val.substr(first, last));
+                thisNode = intNode;
+            }
+        }
+        catch (const std::exception&) {
+            return nullptr;
+        }
+        if (next != nullptr)
+            *next = last;
+        return thisNode;
+    }
+    // string
+    if (ShouldParseAsString(val, first)) {
+        CFGField<std::string>* thisNode = new CFGField<std::string>(CFGFieldType::STRING);
+        std::optional<std::string> strVal = ParseString(val, first, val.length() - 1, next);
+        if (!strVal.has_value())
+            return nullptr;
+        strVal = StrReplace(strVal.value(), "\\q", "\"");
+        strVal = StrReplace(strVal.value(), "\\a", "'");
+        thisNode->value = strVal.value();
+        return thisNode;
+    }
+    return nullptr;
+}
 
 CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) {
     std::string line;
@@ -43,11 +202,15 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
             continue;
         if (indent < currentIndent) {
             currentIndent = indent;
+            if (n->parent == nullptr) {
+                delete root;
+                return nullptr;
+            }
             n = n->parent;
         }
         else if (indent > currentIndent) {
             currentIndent = indent;
-            n = n->children.at(n->children.size() - 1);
+            n = n->children.back();
         }
         CFGParseTreeNode<std::string>* newN = new CFGParseTreeNode<std::string>();
         newN->value = expr;
@@ -56,63 +219,30 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
     return root;
 }
 
-std::string replace(const std::string& str, const std::string& from, const std::string& to) {
-    std::string s = str;
-    size_t pos;
-    while ((pos = s.find(from)) != std::string::npos) {
-        s.replace(pos, from.length(), to);
-    }
-    return s;
-}
-
-const std::string MATCH_NUMBER = "(-?\\d*\\.?\\d+)";
-const std::string MATCH_STRING = "([a-zA-Z_]\\w*|\"(.*?)\"|'(.*?)')";
-
-ICFGField* ParseField(const std::string& val) {
-    std::smatch groups;
-    // number
-    if (std::regex_search(val, std::regex("^" + MATCH_NUMBER + "$"))) {
-        ICFGField* thisNode = nullptr;
-        try {
-            if (val.find('.') == std::string::npos) {
-                CFGField<int>* intNode = new CFGField<int>(CFGFieldType::INTEGER);
-                intNode->value = std::stoi(val);
-                thisNode = intNode;
-            }
-            else {
-                CFGField<float>* floatNode = new CFGField<float>(CFGFieldType::FLOAT);
-                floatNode->value = std::stof(val);
-                thisNode = floatNode;
-            }
-        }
-        catch (const std::exception&) {
-            return nullptr;
-        }
-        return thisNode;
-    }
-    // string
-    if (std::regex_search(val, groups, std::regex("^" + MATCH_STRING + "$"))) {
-        CFGField<std::string>* thisNode = new CFGField<std::string>(CFGFieldType::STRING);
-        std::string strVal = groups[3].matched ? groups[3] : groups[2].matched ? groups[2] : groups[1];
-        std::string withoutEscapes = strVal;
-        withoutEscapes = replace(withoutEscapes, "\\q", "\"");
-        withoutEscapes = replace(withoutEscapes, "\\a", "'");
-        thisNode->value = withoutEscapes;
-        return thisNode;
-    }
-    return nullptr;
-}
-
 ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot = false) {
     std::string name = "";
     std::string val = node->value;
 
-    std::smatch groups;
+    size_t equals = GetFirstNotInStringLiteral(node->value, '=');
+    
+    size_t lastBeforeEquals = 0;
+    if (equals != std::string::npos && equals > 0) {
+        for (size_t i = equals - 1; i >= 0; i--) {
+            if (!std::isspace(node->value.at(i))) {
+                lastBeforeEquals = i;
+                break;
+            }
+        }
+    }
 
-    // object or array
-    if (isRoot || std::regex_search(node->value, groups, std::regex("^" + MATCH_STRING + "\\s*:$"))) {
-        if (!isRoot)
-            name = groups[3].matched ? groups[3] : groups[2].matched ? groups[2] : groups[1];
+    // object or array (inline value left null)
+    if (isRoot || equals == node->value.length() - 1) {
+        if (!isRoot) {
+            std::optional<std::string> opt = ParseString(node->value, 0, lastBeforeEquals, nullptr, true);
+            if (!opt.has_value())
+                return nullptr;
+            name = opt.value();
+        }
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::ARRAY };
         for (auto* child : node->children) {
             ICFGField* item = ParseIndentTreeNodes(child);
@@ -125,37 +255,40 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
         }
         return thisNode;
     }
+
     // field name
-    if (std::regex_match(node->value, groups, std::regex("^" + MATCH_STRING + "\\s*:\\s*([^\\s].*)$"))) {
-        name = groups[3].matched ? groups[3] : groups[2].matched ? groups[2] : groups[1];
-        val = groups[4];
+    if (equals != std::string::npos) {
+        val = TrimWhitespace(node->value.substr(equals + 1));
+        if (ShouldParseAsString(node->value)) {
+            std::optional<std::string> opt = ParseString(node->value, 0, lastBeforeEquals, nullptr, true);
+            if (!opt.has_value())
+                return nullptr;
+            name = opt.value();
+        }
     }
+
     // struct elements
-    auto searchStart = val.cbegin();
-    std::vector<std::smatch> vals;
-    while (std::regex_search(searchStart, val.cend(), groups, std::regex("(" + MATCH_STRING + "|" + MATCH_NUMBER + ")"))) {
-        vals.push_back(groups);
-        // basically a hack around the fact that c++ regex provides no lookarounds
-        // check that the next char is space or end
-        if (groups.suffix().first != val.cend() && !std::isspace(*groups.suffix().first))
-            return nullptr;
-        searchStart = groups.suffix().first;
+    std::vector<ICFGField*> fields;
+    size_t next = 0;
+    while (next != std::string::npos && next < val.length()) {
+        ICFGField* f = ParseFieldValue(val, next, &next);
+        if (f != nullptr)
+            fields.push_back(f);
+        while (next < val.length() && std::isspace(val.at(next)))
+            next++;
     }
-    if (vals.empty())
+    if (fields.empty())
         return nullptr;
     
-    if (vals.size() > 1) {
+    if (fields.size() > 1) {
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::STRUCT };
-        for (const auto& v : vals) {
-            ICFGField* field = ParseField(v[0]);
-            if (field == nullptr)
-                return nullptr;
+        for (ICFGField* field : fields) {
             thisNode->AddItem(field);
         }
         return thisNode;
     }
     else {
-        ICFGField* field = ParseField(val);
+        ICFGField* field = fields.front();
         if (field == nullptr)
             return nullptr;
         field->name = name;
@@ -366,6 +499,10 @@ CFGObject* ParseIndentTree(CFGParseTreeNode<std::string>* strRoot) {
 
 CFGObject* CFGSerializer::ParseCFG(std::stringstream& buffer, const CFGFileTemplate* fileFormat) {
     CFGParseTreeNode<std::string>* strRoot = CreateIndentationTree(buffer);
+    if (strRoot == nullptr) {
+        spdlog::warn("Failed creating a CFG indentation tree!");
+        return nullptr;
+    }
     CFGObject* root = ParseIndentTree(strRoot);
     delete strRoot;
     if (root == nullptr) {
@@ -413,10 +550,10 @@ void CFGFieldValueToString(const ICFGField* field, std::stringstream& ss, const 
         case CFGFieldType::STRING:
             switch (format.stringLiteral) {
                 case CFGStringLiteral::APOSTROPHES:
-                    ss << '\'' + replace(field->GetValue<std::string>(), "'", "\\a") + '\'';
+                    ss << '\'' + StrReplace(field->GetValue<std::string>(), "'", "\\a") + '\'';
                     break;
                 case CFGStringLiteral::QUOTES:
-                    ss << '"' + replace(field->GetValue<std::string>(), "\"", "\\q") + '"';
+                    ss << '"' + StrReplace(field->GetValue<std::string>(), "\"", "\\q") + '"';
                     break;
             }
             break;
@@ -461,7 +598,7 @@ void CFG::Dump(const CFGObject* root, std::stringstream& ss, const CFGFormatting
             continue;
         }
         if (!child->name.empty()) {
-            ss << child->name << ": ";
+            ss << child->name << " = ";
         }
         if (child->type == CFGFieldType::ARRAY)
             ss << '\n';

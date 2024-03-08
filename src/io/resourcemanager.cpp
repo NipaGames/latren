@@ -44,12 +44,92 @@ void ResourceManager::LoadConfigs() {
     Resources::LoadConfig(Paths::VIDEO_SETTINGS_PATH, videoSettings);
 }
 
+std::vector<Resources::Import> Resources::ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj) {
+    using namespace CFG;
+
+    if (obj == nullptr)
+        return { };
+    std::vector<Import> imports;
+    const std::vector<ICFGField*>& items = obj->GetItems();
+    for (const ICFGField* v : items) {
+        if (v->type != CFGFieldType::STRUCT) {
+            spdlog::warn("'{}' cannot be parsed as a list of imports!", obj->name);
+            return { };
+        }
+        const CFGObject* import = static_cast<const CFGObject*>(v);
+        if (import == nullptr)
+            continue;
+        const auto* pathField = import->GetItemByIndex<std::string>(0);
+        if (pathField == nullptr)
+            continue;
+        Resources::Import importStruct;
+        importStruct.id = import->name;
+        importStruct.path = pathField->GetValue();
+        for (int i = 2; i < import->GetItems().size(); i++) {
+            const ICFGField* additional = import->GetItemByIndex(i);
+            if (additional->automaticallyCreated)
+                continue;
+            switch(additional->type) {
+                case CFGFieldType::STRING:
+                    importStruct.additionalData.push_back(import->GetItemByIndex<std::string>(i)->GetValue());
+                    break;
+                case CFGFieldType::NUMBER:
+                    if (import->GetItemByIndex(i)->HasType<int>())
+                        importStruct.additionalData.push_back(import->GetItemByIndex<int>(i)->GetValue());
+                    else
+                        importStruct.additionalData.push_back(import->GetItemByIndex<float>(i)->GetValue());
+                    break;
+                case CFGFieldType::INTEGER:
+                    importStruct.additionalData.push_back(import->GetItemByIndex<int>(i)->GetValue());
+                    break;
+                case CFGFieldType::FLOAT:
+                    importStruct.additionalData.push_back(import->GetItemByIndex<float>(i)->GetValue());
+                    break;
+            }
+        }
+        imports.push_back(importStruct);
+    }
+    return imports;
+}
+
+std::vector<Resources::ShaderImport> Resources::ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj) {
+    using namespace CFG;
+
+    if (obj == nullptr)
+        return { };
+    std::vector<ShaderImport> imports;
+    const std::vector<ICFGField*>& items = obj->GetItems();
+    for (const ICFGField* v : items) {
+        if (v->type != CFGFieldType::STRUCT) {
+            spdlog::warn("'{}' cannot be parsed as a list of shader imports!", obj->name);
+            return { };
+        }
+        const CFGObject* import = static_cast<const CFGObject*>(v);
+        if (import == nullptr)
+            continue;
+        
+        const auto* vertField = import->GetItemByIndex<std::string>(0);
+        const auto* fragField = import->GetItemByIndex<std::string>(1);
+        const auto* geomField = import->GetItemByIndex<std::string>(2);
+        if (vertField == nullptr || fragField == nullptr || geomField == nullptr)
+            continue;
+        Resources::ShaderImport importStruct;
+        importStruct.id = import->name;
+        importStruct.vertexPath = vertField->GetValue();
+        importStruct.fragmentPath = fragField->GetValue();
+        importStruct.geometryPath = geomField->GetValue();
+
+        imports.push_back(importStruct);
+    }
+    return imports;
+}
+
 void ResourceManager::LoadImports(const CFG::CFGObject* imports) {
-    std::vector<Resources::Import> textures = imports->ListImports("textures");
-    std::vector<Resources::Import> models = imports->ListImports("models");
-    std::vector<Resources::Import> fonts = imports->ListImports("fonts");
-    std::vector<Resources::Import> stages = imports->ListImports("stages");
-    std::vector<Resources::ShaderImport> shaders = imports->ListShaderImports("shaders");
+    std::vector<Resources::Import> textures = Resources::ListImports(imports->GetObjectByName("textures"));
+    std::vector<Resources::Import> models = Resources::ListImports(imports->GetObjectByName("models"));
+    std::vector<Resources::Import> fonts = Resources::ListImports(imports->GetObjectByName("fonts"));
+    std::vector<Resources::Import> stages = Resources::ListImports(imports->GetObjectByName("stages"));
+    std::vector<Resources::ShaderImport> shaders = Resources::ListShaderImports(imports->GetObjectByName("shaders"));
     size_t importCount =    textures.size() +
                             models.size() +
                             fonts.size() +

@@ -46,6 +46,15 @@ namespace Resources {
         ResourcePath fragmentPath;
         ResourcePath geometryPath;
     };
+    enum class ResourceType {
+        TEXTURE,
+        SHADER,
+        FONT,
+        MODEL,
+        STAGE,
+        TEXT,
+        CUSTOM
+    };
     template <typename T>
     class ResourceManager {
     private:
@@ -180,6 +189,9 @@ namespace Resources {
 
     LATREN_API void SaveConfig(const std::fs::path&, const SerializableStruct&);
     LATREN_API void LoadConfig(const std::fs::path&, SerializableStruct&);
+
+    LATREN_API std::vector<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
+    LATREN_API std::vector<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
 };
 
 class ResourceManager {
@@ -193,6 +205,10 @@ public:
     Serializer::ObjectSerializer objectsFile;
 
     Config::VideoSettings videoSettings;
+
+    // LATREN_API void OverrideImportPath(Resources::ResourceType, const std::string&);
+    // LATREN_API void OverrideImportCFGField(Resources::ResourceType, const std::string&);
+
     Resources::TextureManager textureManager;
     Resources::ShaderManager shaderManager;
     Resources::FontManager fontManager;
