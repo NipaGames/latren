@@ -102,10 +102,10 @@ namespace UI {
         LATREN_API virtual void UpdateInteractions(UIComponent&);
 
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
-        void AddUIComponent(const SharedComponentPtr<T>& gen, int p = 0) {
+        void AddUIComponent(const SharedComponentPtr<T>& gen, int layer = 0) {
             auto c = SharedComponentPtrCast<UIComponent>(gen);
             c->Get().parent_ = this;
-            _AddUIComponent(c, p);
+            _AddUIComponent(c, layer);
         };
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
         void RemoveUIComponent(const SharedComponentPtr<T>& gen) {
@@ -114,9 +114,9 @@ namespace UI {
             _RemoveUIComponent(c);
         }
 
-        void AddUIComponent(ComponentReference<UIComponent> c, int p = 0) {
+        void AddUIComponent(ComponentReference<UIComponent> c, int layer = 0) {
             c->parent_ = this;
-            _AddUIComponent(c, p);
+            _AddUIComponent(c, layer);
         };
         void RemoveUIComponent(ComponentReference<UIComponent> c) {
             c->parent_ = nullptr;
