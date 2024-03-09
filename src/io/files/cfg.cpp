@@ -192,6 +192,49 @@ ICFGField* ParseFieldValue(const std::string& val, size_t first = 0, size_t* nex
     return nullptr;
 }
 
+const std::unordered_set<char> TYPE_ANNOTATION_SPECIAL_SYMBOLS = {
+    '[', ']', '{', '}', '_', ','
+};
+bool IsValidTypeAnnotationSymbol(char c) {
+    return std::isspace(c) || std::isalnum(c) || TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(c) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end();
+}
+
+// read type annotations from right starting from pos, return empty if no annotations were found
+std::string ReadTypeAnnotation(const std::string& str, size_t& pos) {
+    size_t len = 0;
+    bool isTyped = false;
+    for (size_t i = pos; i != 0; i--, len++) {
+        char c = str.at(i);
+        if (c == ':') {
+            isTyped = true;
+            break;
+        }
+        if (!IsValidTypeAnnotationSymbol(c))
+            break;
+    }
+    if (isTyped) {
+        std::string typeAnnotation = str.substr(pos - len + 1, len);
+        TrimWhitespace(typeAnnotation);
+        // remove spaces when necessary
+        for (size_t i = 0; i < typeAnnotation.length(); i++) {
+            if (std::isspace(typeAnnotation.at(i))) {
+                // this should be safe since the whitespace is trimmed first regardless
+                if (TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i - 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end()) {
+                    typeAnnotation.erase(i, 1);
+                    i -= 1;
+                }
+                else if (TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i + 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end()) {
+                    typeAnnotation.erase(i, 1);
+                    i -= 2;
+                }
+            }
+        }
+        pos = RNextWithoutSpace(str, pos - len - 1);
+        return typeAnnotation;
+    }
+    return "";
+}
+
 CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) {
     std::string line;
     int currentIndent = 0;
@@ -242,58 +285,20 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
     return root;
 }
 
-const std::unordered_set<char> TYPE_ANNOTATION_SPECIAL_SYMBOLS = {
-    '[', ']', '{', '}', '_', ','
-};
-bool IsValidTypeAnnotationSymbol(char c) {
-    return std::isspace(c) || std::isalnum(c) || TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(c) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end();
-}
-
 ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot = false) {
     std::string name = "";
     std::string val = node->value;
+    std::string typeAnnotation = "";
 
     size_t equals = GetFirstNotInStringLiteral(node->value, '=');
     
     size_t lastBeforeEquals = 0;
+    size_t lastOfName = 0;
     if (equals != std::string::npos && equals > 0) {
         lastBeforeEquals = RNextWithoutSpace(node->value, equals - 1);
-    }
-    size_t lastOfName = lastBeforeEquals;
-
-    // type annotation before equals
-    std::string typeAnnotation = "";
-    if (equals != std::string::npos) {
-        size_t len = 0;
-        bool isTyped = false;
-        for (size_t i = lastBeforeEquals; i != 0; i--, len++) {
-            char c = node->value.at(i);
-            if (c == ':') {
-                isTyped = true;
-                break;
-            }
-            if (!IsValidTypeAnnotationSymbol(c))
-                break;
-        }
-        if (isTyped) {
-            lastOfName = RNextWithoutSpace(node->value, lastBeforeEquals - len - 1);
-            typeAnnotation = node->value.substr(lastBeforeEquals - len + 1, len);
-            TrimWhitespace(typeAnnotation);
-            // remove spaces when necessary
-            for (size_t i = 0; i < typeAnnotation.length(); i++) {
-                if (std::isspace(typeAnnotation.at(i))) {
-                    // this should be safe since the whitespace is trimmed first
-                    if (
-                        TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i - 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end() ||
-                        TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i + 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end()
-                    ) {
-                        typeAnnotation.erase(i--, 1);
-                    }
-
-                }
-            }
-            std::cout << typeAnnotation << std::endl;
-        }
+        lastOfName = lastBeforeEquals;
+        // type annotation before equals
+        typeAnnotation = ReadTypeAnnotation(node->value, lastOfName);
     }
 
     // object or array (inline value left null)
@@ -329,14 +334,25 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
         }
     }
 
+    size_t valLast = val.length() - 1;
+    // type annotations after equals
+    if (typeAnnotation.empty()) {
+        typeAnnotation = ReadTypeAnnotation(val, valLast);
+    }
+
     // struct elements
     std::vector<ICFGField*> fields;
     size_t next = 0;
-    while (next != std::string::npos && next < val.length()) {
+    while (next != std::string::npos && next <= valLast) {
         ICFGField* f = ParseFieldValue(val, next, &next);
         if (f != nullptr)
             fields.push_back(f);
-        while (next < val.length() && std::isspace(val.at(next)))
+        else {
+            for (ICFGField* f : fields)
+                delete f;
+            return nullptr;
+        }
+        while (next <= valLast && std::isspace(val.at(next)))
             next++;
     }
     if (fields.empty())
@@ -351,11 +367,11 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     }
     else {
         ICFGField* field = fields.front();
-        if (field == nullptr)
-            return nullptr;
         field->name = name;
         return field;
     }
+    for (ICFGField* f : fields)
+        delete f;
     return nullptr;
 }
 
