@@ -185,9 +185,6 @@ void TextComponent::SetText(const std::string& t) {
     padding_ = Text::GetVerticalPadding(f, text_);
 
     additionalRowsHeight_ = additionalRows_ * (f.fontHeight + lineSpacing);
-    if (additionalRowsHeight_ > 0) {
-        additionalRowsHeight_ += padding_[0];
-    }
     if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_) {
         RenderTexture();
     }

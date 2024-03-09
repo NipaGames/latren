@@ -65,7 +65,7 @@ std::vector<Resources::Import> Resources::ListImports(const CFG::CFGField<std::v
         Resources::Import importStruct;
         importStruct.id = import->name;
         importStruct.path = pathField->GetValue();
-        for (int i = 2; i < import->GetItems().size(); i++) {
+        for (int i = 1; i < import->GetItems().size(); i++) {
             const ICFGField* additional = import->GetItemByIndex(i);
             if (additional->automaticallyCreated)
                 continue;

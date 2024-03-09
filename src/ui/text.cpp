@@ -45,10 +45,8 @@ glm::ivec2 GetRowVerticalPadding(const Font& font, const T& text) {
     auto it = text.begin();
     while (it != text.end()) {
         const Character& c = font.GetChar(*it);
-        int cMax = c.bearing.y;
-        int cMin = c.bearing.y - c.size.y;
-        if (cMax > max) max = cMax;
-        if (cMin < min) min = cMin;
+        max = std::max(c.bearing.y, max);
+        min = std::min(c.bearing.y - c.size.y, min);
         ++it;
     }
     return glm::ivec2(-min, max);
@@ -134,6 +132,8 @@ void Resources::FontManager::SetFontSize(int size) {
 
 void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 pos, float size, float modifier, HorizontalAlignment alignment, float lineSpacing) {    
     glActiveTexture(GL_TEXTURE0);
+    // glClearColor(.5, 0.0, 0.0, 1.0);
+    // glClear(GL_COLOR_BUFFER_BIT);
     Shapes::RECTANGLE_VEC4.Bind();
     std::vector<int> lineWidths = GetLineWidths(font, text);
     int textWidth = *std::max_element(lineWidths.begin(), lineWidths.end());
@@ -224,25 +224,26 @@ glm::ivec2 UI::Text::GetVerticalPadding(const Font& font, const std::string& tex
         size_t last = text.find_last_of('\n');
         glm::ivec2 firstRowPadding = GetRowVerticalPadding(font, text.substr(0, first));
         glm::ivec2 lastRowPadding = GetRowVerticalPadding(font, text.substr(last + 1));
-        return glm::ivec2(lastRowPadding[0], firstRowPadding[1]);
+        return glm::ivec2(firstRowPadding[0], lastRowPadding[1]);
     }
     return GetRowVerticalPadding(font, text);
 }
 
 int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineSpacing) {
     int h = 0;
-    int additionalRows = (int) std::count(text.begin(), text.end(), '\n');
-    glm::ivec2 padding;
-    if (additionalRows > 0) {
-        h += additionalRows * (font.fontHeight + lineSpacing);
-        std::string lastRow = text.substr(text.find_last_of('\n'));
-        padding = GetRowVerticalPadding(font, lastRow);
-        if (padding[1] + padding[0] == 0)
-            padding[1] = font.padding[1];
+    int linebreaks = (int) std::count(text.begin(), text.end(), '\n');
+    if (linebreaks > 0) {
+        h += linebreaks * (font.fontHeight + lineSpacing);
+        std::string lastRow = text.substr(text.find_last_of('\n') + 1);
+        h += GetTextHeight(font, lastRow, 0);
     }
     else {
-        padding = GetVerticalPadding(font, text);
+        auto it = text.begin();
+        while (it != text.end()) {
+            h = std::max(h, font.GetChar(*it).size.y);
+            ++it;
+        }
+        h = (int) ((float) h * ((float) BASE_FONT_SIZE / font.size.y));
     }
-    h += (int) ((float) (padding[1] + padding[0]) * ((float) BASE_FONT_SIZE / font.size.y));
     return h;
 }
