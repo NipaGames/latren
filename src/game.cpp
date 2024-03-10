@@ -44,7 +44,7 @@ void Game::GameThreadInit() {
     if (resources_.videoSettings.fullscreen)
         Input::UPDATE_FULLSCREEN_ = true;
     glfwShowWindow(window_.GetWindow());
-    Serializer::CFGSerializer importsSerializer = Serializer::CFGSerializer(CFG::ImportsFile());
+    Serializer::CFGSerializer importsSerializer = Serializer::CFGSerializer(Resources::ImportsFileTemplate());
     importsSerializer.DeserializeFile(Paths::IMPORTS_PATH.string());
     entityManager_.Setup();
     PreLoad();

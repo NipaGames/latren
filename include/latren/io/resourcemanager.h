@@ -17,21 +17,13 @@
 #include "files/materials.h"
 #include "files/objects.h"
 #include "files/blueprints.h"
+#include "files/cfg.h"
 #include <latren/gamewindow.h>
 #include <latren/stage.h>
 #include <latren/graphics/shader.h>
 #include <latren/graphics/texture.h>
 #include <latren/graphics/model.h>
 #include <latren/ui/text.h>
-
-// forward declarations
-namespace CFG {
-    class ICFGField;
-    template <typename>
-    class CFGField;
-    typedef CFGField<std::vector<ICFGField*>> CFGObject;
-};
-
 
 namespace Resources {
     using AdditionalImportData = std::vector<std::variant<std::string, float, int>>;
@@ -192,6 +184,19 @@ namespace Resources {
 
     LATREN_API std::vector<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
     LATREN_API std::vector<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
+
+    class ImportsFileTemplate : public CFG::CFGFileTemplateFactory {
+        CFG::CFGCustomTypes DefineCustomTypes() const override {
+            using namespace CFG;
+            return {
+                { "Font", { CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::INTEGER) } },
+                { "Model", { CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)) } },
+                { "Shader", { CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::STRING, CFGFieldType::STRING) } },
+                { "Stage", { CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)) } },
+                { "Texture", { CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)) } }
+            };
+        }
+    };
 };
 
 class ResourceManager {

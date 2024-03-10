@@ -203,14 +203,15 @@ bool IsValidTypeAnnotationSymbol(char c) {
 std::string ReadTypeAnnotation(const std::string& str, size_t& pos) {
     size_t len = 0;
     bool isTyped = false;
-    for (size_t i = pos; i != 0; i--, len++) {
+    for (int i = (int) pos; i >= 0; i--, len++) {
         char c = str.at(i);
         if (c == ':') {
             isTyped = true;
             break;
         }
-        if (!IsValidTypeAnnotationSymbol(c))
+        if (!IsValidTypeAnnotationSymbol(c)) {
             break;
+        }
     }
     if (isTyped) {
         std::string typeAnnotation = str.substr(pos - len + 1, len);
@@ -229,10 +230,82 @@ std::string ReadTypeAnnotation(const std::string& str, size_t& pos) {
                 }
             }
         }
-        pos = RNextWithoutSpace(str, pos - len - 1);
+        if (pos - len > 0)
+            pos = RNextWithoutSpace(str, pos - len - 1);
+        else
+            pos = 0;
         return typeAnnotation;
     }
     return "";
+}
+
+std::unordered_map<std::string, CFGFieldType> CFG_PRIMITIVE_NAMES = {
+    { "Str", CFGFieldType::STRING },
+    { "Int", CFGFieldType::INTEGER },
+    { "Flt", CFGFieldType::FLOAT }
+};
+
+std::optional<std::vector<CFGFieldType>> ParseTypeAnnotation(const std::string& str, bool allowNonPrimitives = false, const CFGCustomTypes& ctypes = { }) {
+    std::vector<CFGFieldType> types;
+    int structIndents = 0;
+    int arrayIndents = 0;
+    bool awaitingTypeAfterComma = false;
+    for (size_t pos = 0; pos < str.length(); pos++) {
+        char c = str.at(pos);
+        switch (c) {
+            case '[':
+                structIndents++;
+                types.push_back(CFGFieldType::ARRAY);
+                continue;
+            case ']':
+                structIndents--;
+                continue;
+            case '{':
+                arrayIndents++;
+                types.push_back(CFGFieldType::STRUCT);
+                continue;
+            case '}':
+                arrayIndents--;
+                continue;
+        }
+        if (std::isalpha(c) || c == '_') {
+            // fuck it
+            size_t end = str.find_first_not_of(
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "abcdefghijklmnopqrstuvwxyz"
+                "0123456789_",
+            pos);
+            if (end == std::string::npos)
+                end = str.length();
+            std::string type = str.substr(pos, end - pos);
+            pos = end - 1;
+
+            auto primitive = CFG_PRIMITIVE_NAMES.find(type);
+            if (primitive == CFG_PRIMITIVE_NAMES.end()) {
+                if (!allowNonPrimitives)
+                    return std::nullopt;
+                CFGCustomTypes::const_iterator custom;
+                if (ctypes.empty() || (custom = ctypes.find(type)) == ctypes.end())
+                    types.push_back(CFGFieldType::CUSTOM);
+                else
+                    types.insert(types.end(), custom->second.begin(), custom->second.end());
+            }
+            else {
+                types.push_back(primitive->second);
+            }
+            awaitingTypeAfterComma = false;
+        }
+        else if (c == ',') {
+            awaitingTypeAfterComma = true;
+        }
+        else {
+            return std::nullopt;
+        }
+    }
+    if (arrayIndents != 0 || structIndents != 0 || awaitingTypeAfterComma) {
+        return std::nullopt;
+    }
+    return types;
 }
 
 CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) {
@@ -289,27 +362,33 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     std::string name = "";
     std::string val = node->value;
     std::string typeAnnotation = "";
+    std::vector<CFGFieldType> types;
 
     size_t equals = GetFirstNotInStringLiteral(node->value, '=');
     
-    size_t lastBeforeEquals = 0;
     size_t lastOfName = 0;
     if (equals != std::string::npos && equals > 0) {
-        lastBeforeEquals = RNextWithoutSpace(node->value, equals - 1);
-        lastOfName = lastBeforeEquals;
+        lastOfName = RNextWithoutSpace(node->value, equals - 1);
         // type annotation before equals
         typeAnnotation = ReadTypeAnnotation(node->value, lastOfName);
+        if (!typeAnnotation.empty()) {
+            auto parsedTypes = ParseTypeAnnotation(typeAnnotation, true);
+            if (!parsedTypes.has_value())
+                return nullptr;
+            types = parsedTypes.value();
+        }
     }
 
     // object or array (inline value left null)
     if (isRoot || equals == node->value.length() - 1) {
-        if (!isRoot) {
+        if (!isRoot && lastOfName > 0) {
             std::optional<std::string> opt = ParseString(node->value, 0, lastOfName, nullptr, true);
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
         }
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::ARRAY };
+        thisNode->typeAnnotation = typeAnnotation;
         for (auto* child : node->children) {
             ICFGField* item = ParseIndentTreeNodes(child);
             if (item != nullptr)
@@ -338,6 +417,12 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     // type annotations after equals
     if (typeAnnotation.empty()) {
         typeAnnotation = ReadTypeAnnotation(val, valLast);
+        if (!typeAnnotation.empty()) {
+            auto parsedTypes = ParseTypeAnnotation(typeAnnotation, true);
+            if (!parsedTypes.has_value())
+                return nullptr;
+            types = parsedTypes.value();
+        }
     }
 
     // struct elements
@@ -358,17 +443,21 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     if (fields.empty())
         return nullptr;
     
+    ICFGField* ret = nullptr;
     if (fields.size() > 1) {
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::STRUCT };
         for (ICFGField* field : fields) {
             thisNode->AddItem(field);
         }
-        return thisNode;
+        ret = thisNode;
     }
     else {
-        ICFGField* field = fields.front();
-        field->name = name;
-        return field;
+        ret = fields.front();
+        ret->name = name;
+    }
+    if (ret != nullptr) {
+        ret->typeAnnotation = typeAnnotation;
+        return ret;
     }
     for (ICFGField* f : fields)
         delete f;
@@ -563,8 +652,28 @@ bool ValidateCFGFields(CFGObject* node, const CFGStructuredFields& fields) {
     return true;
 }
 
-bool ValidateCFG(CFGObject* root, const CFGFileTemplate* fileFormat) {
-    return ValidateCFGFields(root, fileFormat->DefineFields());
+bool ConvertCFGFieldTypesToPrimitives(ICFGField* node, const CFGCustomTypes& types) {
+    std::vector<CFGFieldType> conformTypes;
+    if (!node->typeAnnotation.empty()) {
+        std::vector<CFGFieldType> conformTypes = ParseTypeAnnotation(node->typeAnnotation, true, types).value();
+        return ValidateCFGFieldType(node, conformTypes);
+    }
+    if (node->type == CFGFieldType::STRUCT || node->type == CFGFieldType::ARRAY) {
+        CFGObject* obj = static_cast<CFGObject*>(node);
+        if (obj == nullptr)
+            return false;
+        for (ICFGField* f : obj->GetItems()) {
+            if (!ConvertCFGFieldTypesToPrimitives(f, types))
+                return false;
+        }
+    }
+    return true;
+}
+
+bool ValidateCFG(CFGObject* root, const CFGFileTemplate& tmp) {
+    if (!ConvertCFGFieldTypesToPrimitives(root, tmp.types))
+        return false;
+    return ValidateCFGFields(root, tmp.fields);
 }
 
 CFGSerializer::~CFGSerializer() {
@@ -575,7 +684,7 @@ CFGObject* ParseIndentTree(CFGParseTreeNode<std::string>* strRoot) {
     return static_cast<CFGObject*>(ParseIndentTreeNodes(strRoot, true));
 }
 
-CFGObject* CFGSerializer::ParseCFG(std::stringstream& buffer, const CFGFileTemplate* fileFormat) {
+CFGObject* CFGSerializer::ParseCFG(std::stringstream& buffer, const CFGFileTemplate& fileFormat) {
     CFGParseTreeNode<std::string>* strRoot = CreateIndentationTree(buffer);
     if (strRoot == nullptr) {
         spdlog::warn("Failed creating a CFG indentation tree!");
@@ -588,25 +697,23 @@ CFGObject* CFGSerializer::ParseCFG(std::stringstream& buffer, const CFGFileTempl
         delete root;
         return nullptr;
     }
-    if (fileFormat != nullptr) {
-        if (!ValidateCFG(root, fileFormat)) {
-            spdlog::warn("Field validation failed!");
-            delete root;
-            return nullptr;
-        }
+    if (!ValidateCFG(root, fileFormat)) {
+        spdlog::warn("Field validation failed!");
+        delete root;
+        return nullptr;
     }
     return root;
 }
 
-bool CFGSerializer::Validate(const CFGStructuredFields& fields) {
-    return ValidateCFGFields(data_, fields);
+bool CFGSerializer::Validate(const CFGFileTemplate& tmp) {
+    return ValidateCFG(data_, tmp);
 }
 
 std::string CFGDecimal(const ICFGField* field) {
     std::string decimal = std::to_string(field->GetValue<float>());
     // remove trailing zeros from the decimal part
-    while (decimal.size() > 3 && decimal.at(decimal.size() - 1) == '0') {
-        if (decimal.at(decimal.size() - 2) == '.')
+    while (decimal.length() > 3 && decimal.at(decimal.length() - 1) == '0') {
+        if (decimal.at(decimal.length() - 2) == '.')
             break;
         decimal.pop_back();
     }

@@ -12,8 +12,7 @@ namespace CFG {
     template <typename>
     class CFGField;
     typedef CFGField<std::vector<ICFGField*>> CFGObject;
-    struct CFGStructuredField;
-    typedef std::vector<CFGStructuredField> CFGStructuredFields;
+    struct CFGFileTemplate;
 };
 
 enum class MetaType {
@@ -72,7 +71,7 @@ public:
     LATREN_API CFG::CFGObject* CFGSerialize() const;
     LATREN_API void CFGDeserialize(const CFG::CFGObject*);
     const std::vector<SerializableStructMemberData>& GetMembers() const { return members_; }
-    LATREN_API CFG::CFGStructuredFields CreateCFGTemplate() const;
+    LATREN_API CFG::CFGFileTemplate CreateCFGTemplate() const;
 };
 
 #define _GENERATE_META_NAME(x, y) x##y

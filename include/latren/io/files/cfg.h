@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../serializer.h"
-#include "../resourcemanager.h"
 #include <vector>
 #include <initializer_list>
 #include <string>
@@ -30,7 +29,8 @@ namespace CFG {
         ARRAY,
         STRUCT,
         STRUCT_MEMBER_REQUIRED,
-        RAW
+        RAW,
+        CUSTOM
     };
     #define CFG_ARRAY(type) CFG::CFGFieldType::ARRAY, type
     #define CFG_REQUIRE(type) CFG::CFGFieldType::STRUCT_MEMBER_REQUIRED, type
@@ -39,49 +39,6 @@ namespace CFG {
 
     LATREN_API bool IsValidType(CFGFieldType, CFGFieldType, bool = true);
     
-    template <typename T>
-    ICFGField* CreateNewCFGField(const void* ptr) {
-        CFGField<T>* field = new CFGField<T>();
-        if (ptr != nullptr)
-            field->value = *static_cast<const T*>(ptr);
-        return field;
-    }
-
-    // ONLY COPIES THE VALUE, DOES NOT RETURN ANY TYPE OR NAME!
-    template <typename T>
-    ICFGField* CreateNewCFGField(const ICFGField* copyFrom = nullptr) {
-        CFGField<T>* field = new CFGField<T>();
-        if (copyFrom != nullptr)
-            field->value = static_cast<const CFGField<T>*>(copyFrom)->value;
-        return field;
-    }
-    template <typename T>
-    ICFGField* CreateNewCFGField(CFGFieldType type, const T* copyFrom) {
-        ICFGField* field;
-        switch (type) {
-            case CFGFieldType::STRING:
-                field = CreateNewCFGField<std::string>(copyFrom);
-                break;
-            case CFGFieldType::NUMBER:
-            case CFGFieldType::FLOAT:
-                field = CreateNewCFGField<float>(copyFrom);
-                break;
-            case CFGFieldType::INTEGER:
-                field = CreateNewCFGField<int>(copyFrom);
-                break;
-            case CFGFieldType::ARRAY:
-                field = CreateNewCFGField<std::vector<ICFGField*>>(copyFrom);
-                break;
-            case CFGFieldType::STRUCT:
-                field = CreateNewCFGField<std::vector<ICFGField*>>(copyFrom);
-                break;
-        }
-        field->type = type;
-        return field;
-    }
-    LATREN_API ICFGField* CreateNewCFGField(CFGFieldType);
-    LATREN_API ICFGField* CreateNewCFGField(const ICFGField*);
-
     enum class CFGStringLiteral {
         APOSTROPHES,
         QUOTES
@@ -96,10 +53,6 @@ namespace CFG {
         2,
         CFGStringLiteral::APOSTROPHES
     };
-    // serialize cfg object to a stringstream
-    LATREN_API void Dump(const CFGObject*, std::stringstream&, const CFGFormatting& = STANDARD_FORMATTING);
-    // serialize cfg object to a string
-    LATREN_API std::string Dump(const CFGObject*, const CFGFormatting& = STANDARD_FORMATTING);
     
     struct CFGStructuredField {
         std::string name;
@@ -146,12 +99,15 @@ namespace CFG {
         return CFGStructuredField { n, false, t... };
     }
 
+    template <typename T>
+    class CFGField;
+
     class ICFGField {
     public:
         std::string name;
         CFGFieldType type;
-        std::string customType;
-        CFGField<std::vector<ICFGField*>>* parent;
+        std::string typeAnnotation;
+        CFGField<std::vector<ICFGField*>>* parent = nullptr;
         bool automaticallyCreated = false;
         ICFGField() = default;
         ICFGField(CFGFieldType t) : type(t) { }
@@ -238,6 +194,54 @@ namespace CFG {
     typedef CFGField<std::vector<ICFGField*>> CFGObject;
 
     template <typename T>
+    ICFGField* CreateNewCFGField(const void* ptr) {
+        CFGField<T>* field = new CFGField<T>();
+        if (ptr != nullptr)
+            field->value = *static_cast<const T*>(ptr);
+        return field;
+    }
+
+    // ONLY COPIES THE VALUE, DOES NOT RETURN ANY TYPE OR NAME!
+    template <typename T>
+    ICFGField* CreateNewCFGField(const ICFGField* copyFrom = nullptr) {
+        CFGField<T>* field = new CFGField<T>();
+        if (copyFrom != nullptr)
+            field->value = static_cast<const CFGField<T>*>(copyFrom)->value;
+        return field;
+    }
+    template <typename T>
+    ICFGField* CreateNewCFGField(CFGFieldType type, const T* copyFrom) {
+        ICFGField* field;
+        switch (type) {
+            case CFGFieldType::STRING:
+                field = CreateNewCFGField<std::string>(copyFrom);
+                break;
+            case CFGFieldType::NUMBER:
+            case CFGFieldType::FLOAT:
+                field = CreateNewCFGField<float>(copyFrom);
+                break;
+            case CFGFieldType::INTEGER:
+                field = CreateNewCFGField<int>(copyFrom);
+                break;
+            case CFGFieldType::ARRAY:
+                field = CreateNewCFGField<std::vector<ICFGField*>>(copyFrom);
+                break;
+            case CFGFieldType::STRUCT:
+                field = CreateNewCFGField<std::vector<ICFGField*>>(copyFrom);
+                break;
+        }
+        field->type = type;
+        return field;
+    }
+    LATREN_API ICFGField* CreateNewCFGField(CFGFieldType);
+    LATREN_API ICFGField* CreateNewCFGField(const ICFGField*);
+
+    // serialize cfg object to a stringstream
+    LATREN_API void Dump(const CFGObject*, std::stringstream&, const CFGFormatting& = STANDARD_FORMATTING);
+    // serialize cfg object to a string
+    LATREN_API std::string Dump(const CFGObject*, const CFGFormatting& = STANDARD_FORMATTING);
+
+    template <typename T>
     struct CFGParseTreeNode {
         std::vector<CFGParseTreeNode<T>*> children;
         CFGParseTreeNode<T>* parent = nullptr;
@@ -260,38 +264,35 @@ namespace CFG {
     const CFGTypeMap& GetCFGTypeMap();
 
     typedef std::vector<CFGStructuredField> CFGStructuredFields;
-    class CFGFileTemplate {
-    public:
-        virtual CFGStructuredFields DefineFields() const { return { }; }
+    typedef std::unordered_map<std::string, std::vector<CFGFieldType>> CFGCustomTypes;
+
+    struct CFGFileTemplate {
+        CFGStructuredFields fields;
+        CFGCustomTypes types;
     };
 
-    class ImportsFile : public CFGFileTemplate {
-        CFGStructuredFields DefineFields() const override {
-            return {
-                Optional("fonts", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::INTEGER))),
-                Optional("models", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)))),
-                Optional("shaders", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING), CFG_REQUIRE(CFGFieldType::STRING), CFGFieldType::STRING, CFGFieldType::STRING))),
-                Optional("stages", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING)))),
-                Optional("textures", CFG_ARRAY(CFG_STRUCT(CFG_REQUIRE(CFGFieldType::STRING))))
-            };
-        }
+    class CFGFileTemplateFactory {
+    public:
+        virtual CFGStructuredFields DefineFields() const { return { }; }
+        virtual CFGCustomTypes DefineCustomTypes() const { return { }; }
+        CFGFileTemplate CreateTemplate() const { return { DefineFields(), DefineCustomTypes() }; }
+        operator CFGFileTemplate() { return CreateTemplate(); }
     };
 }
 
 namespace Serializer {
     class CFGSerializer : public IFileSerializer<CFG::CFGObject*> {
     private:
-        const CFG::CFGFileTemplate* fileTemplate_ = nullptr;
+        CFG::CFGFileTemplate fileTemplate_;
     public:
         LATREN_API ~CFGSerializer();
-        CFGSerializer(const CFG::CFGFileTemplate* f) : fileTemplate_(f) { }
-        CFGSerializer(const CFG::CFGFileTemplate& f) : fileTemplate_(&f) { }
+        CFGSerializer(const CFG::CFGFileTemplate& f) : fileTemplate_(f) { }
         CFGSerializer() = default;
-        LATREN_API static CFG::CFGObject* ParseCFG(std::stringstream&, const CFG::CFGFileTemplate* = nullptr);
-        LATREN_API bool Validate(const CFG::CFGStructuredFields&);
+        LATREN_API static CFG::CFGObject* ParseCFG(std::stringstream&, const CFG::CFGFileTemplate&);
+        LATREN_API bool Validate(const CFG::CFGFileTemplate&);
         LATREN_API bool StreamRead(std::ifstream&) override;
         LATREN_API bool StreamWrite(std::ofstream&) override;
-        void SetCFGFileTemplate(const CFG::CFGFileTemplate* f) { fileTemplate_ = f; }
+        void SetCFGFileTemplate(const CFG::CFGFileTemplate& f) { fileTemplate_ = f; }
     };
 }
 

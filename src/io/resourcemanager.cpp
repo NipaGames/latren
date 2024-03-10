@@ -124,53 +124,98 @@ std::vector<Resources::ShaderImport> Resources::ListShaderImports(const CFG::CFG
     return imports;
 }
 
-void ResourceManager::LoadImports(const CFG::CFGObject* imports) {
-    std::vector<Resources::Import> textures = Resources::ListImports(imports->GetObjectByName("textures"));
-    std::vector<Resources::Import> models = Resources::ListImports(imports->GetObjectByName("models"));
-    std::vector<Resources::Import> fonts = Resources::ListImports(imports->GetObjectByName("fonts"));
-    std::vector<Resources::Import> stages = Resources::ListImports(imports->GetObjectByName("stages"));
-    std::vector<Resources::ShaderImport> shaders = Resources::ListShaderImports(imports->GetObjectByName("shaders"));
-    size_t importCount =    textures.size() +
-                            models.size() +
-                            fonts.size() +
-                            stages.size() +
-                            shaders.size();
-
-    eventHandler.Dispatch(ResourceLoadEvent::IMPORTS_INDEXED, importCount);
-
+void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     auto resourceLoadEvent = [&](const std::string& resource) {
         eventHandler.Dispatch<const std::string&>(ResourceLoadEvent::ON_IMPORT_LOAD, resource);
     };
+    std::unordered_map<std::string, Resources::ResourceType> cfgTypes = {
+        { "[Texture]", Resources::ResourceType::TEXTURE },
+        { "[Model]", Resources::ResourceType::MODEL },
+        { "[Font]", Resources::ResourceType::FONT },
+        { "[Stage]", Resources::ResourceType::STAGE },
+        { "[Shader]", Resources::ResourceType::SHADER }
+    };
+    std::unordered_map<Resources::ResourceType, std::function<void(const CFG::CFGObject*)>> loaders = {
+        {
+            Resources::ResourceType::TEXTURE,
+            [&](const CFG::CFGObject* obj) {
+                EventID textureLoadEvent = textureManager.onResourceLoad.Subscribe(resourceLoadEvent);
+                textureManager.LoadImports(Resources::ListImports(obj));
+                textureManager.onResourceLoad.Unsubscribe(textureLoadEvent);
+            }
+        },
+        {
+            Resources::ResourceType::MODEL,
+            [&](const CFG::CFGObject* obj) {
+                EventID modelLoadEvent = modelManager.onResourceLoad.Subscribe(resourceLoadEvent);
+                modelManager.LoadImports(Resources::ListImports(obj));
+                modelManager.onResourceLoad.Unsubscribe(modelLoadEvent);
+            }
+        },
+        {
+            Resources::ResourceType::FONT,
+            [&](const CFG::CFGObject* obj) {
+                EventID fontLoadEvent = fontManager.onResourceLoad.Subscribe(resourceLoadEvent);
+                fontManager.LoadImports(Resources::ListImports(obj));
+                fontManager.onResourceLoad.Unsubscribe(fontLoadEvent);
+            }
+        },
+        {
+            Resources::ResourceType::STAGE,
+            [&](const CFG::CFGObject* obj) {
+                EventID stageLoadEvent = stageManager.onResourceLoad.Subscribe(resourceLoadEvent);
+                stageManager.LoadImports(Resources::ListImports(obj));
+                stageManager.onResourceLoad.Unsubscribe(stageLoadEvent);
+                stageManager.UseBlueprints(nullptr);
+            }
+        },
+        {
+            Resources::ResourceType::SHADER,
+            [&](const CFG::CFGObject* obj) {
+                EventID shaderLoadEvent = shaderManager.onResourceLoad.Subscribe(resourceLoadEvent);
+                shaderManager.LoadImports(Resources::ListShaderImports(obj));
+                shaderManager.onResourceLoad.Unsubscribe(shaderLoadEvent);
+            }
+        }
+    };
+    
+    size_t importCount = 0;
+    std::unordered_map<Resources::ResourceType, std::vector<const CFG::CFGObject*>> imports;
+    for (const auto& importList : root->GetItems()) {
+        if (importList->type != CFG::CFGFieldType::ARRAY)
+            continue;
+        auto t = cfgTypes.find(importList->typeAnnotation);
+        if (t == cfgTypes.end())
+            continue;
+        const CFG::CFGObject* importListObj = static_cast<const CFG::CFGObject*>(importList);
+        imports[t->second].push_back(static_cast<const CFG::CFGObject*>(importListObj));
+        importCount += importListObj->GetItems().size();
+    }
 
-    EventID textureLoadEvent = textureManager.onResourceLoad.Subscribe(resourceLoadEvent);
-    textureManager.LoadImports(textures);
-    textureManager.onResourceLoad.Unsubscribe(textureLoadEvent);
+    auto loadResources = [&](Resources::ResourceType t) {
+        for (const auto& list : imports[t]) {
+            loaders[t](list);
+        }
+    };
 
-    EventID shaderLoadEvent = shaderManager.onResourceLoad.Subscribe(resourceLoadEvent);
-    shaderManager.LoadImports(shaders);
-    shaderManager.onResourceLoad.Unsubscribe(shaderLoadEvent);
+    eventHandler.Dispatch(ResourceLoadEvent::IMPORTS_INDEXED, importCount);
+
+    loadResources(Resources::ResourceType::TEXTURE);
+    loadResources(Resources::ResourceType::SHADER);
 
     materialsFile.DeserializeFile(Paths::MATERIALS_PATH.string());
     materialsFile.Register(Game::GetGameInstanceBase()->GetRenderer().GetMaterials());
 
     objectsFile.DeserializeFile(Paths::OBJECTS_PATH.string());
 
-    EventID modelLoadEvent = modelManager.onResourceLoad.Subscribe(resourceLoadEvent);
-    modelManager.LoadImports(models);
-    modelManager.onResourceLoad.Unsubscribe(modelLoadEvent);
-
-    EventID fontLoadEvent = fontManager.onResourceLoad.Subscribe(resourceLoadEvent);
-    fontManager.LoadImports(fonts);
-    fontManager.onResourceLoad.Unsubscribe(fontLoadEvent);
+    loadResources(Resources::ResourceType::MODEL);
+    loadResources(Resources::ResourceType::FONT);
 
     Serializer::BlueprintSerializer blueprints;
     blueprints.DeserializeFile(Paths::BLUEPRINTS_PATH.string());
     stageManager.UseBlueprints(&blueprints);
     
-    EventID stageLoadEvent = stageManager.onResourceLoad.Subscribe(resourceLoadEvent);
-    stageManager.LoadImports(stages);
-    stageManager.onResourceLoad.Unsubscribe(stageLoadEvent);
-    stageManager.UseBlueprints(nullptr);
+    loadResources(Resources::ResourceType::STAGE);
 }
 
 void ResourceManager::UnloadAll() {

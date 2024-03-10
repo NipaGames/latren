@@ -123,8 +123,8 @@ void SerializableStruct::CFGDeserialize(const CFGObject* obj) {
     }
 }
 
-CFG::CFGStructuredFields SerializableStruct::CreateCFGTemplate() const {
-    CFG::CFGStructuredFields fields = CFG::CFGStructuredFields();
+CFG::CFGFileTemplate SerializableStruct::CreateCFGTemplate() const {
+    CFG::CFGFileTemplate tmp;
     /*for (const auto& m : members_) {
         if (m.metaType != MetaType::NONE)
             continue;
@@ -134,5 +134,5 @@ CFG::CFGStructuredFields SerializableStruct::CreateCFGTemplate() const {
         }
         fields.push_back(CFG::Mandatory(m.name, CFG_TYPES_.at(m.type->hash_code())));
     }*/
-    return fields;
+    return tmp;
 }
