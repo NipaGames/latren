@@ -83,7 +83,6 @@ CFGObject* SerializableStruct::CFGSerialize() const {
                         structMember = CreateNewCFGField(type, &static_cast<const glm::vec2*>(m.addr)->operator[](index++));
                     else if (m.type->hash_code() == typeid(glm::ivec2).hash_code())
                         structMember = CreateNewCFGField(type, &static_cast<const glm::ivec2*>(m.addr)->operator[](index++));
-                    structMember->type = type;
                     structObj->AddItem(structMember);
                 }
                 field = structObj;

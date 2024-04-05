@@ -9,11 +9,11 @@
 typedef std::string ResourceName;
 
 namespace Resources {
-    TextureManager::TextureManager() : ResourceManager<Texture::TextureID>(Paths::TEXTURES_DIR, ResourceName("texture")) { }
-    ShaderManager::ShaderManager() : ResourceManager<GLuint>(Paths::SHADER_DIR) { }
-    FontManager::FontManager() : ResourceManager<UI::Text::Font>(Paths::FONTS_DIR, ResourceName("font")) { }
-    ModelManager::ModelManager() : ResourceManager<Model>(Paths::MODELS_DIR, ResourceName("model")) { }
-    StageManager::StageManager() : ResourceManager<Stage>(Paths::STAGES_DIR, ResourceName("stage")) { }
+    TextureManager::TextureManager() : ResourceManager<Texture::TextureID>(Paths::RESOURCE_DIRS.at(ResourceType::TEXTURE), ResourceName("texture")) { }
+    ShaderManager::ShaderManager() : ResourceManager<GLuint>(Paths::RESOURCE_DIRS.at(ResourceType::SHADER)) { }
+    FontManager::FontManager() : ResourceManager<UI::Text::Font>(Paths::RESOURCE_DIRS.at(ResourceType::FONT), ResourceName("font")) { }
+    ModelManager::ModelManager() : ResourceManager<Model>(Paths::RESOURCE_DIRS.at(ResourceType::MODEL), ResourceName("model")) { }
+    StageManager::StageManager() : ResourceManager<Stage>(Paths::RESOURCE_DIRS.at(ResourceType::STAGE), ResourceName("stage")) { }
 };
 
 void Resources::SaveConfig(const std::fs::path& path, const SerializableStruct& config) {

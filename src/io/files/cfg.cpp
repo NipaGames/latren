@@ -360,6 +360,7 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
 
 ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot = false) {
     std::string name = "";
+    bool hasName = false;
     std::string val = node->value;
     std::string typeAnnotation = "";
     std::vector<CFGFieldType> types;
@@ -386,8 +387,10 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
+            hasName = true;
         }
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::ARRAY };
+        thisNode->hasName = hasName;
         thisNode->typeAnnotation = typeAnnotation;
         for (auto* child : node->children) {
             ICFGField* item = ParseIndentTreeNodes(child);
@@ -410,6 +413,7 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
+            hasName = true;
         }
     }
 
@@ -457,6 +461,7 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     }
     if (ret != nullptr) {
         ret->typeAnnotation = typeAnnotation;
+        ret->hasName = hasName;
         return ret;
     }
     for (ICFGField* f : fields)
@@ -498,9 +503,7 @@ bool ValidateSubItems(ICFGField* node, const std::vector<CFGFieldType>& types) {
 
 CFGField<float>* CastIntegerToFloat(const CFGField<int>* intField) {
     CFGField<float>* floatField = dynamic_cast<CFGField<float>*>(CreateNewCFGField<float>(intField));
-    floatField->value = (float) intField->value;
     floatField->type = CFGFieldType::FLOAT;
-    floatField->name = intField->name;
     floatField->parent = intField->parent;
     if (intField->parent != nullptr) {
         auto& otherItems = const_cast<CFGField<int>*>(intField)->parent->GetItems();
@@ -516,12 +519,11 @@ bool ValidateStruct(ICFGField* node, const std::vector<CFGFieldType>& types) {
     CFGObject* structNode;
     if (node->type != CFGFieldType::STRUCT) {
         std::string name = node->name;
-        CFGFieldType type = node->type;
+        bool hasName = node->hasName;
         ICFGField* field = CreateNewCFGField(node);
         if (field == nullptr)
             return false;
         structNode = new CFGObject{ name, CFGFieldType::STRUCT };
-        field->type = type;
         structNode->AddItem(field);
         auto& parentItems = node->parent->GetItems();
         *std::find(parentItems.begin(), parentItems.end(), node) = structNode;
@@ -633,6 +635,7 @@ bool ValidateCFGFields(CFGObject* node, const CFGStructuredFields& fields) {
                     newField = CreateNewCFGField(f.types.at(0));
                 newField->automaticallyCreated = true;
                 newField->name = f.name;
+                newField->hasName = !newField->name.empty();
                 node->AddItem(newField);
                 continue;
             }

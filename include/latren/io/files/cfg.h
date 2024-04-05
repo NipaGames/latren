@@ -109,9 +109,10 @@ namespace CFG {
         std::string typeAnnotation;
         CFGField<std::vector<ICFGField*>>* parent = nullptr;
         bool automaticallyCreated = false;
+        bool hasName = false;
         ICFGField() = default;
         ICFGField(CFGFieldType t) : type(t) { }
-        ICFGField(const std::string& n, CFGFieldType t) : name(n), type(t) { }
+        ICFGField(const std::string& n, CFGFieldType t) : name(n), type(t), hasName(true) { }
         virtual bool HasType(const std::type_info&) const { return false; }
         template <typename T>
         const T& GetValue() const {
@@ -198,15 +199,32 @@ namespace CFG {
         CFGField<T>* field = new CFGField<T>();
         if (ptr != nullptr)
             field->value = *static_cast<const T*>(ptr);
+        
+        if constexpr (std::is_same_v<T, std::string>)
+            field->type = CFGFieldType::STRING;
+        else if constexpr (std::is_same_v<T, float>)
+            field->type = CFGFieldType::FLOAT;
+        else if constexpr (std::is_same_v<T, int>)
+            field->type = CFGFieldType::INTEGER;
+        // could be any non-primitive really but we'll just assume it's a struct by default
+        else if constexpr (std::is_same_v<T, ICFGField*>)
+            field->type = CFGFieldType::STRUCT;
         return field;
     }
 
-    // ONLY COPIES THE VALUE, DOES NOT RETURN ANY TYPE OR NAME!
     template <typename T>
     ICFGField* CreateNewCFGField(const ICFGField* copyFrom = nullptr) {
-        CFGField<T>* field = new CFGField<T>();
+        const void* ptr = nullptr;
         if (copyFrom != nullptr)
-            field->value = static_cast<const CFGField<T>*>(copyFrom)->value;
+            ptr = &static_cast<const CFGField<T>*>(copyFrom)->value;
+        CFGField<T>* field = static_cast<CFGField<T>*>(CreateNewCFGField<T>(ptr));
+        // fuck copy constructors and assignment operators
+        if (copyFrom != nullptr) {
+            field->name = copyFrom->name;
+            field->hasName = copyFrom->hasName;
+            field->automaticallyCreated = copyFrom->automaticallyCreated;
+            field->type = copyFrom->type;
+        }
         return field;
     }
     template <typename T>

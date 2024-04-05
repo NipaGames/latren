@@ -11,6 +11,7 @@
 #include <spdlog/spdlog.h>
 
 #include "resourcepath.h"
+#include "resourcetype.h"
 #include "fs.h"
 #include "serializablestruct.h"
 #include "configs.h"
@@ -38,15 +39,6 @@ namespace Resources {
         ResourcePath fragmentPath;
         ResourcePath geometryPath;
     };
-    enum class ResourceType {
-        TEXTURE,
-        SHADER,
-        FONT,
-        MODEL,
-        STAGE,
-        TEXT,
-        CUSTOM
-    };
     template <typename T>
     class ResourceManager {
     private:
@@ -65,6 +57,7 @@ namespace Resources {
     protected:
         std::map<std::string, T, ItemComp> items_;
         std::fs::path path_;
+        const std::fs::path defaultPath_;
         virtual std::optional<T> LoadResource(const std::fs::path&) = 0;
         void SetItemID(const std::string& id) { itemID_ = id; }
         void SetAdditionalData(const AdditionalImportData& data) { additionalData_ = data; }
@@ -72,7 +65,9 @@ namespace Resources {
         const AdditionalImportData& GetAdditionalData() { return additionalData_; }
     public:
         SingleEventHandler<const std::string&> onResourceLoad;
-        ResourceManager(const std::fs::path& p, const std::string& t = "resource") : path_(p), typeStr_(t) { }
+        ResourceManager(const std::fs::path& p, const std::string& t = "resource") : defaultPath_(p), typeStr_(t) {
+            path_ = defaultPath_;
+        }
         virtual void Load(const std::fs::path& p) {
             onResourceLoad.Dispatch(itemID_);
             if (items_.find(itemID_) != items_.end())
