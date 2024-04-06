@@ -104,15 +104,14 @@ namespace CFG {
 
     class ICFGField {
     public:
-        std::string name;
+        std::optional<std::string> name;
         CFGFieldType type;
         std::string typeAnnotation;
         CFGField<std::vector<ICFGField*>>* parent = nullptr;
         bool automaticallyCreated = false;
-        bool hasName = false;
         ICFGField() = default;
         ICFGField(CFGFieldType t) : type(t) { }
-        ICFGField(const std::string& n, CFGFieldType t) : name(n), type(t), hasName(true) { }
+        ICFGField(const std::optional<std::string>& n, CFGFieldType t) : name(n), type(t) { }
         virtual bool HasType(const std::type_info&) const { return false; }
         template <typename T>
         const T& GetValue() const {
@@ -221,7 +220,6 @@ namespace CFG {
         // fuck copy constructors and assignment operators
         if (copyFrom != nullptr) {
             field->name = copyFrom->name;
-            field->hasName = copyFrom->hasName;
             field->automaticallyCreated = copyFrom->automaticallyCreated;
             field->type = copyFrom->type;
         }

@@ -153,9 +153,11 @@ void Resources::ShaderManager::Load(const Resources::ShaderImport& import) {
 }
 
 // tried to template this so the boilerplate wouldn't be needed but instead got the whackiest runtime errors known to man
-void Resources::ShaderManager::LoadImports(const std::vector<Resources::ShaderImport>& imports) {
-    for (const auto& import : imports)
+void Resources::ShaderManager::LoadImports(const Imports<ShaderImport>& imports) {
+    SetPath(imports.parentPath);
+    for (const auto& import : imports.imports)
         Load(import);
+    RestoreDefaultPath();
 }
 
 GLuint& Resources::ShaderManager::Get(ShaderID shader) {

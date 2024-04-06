@@ -33,6 +33,16 @@ namespace Resources {
         std::string id;
         AdditionalImportData additionalData;
     };
+    LATREN_API const std::fs::path& GetDefaultPath(ResourceType);
+    template <typename ImportType = Import>
+    struct Imports {
+        ResourceType resourceType;
+        std::fs::path parentPath;
+        std::vector<ImportType> imports;
+
+        Imports(ResourceType t, const std::fs::path& p, const std::vector<ImportType>& i = { }) : resourceType(t), parentPath(p), imports(i) { }
+        Imports(ResourceType t, const std::vector<ImportType>& i = { }) : resourceType(t), parentPath(GetDefaultPath(t)), imports(i) { }
+    };
     struct ShaderImport {
         std::string id;
         ResourcePath vertexPath;
@@ -90,13 +100,21 @@ namespace Resources {
             SetAdditionalData(import.additionalData);
             Load(importPath);
         }
+        void SetPath(const std::fs::path& p) {
+            path_ = p;
+        }
+        void RestoreDefaultPath() {
+            path_ = defaultPath_;
+        }
         virtual void LoadImports() {
             for (const auto& f : std::fs::directory_iterator(path_))
                 Load(f.path());
         }
-        void LoadImports(const std::vector<Import>& imports) {
-            for (const auto& import : imports)
+        void LoadImports(const Imports<Import>& imports) {
+            SetPath(imports.parentPath);
+            for (const auto& import : imports.imports)
                 Load(import);
+            RestoreDefaultPath();
         }
         virtual T& Get(const std::string& item) {
             return items_.at(item);
@@ -135,7 +153,7 @@ namespace Resources {
         LATREN_API void LoadStandardShader(Shaders::ShaderID, const std::string&, const std::string&, const std::string& = "");
     public:
         LATREN_API void Load(const Resources::ShaderImport&);
-        LATREN_API void LoadImports(const std::vector<Resources::ShaderImport>&);
+        LATREN_API void LoadImports(const Imports<ShaderImport>&);
         LATREN_API ShaderManager();
         LATREN_API virtual void LoadStandardShaders();
         LATREN_API GLuint& Get(Shaders::ShaderID);
@@ -177,8 +195,8 @@ namespace Resources {
     LATREN_API void SaveConfig(const std::fs::path&, const SerializableStruct&);
     LATREN_API void LoadConfig(const std::fs::path&, SerializableStruct&);
 
-    LATREN_API std::vector<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
-    LATREN_API std::vector<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
+    LATREN_API Imports<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*, ResourceType);
+    LATREN_API Imports<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
 
     class ImportsFileTemplate : public CFG::CFGFileTemplateFactory {
         CFG::CFGCustomTypes DefineCustomTypes() const override {

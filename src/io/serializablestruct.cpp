@@ -99,7 +99,7 @@ CFGObject* SerializableStruct::CFGSerialize() const {
 
 void SerializableStruct::CFGDeserialize(const CFGObject* obj) {
     for (const ICFGField* f : obj->GetItems()) {
-        const SerializableStructMemberData& data = GetMemberData(f->name);
+        const SerializableStructMemberData& data = GetMemberData(f->name.value_or(""));
         if (data.addr == nullptr)
             continue;
         
@@ -115,7 +115,7 @@ void SerializableStruct::CFGDeserialize(const CFGObject* obj) {
         bool success = (*it)->fn(args, f);
         if (!success) {
             spdlog::warn("Invalid CFG value for field '{}'! (trying to serialize as {})",
-                !f->name.empty() ? f->name : "UNNAMED_FIELD",
+                f->name.value_or("UNNAMED_FIELD"),
                 data.type->name()
             );
         }

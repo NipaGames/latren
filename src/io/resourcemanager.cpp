@@ -8,12 +8,15 @@
 
 typedef std::string ResourceName;
 
+const std::fs::path& Resources::GetDefaultPath(Resources::ResourceType t) {
+    return Paths::RESOURCE_DIRS.at(t);
+}
 namespace Resources {
-    TextureManager::TextureManager() : ResourceManager<Texture::TextureID>(Paths::RESOURCE_DIRS.at(ResourceType::TEXTURE), ResourceName("texture")) { }
-    ShaderManager::ShaderManager() : ResourceManager<GLuint>(Paths::RESOURCE_DIRS.at(ResourceType::SHADER)) { }
-    FontManager::FontManager() : ResourceManager<UI::Text::Font>(Paths::RESOURCE_DIRS.at(ResourceType::FONT), ResourceName("font")) { }
-    ModelManager::ModelManager() : ResourceManager<Model>(Paths::RESOURCE_DIRS.at(ResourceType::MODEL), ResourceName("model")) { }
-    StageManager::StageManager() : ResourceManager<Stage>(Paths::RESOURCE_DIRS.at(ResourceType::STAGE), ResourceName("stage")) { }
+    TextureManager::TextureManager() : ResourceManager<Texture::TextureID>(GetDefaultPath(ResourceType::TEXTURE), ResourceName("texture")) { }
+    ShaderManager::ShaderManager() : ResourceManager<GLuint>(GetDefaultPath(ResourceType::SHADER)) { }
+    FontManager::FontManager() : ResourceManager<UI::Text::Font>(GetDefaultPath(ResourceType::FONT), ResourceName("font")) { }
+    ModelManager::ModelManager() : ResourceManager<Model>(GetDefaultPath(ResourceType::MODEL), ResourceName("model")) { }
+    StageManager::StageManager() : ResourceManager<Stage>(GetDefaultPath(ResourceType::STAGE), ResourceName("stage")) { }
 };
 
 void Resources::SaveConfig(const std::fs::path& path, const SerializableStruct& config) {
@@ -44,18 +47,22 @@ void ResourceManager::LoadConfigs() {
     Resources::LoadConfig(Paths::VIDEO_SETTINGS_PATH, videoSettings);
 }
 
-std::vector<Resources::Import> Resources::ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj) {
+Resources::Imports<Resources::Import> Resources::ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj, ResourceType t) {
     using namespace CFG;
+    Imports<Import> imports = Imports<Import>(t);
 
     if (obj == nullptr)
-        return { };
-    std::vector<Import> imports;
+        return imports;
+    if (obj->name.has_value())
+        imports.parentPath = Paths::Path(Paths::RESOURCES_DIR, obj->name.value());
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {
-            spdlog::warn("'{}' cannot be parsed as a list of imports!", obj->name);
-            return { };
+            spdlog::warn("'{}' cannot be parsed as a list of imports!", obj->name.value_or(""));
+            return imports;
         }
+    }
+    for (const ICFGField* v : items) {
         const CFGObject* import = static_cast<const CFGObject*>(v);
         if (import == nullptr)
             continue;
@@ -63,7 +70,7 @@ std::vector<Resources::Import> Resources::ListImports(const CFG::CFGField<std::v
         if (pathField == nullptr)
             continue;
         Resources::Import importStruct;
-        importStruct.id = import->name;
+        importStruct.id = import->name.value_or("");
         importStruct.path = pathField->GetValue();
         for (int i = 1; i < import->GetItems().size(); i++) {
             const ICFGField* additional = import->GetItemByIndex(i);
@@ -87,23 +94,27 @@ std::vector<Resources::Import> Resources::ListImports(const CFG::CFGField<std::v
                     break;
             }
         }
-        imports.push_back(importStruct);
+        imports.imports.push_back(importStruct);
     }
     return imports;
 }
 
-std::vector<Resources::ShaderImport> Resources::ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj) {
+Resources::Imports<Resources::ShaderImport> Resources::ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj) {
     using namespace CFG;
 
+    Imports<ShaderImport> imports = Imports<ShaderImport>(ResourceType::SHADER);
     if (obj == nullptr)
-        return { };
-    std::vector<ShaderImport> imports;
+        return imports;
+    if (obj->name.has_value())
+        imports.parentPath = Paths::Path(Paths::RESOURCES_DIR, obj->name.value());
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {
-            spdlog::warn("'{}' cannot be parsed as a list of shader imports!", obj->name);
-            return { };
+            spdlog::warn("'{}' cannot be parsed as a list of shader imports!", obj->name.value_or(""));
+            return imports;
         }
+    }
+    for (const ICFGField* v : items) {
         const CFGObject* import = static_cast<const CFGObject*>(v);
         if (import == nullptr)
             continue;
@@ -114,12 +125,12 @@ std::vector<Resources::ShaderImport> Resources::ListShaderImports(const CFG::CFG
         if (vertField == nullptr || fragField == nullptr || geomField == nullptr)
             continue;
         Resources::ShaderImport importStruct;
-        importStruct.id = import->name;
+        importStruct.id = import->name.value_or("");
         importStruct.vertexPath = vertField->GetValue();
         importStruct.fragmentPath = fragField->GetValue();
         importStruct.geometryPath = geomField->GetValue();
 
-        imports.push_back(importStruct);
+        imports.imports.push_back(importStruct);
     }
     return imports;
 }
@@ -135,43 +146,42 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
         { "[Stage]", Resources::ResourceType::STAGE },
         { "[Shader]", Resources::ResourceType::SHADER }
     };
-    std::unordered_map<Resources::ResourceType, std::function<void(const CFG::CFGObject*)>> loaders = {
+    std::unordered_map<Resources::ResourceType, std::function<void(const CFG::CFGObject*, Resources::ResourceType)>> loaders = {
         {
             Resources::ResourceType::TEXTURE,
-            [&](const CFG::CFGObject* obj) {
+            [&](const CFG::CFGObject* obj, Resources::ResourceType t) {
                 EventID textureLoadEvent = textureManager.onResourceLoad.Subscribe(resourceLoadEvent);
-                textureManager.LoadImports(Resources::ListImports(obj));
+                textureManager.LoadImports(Resources::ListImports(obj, t));
                 textureManager.onResourceLoad.Unsubscribe(textureLoadEvent);
             }
         },
         {
             Resources::ResourceType::MODEL,
-            [&](const CFG::CFGObject* obj) {
+            [&](const CFG::CFGObject* obj, Resources::ResourceType t) {
                 EventID modelLoadEvent = modelManager.onResourceLoad.Subscribe(resourceLoadEvent);
-                modelManager.LoadImports(Resources::ListImports(obj));
+                modelManager.LoadImports(Resources::ListImports(obj, t));
                 modelManager.onResourceLoad.Unsubscribe(modelLoadEvent);
             }
         },
         {
             Resources::ResourceType::FONT,
-            [&](const CFG::CFGObject* obj) {
+            [&](const CFG::CFGObject* obj, Resources::ResourceType t) {
                 EventID fontLoadEvent = fontManager.onResourceLoad.Subscribe(resourceLoadEvent);
-                fontManager.LoadImports(Resources::ListImports(obj));
+                fontManager.LoadImports(Resources::ListImports(obj, t));
                 fontManager.onResourceLoad.Unsubscribe(fontLoadEvent);
             }
         },
         {
             Resources::ResourceType::STAGE,
-            [&](const CFG::CFGObject* obj) {
+            [&](const CFG::CFGObject* obj, Resources::ResourceType t) {
                 EventID stageLoadEvent = stageManager.onResourceLoad.Subscribe(resourceLoadEvent);
-                stageManager.LoadImports(Resources::ListImports(obj));
+                stageManager.LoadImports(Resources::ListImports(obj, t));
                 stageManager.onResourceLoad.Unsubscribe(stageLoadEvent);
-                stageManager.UseBlueprints(nullptr);
             }
         },
         {
             Resources::ResourceType::SHADER,
-            [&](const CFG::CFGObject* obj) {
+            [&](const CFG::CFGObject* obj, Resources::ResourceType) {
                 EventID shaderLoadEvent = shaderManager.onResourceLoad.Subscribe(resourceLoadEvent);
                 shaderManager.LoadImports(Resources::ListShaderImports(obj));
                 shaderManager.onResourceLoad.Unsubscribe(shaderLoadEvent);
@@ -194,7 +204,7 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
 
     auto loadResources = [&](Resources::ResourceType t) {
         for (const auto& list : imports[t]) {
-            loaders[t](list);
+            loaders[t](list, t);
         }
     };
 
@@ -214,8 +224,8 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     Serializer::BlueprintSerializer blueprints;
     blueprints.DeserializeFile(Paths::BLUEPRINTS_PATH.string());
     stageManager.UseBlueprints(&blueprints);
-    
     loadResources(Resources::ResourceType::STAGE);
+    stageManager.UseBlueprints(nullptr);
 }
 
 void ResourceManager::UnloadAll() {

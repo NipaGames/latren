@@ -359,8 +359,7 @@ CFGParseTreeNode<std::string>* CreateIndentationTree(std::stringstream& buffer) 
 }
 
 ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot = false) {
-    std::string name = "";
-    bool hasName = false;
+    std::optional<std::string> name = std::nullopt;
     std::string val = node->value;
     std::string typeAnnotation = "";
     std::vector<CFGFieldType> types;
@@ -387,10 +386,8 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
-            hasName = true;
         }
         CFGObject* thisNode = new CFGObject{ name, CFGFieldType::ARRAY };
-        thisNode->hasName = hasName;
         thisNode->typeAnnotation = typeAnnotation;
         for (auto* child : node->children) {
             ICFGField* item = ParseIndentTreeNodes(child);
@@ -413,7 +410,6 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
             if (!opt.has_value())
                 return nullptr;
             name = opt.value();
-            hasName = true;
         }
     }
 
@@ -461,7 +457,6 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     }
     if (ret != nullptr) {
         ret->typeAnnotation = typeAnnotation;
-        ret->hasName = hasName;
         return ret;
     }
     for (ICFGField* f : fields)
@@ -518,8 +513,7 @@ CFGField<float>* CastIntegerToFloat(const CFGField<int>* intField) {
 bool ValidateStruct(ICFGField* node, const std::vector<CFGFieldType>& types) {
     CFGObject* structNode;
     if (node->type != CFGFieldType::STRUCT) {
-        std::string name = node->name;
-        bool hasName = node->hasName;
+        std::optional<std::string> name = node->name;
         ICFGField* field = CreateNewCFGField(node);
         if (field == nullptr)
             return false;
@@ -604,7 +598,7 @@ bool ValidateCFGFieldType(ICFGField* node, std::vector<CFGFieldType> types) {
     }
     if (!IsValidType(node->type, types.at(0))) {
         spdlog::warn("Invalid field type for '{}'! (Expected {} but received {})",
-            !node->name.empty() ? node->name : "UNNAMED_FIELD",
+            node->name.value_or("UNNAMED_FIELD"),
             magic_enum::enum_name(types.at(0)),
             magic_enum::enum_name(node->type));
         return false;
@@ -635,7 +629,6 @@ bool ValidateCFGFields(CFGObject* node, const CFGStructuredFields& fields) {
                     newField = CreateNewCFGField(f.types.at(0));
                 newField->automaticallyCreated = true;
                 newField->name = f.name;
-                newField->hasName = !newField->name.empty();
                 node->AddItem(newField);
                 continue;
             }
@@ -762,8 +755,8 @@ void CFGFieldValueToString(const ICFGField* field, std::stringstream& ss, const 
             for (int i = 0; i < obj->GetItems().size(); i++) {
                 ss << std::string(indents, ' ');
                 const ICFGField* e = obj->GetItemByIndex(i);
-                if (!e->name.empty())
-                    ss << e->name << ": ";
+                if (e->name.has_value())
+                    ss << e->name.value() << ": ";
                 CFGFieldValueToString(e, ss, format, indents);
                 if (i < obj->GetItems().size() - 1) {
                     ss << '\n';
@@ -785,8 +778,8 @@ void CFG::Dump(const CFGObject* root, std::stringstream& ss, const CFGFormatting
             ss << child->GetValue<std::string>();
             continue;
         }
-        if (!child->name.empty()) {
-            ss << child->name << " = ";
+        if (child->name.has_value()) {
+            ss << child->name.value() << " = ";
         }
         if (child->type == CFGFieldType::ARRAY)
             ss << '\n';
