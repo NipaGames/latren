@@ -5,9 +5,7 @@
 #include <latren/io/serializetypes.h>
 #include <latren/io/files/cfg.h>
 #include <latren/io/paths.h>
-
-#include <AL/al.h>
-#include <AL/alc.h>
+#include <latren/audio/audioplayer.h>
 
 std::unique_ptr<Game> GLOBAL_GAME_INSTANCE_;
 
@@ -38,6 +36,9 @@ void Game::GameThreadInit() {
     srand(static_cast<unsigned int>(time(0)));
     RegisterDefaultSerializers();
     glfwMakeContextCurrent(window_.GetWindow());
+    AudioPlayer audioPlayer;
+    if (!audioPlayer.Init())
+        spdlog::error("Audio disabled!");
     resources_.LoadConfigs();
     glfwSetWindowSize(window_.GetWindow(), resources_.videoSettings.resolution.x, resources_.videoSettings.resolution.y);
     window_.UseVsync(resources_.videoSettings.useVsync);
