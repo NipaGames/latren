@@ -25,3 +25,6 @@
 [submodule "thirdparty/openal-soft"]
 	path = thirdparty/openal-soft
 	url = https://github.com/kcat/openal-soft
+[submodule "thirdparty/ffmpeg"]
+	path = thirdparty/ffmpeg
+	url = https://git.ffmpeg.org/ffmpeg.git
