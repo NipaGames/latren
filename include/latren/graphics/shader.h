@@ -1,0 +1,78 @@
+#pragma once
+
+#include <latren/latren.h>
+#include <latren/defines/opengl.h>
+#include <string>
+#include <typeinfo>
+#include <variant>
+#include <array>
+
+#include "shaders.h"
+
+namespace Shaders {
+    enum class ShaderType {
+        VERT,
+        FRAG,
+        GEOM,
+        VERT_FRAG,
+        VERT_FRAG_GEOM
+    };
+    extern const std::string EXT_VERT;
+    extern const std::string EXT_FRAG;
+    extern const std::string EXT_GEOM;
+    LATREN_API GLuint GetShaderProgram(ShaderID);
+    LATREN_API GLuint GetShaderProgram(const std::string&);
+};
+
+class LATREN_API Shader {
+private:
+    std::variant<std::string, Shaders::ShaderID> id_;
+    // cache shader program
+    mutable GLuint program_ = GL_NONE;
+public:
+    Shader() = default;
+    Shader(Shaders::ShaderID id) : id_(id) { }
+    Shader(const std::string& id) : id_(id) { }
+    Shader(const char* id) : id_(id) { }
+    void Use() const;
+    GLuint GetProgram() const;
+    Shaders::ShaderID GetID() const;
+    std::string GetIDString() const;
+
+    // this implementation sucks ass, maybe i'll come with something better later
+    // it will do well enough for now
+    // nevermind, these 'if constexpr' statements are really cool although they look very cursed
+    
+    template <typename T>
+    void SetUniform(const char* name, const T& value) const {
+        GLuint location = glGetUniformLocation(GetProgram(), name);
+
+        // yanderedev switch statement
+        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, bool>)
+            glUniform1i(location, value);
+        else if constexpr (std::is_same_v<T, float>)
+            glUniform1f(location, value);
+        else if constexpr (std::is_same_v<T, glm::mat2>)
+            glUniformMatrix2fv(location, 1, GL_FALSE, &value[0][0]);
+        else if constexpr (std::is_same_v<T, glm::mat3>)
+            glUniformMatrix3fv(location, 1, GL_FALSE, &value[0][0]);
+        else if constexpr (std::is_same_v<T, glm::mat4>)
+            glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
+        else if constexpr (std::is_same_v<T, glm::vec2>)
+            glUniform2f(location, ((glm::vec2) value).x, ((glm::vec2) value).y);
+        else if constexpr (std::is_same_v<T, glm::vec3>)
+            glUniform3f(location, ((glm::vec3) value).x, ((glm::vec3) value).y, ((glm::vec3) value).z);
+        else if constexpr (std::is_same_v<T, glm::vec4>)
+            glUniform4f(location, ((glm::vec4) value).x, ((glm::vec4) value).y, ((glm::vec4) value).z, ((glm::vec4) value).w);
+    }
+    template <typename T, size_t S>
+    void SetUniform(const char* name, const std::array<T, S>& value) const {
+        GLuint location = glGetUniformLocation(GetProgram(), name);
+
+        // yanderedev switch statement II
+        if constexpr (std::is_same_v<T, int>)
+            glUniform1iv(location, S, value.data());
+        else if constexpr (std::is_same_v<T, float>)
+            glUniform1fv(location, S, value.data());
+    }
+};
