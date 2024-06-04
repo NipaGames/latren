@@ -25,8 +25,8 @@ behold the reincarnation of the great opengl-game
   - not relevant yet. lua would be simpler to implement probably but python would be so much cooler. FUTURE ME **DO NOT** TRY TO WRITE YOUR OWN LANGUAGES OR PARSERS
 
 ### third-party dependencies:
-since c++ doesn't have a universal package manager these are managed as git submodules (so clone recursively)
-dependencies marked with a star (*) are compiled into libs first, others are header-onlies and directly compiled into the binary
+since c++ doesn't have a universal package manager these are managed as git submodules (so clone recursively)  
+dependencies marked with a star (*) are compiled into libs first, others are header-onlies and directly compiled into the binary  
 *i'll hopefully provide some prebuilt binaries sometime in future since compiling these takes an eternity*
 - [bullet (physics)](https://github.com/bulletphysics/bullet3) *
 - [glfw (window management)](https://github.com/glfw/glfw) *
