@@ -6,7 +6,7 @@ behold the reincarnation of the great opengl-game
 - check the glfw thread safety and try to move all the calls to the main thread
 - [x] basic lighting (phong shading, no shadows)
 - [x] resource management system
-  - add support for plain text and custom formats
+  - add support for ~~plain text~~ (added) and custom formats
 - [x] weird hybrid ecs + unity esque component mess
 - [x] stage deserialization with whacky pseudo-reflection
 - [x] physics (bullet implementation)
@@ -15,7 +15,8 @@ behold the reincarnation of the great opengl-game
 - [x] primitive ui api
   - fix text rendering for the hundreth time (sometimes textures too small)
 - [x] audio
-  - add 3d audio and audiosource component
+  - force 3d stereo audio to mono (spatial stereo audio doesn't play)
+  - support more formats (now supporting only ogg vorbis)
 - [x] custom .cfg file format mainly for resource management and user configs
   - (it's way more complicated than it has any right to be)
 - [ ] editor gui
@@ -24,19 +25,20 @@ behold the reincarnation of the great opengl-game
   - not relevant yet. lua would be simpler to implement probably but python would be so much cooler. FUTURE ME **DO NOT** TRY TO WRITE YOUR OWN LANGUAGES OR PARSERS
 
 ### third-party dependencies:
-*since c++ doesn't have a package manager these are managed as git submodules (so clone recursively)*  
-*i'll provide some prebuilt binaries sometime in future since compiling these takes an eternity*
-- [bullet (physics)](https://github.com/bulletphysics/bullet3)
-- [glfw (window management)](https://github.com/glfw/glfw)
-- [glm (maths)](https://github.com/g-truc/glm)
-- [openal-soft (audio)](https://github.com/kcat/openal-soft)
-- [assimp (3d model importing)](https://github.com/assimp/assimp)
-- [freetype (font importing)](https://gitlab.freedesktop.org/freetype/freetype)
-- [fmt (utility; formatting)](https://github.com/fmtlib/fmt)
-- [glew-cmake (utility; opengl)](https://github.com/Perlmint/glew-cmake)
-- [spdlog (utility; logging)](https://github.com/gabime/spdlog)  
-header-only includes *(not submodules)*:  
-- [stb_image (texture importing)](https://github.com/nothings/stb/blob/master/stb_image.h)
-- [stb_vorbis (audio importing)](https://github.com/nothings/stb/blob/master/stb_vorbis.c)
+since c++ doesn't have a universal package manager these are managed as git submodules (so clone recursively)
+dependencies marked with a star (*) are compiled into libs first, others are header-onlies and directly compiled into the binary
+*i'll hopefully provide some prebuilt binaries sometime in future since compiling these takes an eternity*
+- [bullet (physics)](https://github.com/bulletphysics/bullet3) *
+- [glfw (window management)](https://github.com/glfw/glfw) *
+- [glm (maths)](https://github.com/g-truc/glm) *
+- [openal-soft (audio)](https://github.com/kcat/openal-soft) *
+- [assimp (3d model importing)](https://github.com/assimp/assimp) *
+- [freetype (font importing)](https://gitlab.freedesktop.org/freetype/freetype) *
+- [fmt (utility; formatting)](https://github.com/fmtlib/fmt) *
+- [glew-cmake (utility; opengl)](https://github.com/Perlmint/glew-cmake) *
+- [spdlog (utility; logging)](https://github.com/gabime/spdlog) * 
+- [stb](https://github.com/nothings/stb), in which:
+  - [stb_image (texture importing)](https://github.com/nothings/stb/blob/master/stb_image.h)
+  - [stb_vorbis (audio importing)](https://github.com/nothings/stb/blob/master/stb_vorbis.c)
 - [nlohmann/json (json parsing)](https://github.com/nlohmann/json)
 - [magic_enum (utility; serialization)](https://github.com/Neargye/magic_enum)

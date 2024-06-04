@@ -25,3 +25,12 @@
 [submodule "thirdparty/openal-soft"]
 	path = thirdparty/openal-soft
 	url = https://github.com/kcat/openal-soft
+[submodule "thirdparty/stb"]
+	path = thirdparty/stb
+	url = https://github.com/nothings/stb
+[submodule "thirdparty/nlohmann-json"]
+	path = thirdparty/nlohmann-json
+	url = https://github.com/nlohmann/json
+[submodule "thirdparty/magic_enum"]
+	path = thirdparty/magic_enum
+	url = https://github.com/Neargye/magic_enum
