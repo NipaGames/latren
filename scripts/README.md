@@ -5,7 +5,8 @@
   
 scripts:
 - build: builds the project (a shocker)
-- run: runs the project (mind absolutely motherfricking blown)
+- run: runs the project (mind absolutely motherfricking blown)  
+
 atm you can specify the build type in the build script but you also have to change the path in run too to run the right build type. by default both are set to release.
   
 your project's folder structure should look like this after compiling:
