@@ -7,7 +7,7 @@
 
 using namespace Texture;
 
-int FindOptimalSizeAndPack(std::vector<stbrp_rect>& rects, std::set<int> sizes = { 128, 256, 512, 1024, 2048, 4096 }) {
+int FindOptimalSizeAndPack(std::vector<stbrp_rect>& rects, const std::set<int>& sizes = { 128, 256, 512, 1024, 2048, 4096 }) {
     int finalSize = 0;
 
     // since stbrp_pack_rects is inplace, i think it's faster to do this with copies than

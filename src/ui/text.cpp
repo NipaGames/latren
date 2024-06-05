@@ -182,7 +182,7 @@ void Resources::FontManager::SetFontSize(int size) {
     SetFontSize(glm::ivec2(fontSize_.x, size));
 }
 
-void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 pos, float size, float modifier, HorizontalAlignment alignment, float lineSpacing) {    
+void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 pos, float size, float aspectRatio, HorizontalAlignment alignment, float lineSpacing) {    
     glActiveTexture(GL_TEXTURE0);
     // glClearColor(.5, 0.0, 0.0, 1.0);
     // glClear(GL_COLOR_BUFFER_BIT);
@@ -214,10 +214,10 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
                 actualPos.x = pos.x + c.bearing.x * size * fontModifier;
                 break;
             case HorizontalAlignment::RIGHT:
-                actualPos.x = pos.x + (c.bearing.x + textWidth - lineWidths.at(line)) * size * fontModifier;
+                actualPos.x = pos.x + (c.bearing.x + textWidth - lineWidths.at(line)) * size * fontModifier * aspectRatio;
                 break;
             case HorizontalAlignment::CENTER:
-                actualPos.x = pos.x + (c.bearing.x * size + (textWidth - lineWidths.at(line)) / 2.0f) * size * fontModifier;
+                actualPos.x = pos.x + (c.bearing.x * size + (textWidth - lineWidths.at(line)) / 2.0f) * size * fontModifier * aspectRatio;
                 break;
         }
 
@@ -225,15 +225,14 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
         
         // some bitshift magic from learnopengl.com
         // just multiplies by 64 since for some reason freetype uses 1/64 pixel as a unit
-        pos.x += (c.advance >> 6) * size * modifier;
+        pos.x += (c.advance >> 6) * size * aspectRatio;
     }
     bool useAtlas = (font.atlasTexture != TEXTURE_NONE);
 
-    struct CharVertex {
-        float posX, posY, texX, texY;
-    };
     struct CharQuad {
-        CharVertex tl0, bl0, br0, tl1, br1, tr1;
+        struct {
+            float posX, posY, texX, texY;
+        } tl0, bl0, br0, tl1, br1, tr1;
     };
     if (useAtlas) {
         std::vector<CharQuad> vertices;
@@ -245,7 +244,7 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
             float texLeft = (c.c.atlasOffset.x + inwards) / (float) font.atlasSize.x;
             float texRight = c.c.atlasOffset.x / (float) font.atlasSize.x + (c.c.size.x - inwards) / (float) font.atlasSize.x;
 
-            float w = c.c.size.x * size * modifier;
+            float w = c.c.size.x * size * aspectRatio;
             float h = c.c.size.y * size;
 
             vertices.push_back({
@@ -271,7 +270,7 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
     else {
         Shapes::GetDefaultShape(Shapes::DefaultShape::RECTANGLE_VEC4).Bind();
         for (const auto& c : charsToRender) {
-            float w = c.c.size.x * size * modifier;
+            float w = c.c.size.x * size * aspectRatio;
             float h = c.c.size.y * size;
             CharQuad quad = {
                 { c.pos.x,     c.pos.y + h,   0.0f, 0.0f },
