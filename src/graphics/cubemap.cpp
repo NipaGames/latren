@@ -1,6 +1,7 @@
 #include <latren/graphics/cubemap.h>
 #include <latren/io/paths.h>
-#include <latren/defines/stb.h>
+
+#include <stb/stb_image.h>
 #include <spdlog/spdlog.h>
 
 const char* const DEFAULT_FACES[6] = {

@@ -19,6 +19,7 @@ namespace UI::Text {
         glm::ivec2 size;
         glm::ivec2 bearing;
         int advance;
+        glm::ivec2 atlasOffset = glm::ivec2(0);
     };
     struct Font {
         FT_Face fontFace;
@@ -26,6 +27,8 @@ namespace UI::Text {
         glm::ivec2 size;
         glm::ivec2 padding;
         std::unordered_map<WCHAR_T, Character> charMap;
+        GLuint atlasTexture;
+        glm::ivec2 atlasSize;
         LATREN_API const Character& GetChar(WCHAR_T) const;
     };
     

@@ -1,5 +1,6 @@
 #include <latren/io/resourcemanager.h>
-#include <latren/defines/stb.h>
+#define STB_VORBIS_HEADER_ONLY
+#include <stb/stb_vorbis.c>
 #include <latren/systems.h>
 #include <latren/audio/audioplayer.h>
 

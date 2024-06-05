@@ -12,7 +12,11 @@
 
 namespace UI {
     enum class TextRenderingMethod {
+        // Render each character every time separately (1 quad/character).
         RENDER_EVERY_FRAME,
+        // Group textcomponent's text's into a texture (1 quad/textcomponent).
+        // Can slightly increase performance but more buggier and text rendering anyway is seldom the bottleneck.
+        // However, can also be used to run cool shaders on the whole text instead of each letter.
         RENDER_TO_TEXTURE
     };
 
@@ -41,7 +45,7 @@ namespace UI {
         bool anchorRowsOver = false;
         glm::vec2 forceTextSize = glm::vec2(-1);
         glm::vec4 color = glm::vec4(1.0f);
-        TextRenderingMethod renderingMethod = TextRenderingMethod::RENDER_TO_TEXTURE; // Must be declared before start, no effect otherwise
+        TextRenderingMethod renderingMethod = TextRenderingMethod::RENDER_EVERY_FRAME; // Must be declared before start, no effect otherwise
         HorizontalAlignment horizontalAlignment = HorizontalAlignment::LEFT;
         VerticalAlignment verticalAlignment = VerticalAlignment::BOTTOM;
         float textureResolutionModifier = 1.0f;

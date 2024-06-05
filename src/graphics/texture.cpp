@@ -1,6 +1,7 @@
 #include <latren/graphics/texture.h>
 #include <latren/io/resourcemanager.h>
-#include <latren/defines/stb.h>
+
+#include <stb/stb_image.h>
 
 using namespace Texture;
 
