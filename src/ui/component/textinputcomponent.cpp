@@ -23,18 +23,9 @@ void TextInputComponent::SetValue(const std::string& val) {
     if (maxLength != -1 && val.length() > maxLength)
         return;
     value = val;
-    float w = Text::GetTextWidth(Systems::GetResources().fontManager.Get(font), val) * GetTransform().size;
-    if (forceTextSize.x != -1) {
-        overflow_ = (w > forceTextSize.x);
-        if (overflow_) {
-            textOffset_.x = forceTextSize.x - w;
-        }
-        else {
-            textOffset_.x = 0.0f;
-        }
-    }
-    SetText(val);
     textWidth_ = Text::GetTextWidth(Systems::GetResources().fontManager.Get(font), value) * GetTransform().size;
+    UpdateCaretAndOffsetPos();
+    SetText(value);
 }
 
 void TextInputComponent::Focus() {
@@ -88,8 +79,21 @@ void TextInputComponent::UIUpdate() {
     }
 }
 
+void TextInputComponent::UpdateCaretAndOffsetPos() {
+    if (forceTextSize.x != -1) {
+        overflow_ = (textWidth_ * aspectRatioModifier_ > forceTextSize.x);
+        if (overflow_) {
+            textOffset_.x = forceTextSize.x - textWidth_ * aspectRatioModifier_;
+        }
+        else {
+            textOffset_.x = 0.0f;
+        }
+    }
+}
+
 void TextInputComponent::Render(const glm::mat4& proj) {
     TextComponent::Render(proj);
+    UpdateCaretAndOffsetPos();
     if (inputFocus_) {
         caretMaterial->Use();
         caretMaterial->GetShader().SetUniform("time", (float) GetTime() - blinkStart_);

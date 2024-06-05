@@ -30,6 +30,7 @@ namespace UI {
         void UIUpdate();
         void SetValue(const std::string&);
         void Render(const glm::mat4&);
+        void UpdateCaretAndOffsetPos();
         Image& GetBackground();
     };
 };

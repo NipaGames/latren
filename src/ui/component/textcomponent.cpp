@@ -24,12 +24,13 @@ void TextComponent::Start() {
     shape_.GenerateVAO();
 
     hasStarted_ = true;
+    UpdateTextMetrics();
+    CalculateBounds();
     if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE) {
         glGenFramebuffers(1, &fbo_);
         glGenTextures(1, &texture_);
         RenderTexture();
     }
-    CalculateBounds();
     UIComponent::Start();
 }
 
@@ -40,8 +41,14 @@ void TextComponent::CalculateBounds() {
     glm::vec2 pos = trans.pos;
     float size = trans.size;
 
-    float w = textSize_.x * aspectRatioModifier_;
-    float h = textSize_.y;
+    if (forceTextSize.x != -1)
+        actualTextSize_.x = textSize_.x = forceTextSize.x;
+    else
+        actualTextSize_.x = textSize_.x * aspectRatioModifier_;
+    if (forceTextSize.y != -1)
+        textSize_.y = forceTextSize.y;
+    actualTextSize_.y = textSize_.y;
+
     float adtRowHeight = anchorRowsOver ? 0.0f : additionalRowsHeight_;
     float marginY = (adtRowHeight + padding_[0] * fontModifier) * size;
     glm::vec2 offset = glm::vec2(0.0f);
@@ -51,11 +58,11 @@ void TextComponent::CalculateBounds() {
             offset.x = 0.0f;
             break;
         case HorizontalAlignment::RIGHT:
-            offset.x = (float) -w;
+            offset.x = (float) -actualTextSize_.x;
             break;
         case HorizontalAlignment::CENTER:
             // todo: check for anchorRowsOver
-            offset.x = -w / 2.0f;
+            offset.x = -actualTextSize_.x / 2.0f;
             break;
     }
     switch (verticalAlignment) {
@@ -70,13 +77,13 @@ void TextComponent::CalculateBounds() {
             break;
     }
     if (renderingMethod_ == TextRenderingMethod::RENDER_EVERY_FRAME) {
-        h = (additionalRowsHeight_ - adtRowHeight) * fontModifier * size;
+        offset.y -= actualTextSize_.y - (additionalRowsHeight_ - adtRowHeight) * fontModifier * size;
     }
     else if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE) {
         offset.y -= marginY;
     }
-    bounds_ = { pos.x + offset.x, pos.x + offset.x + w, pos.y + offset.y + h, pos.y + offset.y };
-    generalBounds_ = { pos.x + offset.x, pos.x + offset.x + w, pos.y + (f.padding[1] - f.padding[0]) * fontModifier * size, pos.y - f.padding[0] * fontModifier * size };
+    bounds_ = { pos.x + offset.x, pos.x + offset.x + actualTextSize_.x, pos.y + offset.y + actualTextSize_.y, pos.y + offset.y };
+    generalBounds_ = { pos.x + offset.x, pos.x + offset.x + actualTextSize_.x, pos.y + (f.padding[1] - f.padding[0]) * fontModifier * size, pos.y - f.padding[0] * fontModifier * size };
 }
 
 void TextComponent::SetShader(const Shader& s) {
@@ -93,23 +100,36 @@ void TextComponent::Render(const glm::mat4& proj) {
     shader_.SetUniform("textColor", color);
     shader_.SetUniform("projection", proj);
     shader_.SetUniform("time", (float) GetTime());
-    float size = GetTransform().size;
+    const UITransform& trans = GetTransform();
+    float size = trans.size;
 
     auto& f = Systems::GetResources().fontManager.Get(font);
     float fontModifier = (float) BASE_FONT_SIZE / f.size.y;
     CalculateBounds();
     if (renderingMethod_ == TextRenderingMethod::RENDER_EVERY_FRAME) {
-        Text::RenderText(f, text_, glm::vec2(bounds_.left, bounds_.top), size * fontModifier, aspectRatioModifier_, horizontalAlignment, lineSpacing * size);
+        bool scissor = (forceTextSize.x != -1 || forceTextSize.y != -1);
+        if (scissor) {
+            glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetWindowSize() / glm::vec2(1280.0f, 720.0f);
+            glEnable(GL_SCISSOR_TEST);
+            // good enough
+            glm::vec2 scissorPos = glm::vec2(bounds_.left, (bounds_.top - (f.padding[0]) * fontModifier * size)) * wndRatio;
+            glm::vec2 scissorSize = forceTextSize * wndRatio;
+            glScissor(scissorPos.x, scissorPos.y, scissorSize.x, scissorSize.y);
+        }
+        Text::RenderText(f, text_, glm::vec2(bounds_.left, bounds_.top) + textOffset_, size * fontModifier, aspectRatioModifier_, horizontalAlignment, lineSpacing * size);
+        if (scissor)
+            glDisable(GL_SCISSOR_TEST);
     }
     else if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE) {
+        float rightBound = bounds_.left + textSize_.x * aspectRatioModifier_; 
         shape_.SetVertexData(new float[24] {
             bounds_.left,   bounds_.top,        0.0f, 1.0f,
             bounds_.left,   bounds_.bottom,     0.0f, 0.0f,
-            bounds_.right,  bounds_.bottom,     1.0f, 0.0f,
+            rightBound,     bounds_.bottom,     1.0f, 0.0f,
 
             bounds_.left,   bounds_.top,        0.0f, 1.0f,
-            bounds_.right,  bounds_.bottom,     1.0f, 0.0f,
-            bounds_.right,  bounds_.top,        1.0f, 1.0f
+            rightBound,     bounds_.bottom,     1.0f, 0.0f,
+            rightBound,     bounds_.top,        1.0f, 1.0f
         }, false);
         shape_.Bind();
 
@@ -124,14 +144,9 @@ void TextComponent::Render(const glm::mat4& proj) {
 void TextComponent::RenderTexture() {
     auto& f = Systems::GetResources().fontManager.Get(font);
 
-    glm::ivec2 windowSize = Systems::GetGameWindow().GetWindowSize();
+    glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetWindowSize() / glm::vec2(1280.0f, 720.0f);
     float fontModifier = ((float) BASE_FONT_SIZE / f.size.y);
     float size = GetTransform().size;
-    glm::vec2 wndRatio = (glm::vec2) windowSize / glm::vec2(1280.0f, 720.0f);
-    if (forceTextSize.x != -1)
-        textSize_.x = forceTextSize.x;
-    if (forceTextSize.y != -1)
-        textSize_.y = forceTextSize.y;
     glm::ivec2 texSize = (glm::ivec2) glm::ceil(wndRatio * (glm::vec2) textSize_);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
     glBindTexture(GL_TEXTURE_2D, texture_);
@@ -152,26 +167,30 @@ void TextComponent::RenderTexture() {
     textureShader_.SetUniform("textColor", glm::vec4(1.0f));
     textureShader_.SetUniform("projection", glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f));
 
-    Text::RenderText(f, text_, glm::vec2(0, (additionalRowsHeight_ + padding_[0] * fontModifier) * size) + textOffset_, size * fontModifier, 1.0f, horizontalAlignment, lineSpacing * size);
+    Text::RenderText(f, text_, glm::vec2(0, (additionalRowsHeight_ + padding_[0] * fontModifier) * size) + textOffset_ * wndRatio.x, size * fontModifier, 1.0f, horizontalAlignment, lineSpacing * size);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void TextComponent::UpdateTextMetrics() {
+    auto& f = Systems::GetResources().fontManager.Get(font);
+    additionalRows_ = (int) std::count(text_.begin(), text_.end(), '\n');
+    padding_ = Text::GetVerticalPadding(f, text_);
+    additionalRowsHeight_ = additionalRows_ * (f.fontHeight + lineSpacing);
+    float fontModifier = ((float) BASE_FONT_SIZE / f.size.y);
+    if (forceTextSize.x == -1)
+        textSize_.x = Text::GetTextWidth(f, text_) * GetTransform().size;
+    if (forceTextSize.y == -1)
+        textSize_.y = (Text::GetTextHeight(f, text_, (int) lineSpacing) + padding_[0] * fontModifier) * GetTransform().size;
 }
 
 void TextComponent::SetText(const std::string& t) {
     if (text_ == t)
         return;
     text_ = t;
-    additionalRows_ = (int) std::count(text_.begin(), text_.end(), '\n');
-
-    auto& f = Systems::GetResources().fontManager.Get(font);
-    padding_ = Text::GetVerticalPadding(f, text_);
-
-    additionalRowsHeight_ = additionalRows_ * (f.fontHeight + lineSpacing);
-    float fontModifier = ((float) BASE_FONT_SIZE / f.size.y);
-    textSize_ = glm::vec2(Text::GetTextWidth(f, text_), Text::GetTextHeight(f, text_, (int) lineSpacing) + padding_[0] * fontModifier) * GetTransform().size;
-    actualTextSize_ = glm::vec2(textSize_.x * aspectRatioModifier_, textSize_.y);
-    if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_) {
+    UpdateTextMetrics();
+    CalculateBounds();
+    if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_)
         RenderTexture();
-    }
 }
 
 const std::string& TextComponent::GetText() const {
@@ -191,8 +210,7 @@ UI::Rect TextComponent::GetLocalBounds() const {
 }
 
 void TextComponent::UpdateWindowSize() {
-    actualTextSize_ = glm::vec2(textSize_.x * aspectRatioModifier_, textSize_.y);
-    if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_) {
+    CalculateBounds();
+    if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_)
         RenderTexture();
-    }
 }

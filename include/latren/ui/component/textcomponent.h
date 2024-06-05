@@ -57,6 +57,7 @@ namespace UI {
         void SetText(const std::string&);
         void SetShader(const Shader&);
         void CalculateBounds();
+        void UpdateTextMetrics();
         const std::string& GetText() const;
         const glm::vec2& GetTextSize() const;
         // get the "actual" text bounds (the ones that start from the actual first rendered pixels), variable height and bottom
