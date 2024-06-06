@@ -41,17 +41,24 @@ const Character& Font::GetChar(WCHAR_T c) const {
     return EMPTY_CHAR;
 }
 
+const float Font::GetSizeModifier() const {
+    return (float) BASE_FONT_SIZE / size.y;
+}
+
 template <typename T>
-BaseLine GetRowBaseLine(const Font& font, const T& text) {
-    BaseLine line = { 0, 0 };
-    auto it = text.begin();
-    while (it != text.end()) {
+BaseLine GetRowBaseLine(const Font& font, const T& text, bool applyModifier = true) {
+    BaseLine bl = { 0, 0 };
+    for (auto it = text.begin(); it != text.end(); it++) {
         const Character& c = font.GetChar(*it);
-        line.fromGlyphBottom = std::max(c.size.y - c.bearing.y, line.fromGlyphBottom);
-        line.fromGlyphTop = std::max(c.bearing.y, line.fromGlyphTop);
-        ++it;
+        bl.fromGlyphBottom = std::max(c.size.y - c.bearing.y, bl.fromGlyphBottom);
+        bl.fromGlyphTop = std::max(c.bearing.y, bl.fromGlyphTop);
     }
-    return line;
+    if (applyModifier) {
+        float m = font.GetSizeModifier();
+        bl.fromGlyphBottom = (int) std::ceil(bl.fromGlyphBottom * m);
+        bl.fromGlyphTop = (int) std::ceil(bl.fromGlyphTop * m);
+    }
+    return bl;
 }
 
 // you should also free everything created with this wicked function
@@ -104,7 +111,7 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
     
     std::vector<WCHAR_T> chars;
     std::vector<Texture::Sprite> atlasSprites;
-
+    
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     while (i != 0) {
         if (FT_Load_Char(face, c, FT_LOAD_RENDER) != 0) {
@@ -116,7 +123,9 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
         Character character;
         character.size = glm::ivec2(glyph->bitmap.width, glyph->bitmap.rows);
         character.bearing = glm::ivec2(glyph->bitmap_left, glyph->bitmap_top);
-        character.advance = glyph->advance.x;
+        // some bitshift magic from learnopengl.com
+        // just multiplies by 64 since for some reason freetype uses 1/64 pixel as a unit
+        character.advance = glyph->advance.x >> 6;
 
         if (!createAtlas)
             character.texture = CreateOpenGLFontTexture(glyph->bitmap.buffer, glyph->bitmap.width, glyph->bitmap.rows);
@@ -137,10 +146,10 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
         if (c > wcharMax)
             break;
     }
-    // this is fucking genius
-    font.baseLine = GetRowBaseLine(font, chars);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
+    
+    if (!allGlyphsLoaded)
+        spdlog::warn("Some glyphs not loaded!", pathStr);
+    
     if (createAtlas) {
         Texture::TextureAtlas atlas = Texture::CreateAtlas(atlasSprites, 1, 1);
         GLuint atlasTexture = CreateOpenGLFontTexture(atlas.buffer, atlas.w, atlas.h);
@@ -167,9 +176,10 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
         font.atlasTexture = TEXTURE_NONE;
     }
 
-    if (!allGlyphsLoaded)
-        spdlog::warn("Some glyphs not loaded!", pathStr);
+    // this is fucking genius
+    font.baseLine = GetRowBaseLine(font, chars, false);
     font.size = fontSize;
+
     return std::optional<Font>(font);
 }
 
@@ -222,9 +232,7 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
 
         charsToRender.push_back({ actualPos, c });
         
-        // some bitshift magic from learnopengl.com
-        // just multiplies by 64 since for some reason freetype uses 1/64 pixel as a unit
-        pos.x += (c.advance >> 6) * size * aspectRatio;
+        pos.x += c.advance * size * aspectRatio;
     }
     bool useAtlas = (font.atlasTexture != TEXTURE_NONE);
 
@@ -293,10 +301,18 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
 
 int UI::Text::GetLineWidth(const Font& font, const std::string& text) {
     int width = 0;
-    for (std::string::const_iterator it = text.begin(); it != text.end(); ++it) {
-        width += (font.GetChar(*it).advance >> 6);
+    std::string::const_iterator it = text.begin();
+    if (text.length() > 1) {
+        while (it != text.end() - 1) {
+            width += font.GetChar(*it).advance;
+            ++it;
+        }
     }
-    return (int) (width * ((float) BASE_FONT_SIZE / font.size.y));
+    if (!text.empty()) {
+        const Character& lastChar = font.GetChar(*it);
+        width += lastChar.bearing.x + lastChar.size.x;
+    }
+    return (int) std::ceil(width * font.GetSizeModifier());
 }
 
 
@@ -327,26 +343,30 @@ BaseLine UI::Text::GetBaseLine(const Font& font, const std::string& text) {
         size_t last = text.find_last_of('\n');
         BaseLine firstRowPadding = GetRowBaseLine(font, text.substr(0, first));
         BaseLine lastRowPadding = GetRowBaseLine(font, text.substr(last + 1));
-        return { firstRowPadding.fromGlyphBottom, lastRowPadding.fromGlyphTop };
+        return { lastRowPadding.fromGlyphBottom, firstRowPadding.fromGlyphTop };
     }
     return GetRowBaseLine(font, text);
+}
+
+int UI::Text::GetRowHeight(const Font& font, const std::string& text) {
+    BaseLine bl = GetRowBaseLine(font, text);
+    return bl.fromGlyphBottom + bl.fromGlyphTop;
 }
 
 int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineSpacing) {
     int h = 0;
     int linebreaks = (int) std::count(text.begin(), text.end(), '\n');
     if (linebreaks > 0) {
-        h += linebreaks * (font.fontHeight + lineSpacing);
-        std::string lastRow = text.substr(text.find_last_of('\n') + 1);
-        h += GetTextHeight(font, lastRow, 0);
+        BaseLine firstRowBl = GetRowBaseLine(font, text.substr(0, text.find_first_of('\n')));
+        BaseLine lastRowBl = GetRowBaseLine(font, text.substr(text.find_last_of('\n') + 1));
+        h += 2 * std::max(firstRowBl.fromGlyphBottom + lastRowBl.fromGlyphTop, lastRowBl.fromGlyphBottom + firstRowBl.fromGlyphTop);
+        h += lineSpacing;
+        // rows in between
+        h += (linebreaks - 1) * (font.fontHeight + lineSpacing);
+        // h += GetRowHeight(font, firstRow) - ;
     }
     else {
-        auto it = text.begin();
-        while (it != text.end()) {
-            h = std::max(h, font.GetChar(*it).size.y);
-            ++it;
-        }
-        h = (int) ((float) h * ((float) BASE_FONT_SIZE / font.size.y));
+        h = GetRowHeight(font, text);
     }
     return h;
 }

@@ -32,8 +32,7 @@ namespace UI::Text {
     * ░░░█████░░ /
     **/
     struct BaseLine {
-        int fromGlyphBottom;
-        int fromGlyphTop;
+        int fromGlyphBottom, fromGlyphTop;
     };
     struct Font {
         FT_Face fontFace;
@@ -44,6 +43,7 @@ namespace UI::Text {
         GLuint atlasTexture;
         glm::ivec2 atlasSize;
         LATREN_API const Character& GetChar(WCHAR_T) const;
+        LATREN_API const float GetSizeModifier() const;
     };
     
     LATREN_API bool Init();
@@ -53,5 +53,6 @@ namespace UI::Text {
     LATREN_API int GetLineWidth(const Font&, const std::string&);
     LATREN_API std::vector<int> GetLineWidths(const Font&, const std::string&);
     LATREN_API int GetTextWidth(const Font&, const std::string&);
+    LATREN_API int GetRowHeight(const Font&, const std::string&);
     LATREN_API int GetTextHeight(const Font&, const std::string&, int = 5);
 };

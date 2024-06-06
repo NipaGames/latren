@@ -36,7 +36,7 @@ void TextComponent::Start() {
 
 void TextComponent::CalculateBounds() {
     auto& f = Systems::GetResources().fontManager.Get(font);
-    float fontModifier = (float) BASE_FONT_SIZE / f.size.y;
+    float fontModifier = f.GetSizeModifier();
     const UITransform& trans = GetTransform();
     glm::vec2 pos = trans.pos;
     float size = trans.size;
@@ -70,7 +70,7 @@ void TextComponent::CalculateBounds() {
     }
 
     // yeah...
-    offset.y -= ((anchorRowsOver ? 0.0f : additionalRowsHeight_) + baseLine_.fromGlyphBottom * fontModifier) * size;
+    offset.y -= ((anchorRowsOver ? 0.0f : additionalRowsHeight_) + baseLine_.fromGlyphBottom) * size;
     bounds_ = { pos.x + offset.x, pos.x + offset.x + actualTextSize_.x, pos.y + offset.y + actualTextSize_.y, pos.y + offset.y };
     pos.y -= f.baseLine.fromGlyphBottom * fontModifier * size;
     generalBounds_ = { pos.x + offset.x, pos.x + offset.x + ((forceTextSize.x != -1) ? forceTextSize.x : actualTextSize_.x), pos.y + f.baseLine.fromGlyphTop * fontModifier * size, pos.y };
@@ -79,9 +79,9 @@ void TextComponent::CalculateBounds() {
 void TextComponent::RenderTextToPos(glm::vec2 pos) {
     float size = GetTransform().size;
     auto& f = Systems::GetResources().fontManager.Get(font);
-    float fontModifier = (float) BASE_FONT_SIZE / f.size.y;
+    float fontModifier = f.GetSizeModifier();
 
-    pos.y += (additionalRowsHeight_ + baseLine_.fromGlyphBottom * fontModifier) * size;
+    pos.y += (additionalRowsHeight_ + baseLine_.fromGlyphBottom) * size;
     pos += textOffset_;
     Text::RenderText(f, text_, pos, size * fontModifier, aspectRatioModifier_, horizontalAlignment, lineSpacing * size);
 }
@@ -159,7 +159,7 @@ void TextComponent::RenderTexture() {
     textureShader_.Use();
     textureShader_.SetUniform("textColor", glm::vec4(1.0f));
     textureShader_.SetUniform("projection", glm::ortho(0.0f, texSize.x / wndRatio.x, 0.0f, texSize.y / wndRatio.y));
-    RenderTextToPos(glm::vec2(0.0f, 0.0f));
+    RenderTextToPos(glm::vec2(0.0f));
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     Systems::GetRenderer().RestoreViewport();
 }
@@ -169,9 +169,8 @@ void TextComponent::UpdateTextMetrics() {
     additionalRows_ = (int) std::count(text_.begin(), text_.end(), '\n');
     baseLine_ = Text::GetBaseLine(f, text_);
     additionalRowsHeight_ = additionalRows_ * (f.fontHeight + lineSpacing);
-    float fontModifier = ((float) BASE_FONT_SIZE / f.size.y);
     textSize_.x = Text::GetTextWidth(f, text_) * GetTransform().size;
-    textSize_.y = (Text::GetTextHeight(f, text_, (int) lineSpacing) + baseLine_.fromGlyphBottom * fontModifier) * GetTransform().size;
+    textSize_.y = Text::GetTextHeight(f, text_, (int) lineSpacing) * GetTransform().size;
 }
 
 void TextComponent::SetText(const std::string& t) {
