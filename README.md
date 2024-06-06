@@ -12,8 +12,8 @@ behold the reincarnation of the great opengl-game
 - [x] physics (bullet implementation)
 - [x] shit runs on my crap school laptop
   - trying to keep this running at over 100 fps on my shitbox, 60 absolute minimum. for now runs pretty stable even on debug builds. performance isn't my primary concern but if i ever make a finished game with this i want to play it with the laptop too.
-- [x] primitive ui api
-  - fix text rendering for the hundreth time (sometimes textures too small)
+- [x] primitive-ish ui api
+  - text rendering now finally fixed!!! you can render glyphs from atlases and even render textcomponents to intermediate textures for miniscule performance increases and maximum vram usage! i'm pretty proud of the text rendering system now but it's a love-hate-relationship, the text renderer has been by far the most annoying system of the whole engine to get working properly and efficiently.
 - [x] audio
   - force 3d stereo audio to mono (spatial stereo audio doesn't play)
   - support more formats (now supporting only ogg vorbis)
