@@ -2,6 +2,7 @@
 #include <latren/systems.h>
 #include <latren/io/resourcemanager.h>
 #include <latren/gamewindow.h>
+#include <latren/debugmacros.h>
 #include <algorithm>
 
 using namespace UI;
@@ -19,6 +20,12 @@ void TextComponent::Delete() {
 
 void TextComponent::Start() {
     renderingMethod_ = renderingMethod;
+    #ifdef LATREN_FORCE_TEXT_RENDER_EVERY_FRAME
+    renderingMethod_ = TextRenderingMethod::RENDER_EVERY_FRAME;
+    #endif
+    #ifdef LATREN_FORCE_TEXT_RENDER_TO_TEXTURE
+    renderingMethod_ = TextRenderingMethod::RENDER_TO_TEXTURE;
+    #endif
     shape_.numVertexAttributes = 4;
     shape_.stride = 4;
     shape_.GenerateVAO();
@@ -41,8 +48,14 @@ void TextComponent::CalculateBounds() {
     glm::vec2 pos = trans.pos;
     float size = trans.size;
 
-    actualTextSize_.x = textSize_.x * aspectRatioModifier_;
-    actualTextSize_.y = textSize_.y;
+    if (forceTextSize.x != -1)
+        actualTextSize_.x = std::min(textSize_.x * aspectRatioModifier_, forceTextSize.x);
+    else
+        actualTextSize_.x = textSize_.x * aspectRatioModifier_;
+    if (forceTextSize.y != -1)
+        actualTextSize_.y = std::min(textSize_.y, forceTextSize.y);
+    else
+        actualTextSize_.y = textSize_.y;
 
     glm::vec2 offset = glm::vec2(0.0f);
 
@@ -70,10 +83,21 @@ void TextComponent::CalculateBounds() {
     }
 
     // yeah...
-    offset.y -= ((anchorRowsOver ? 0.0f : additionalRowsHeight_) + baseLine_.fromGlyphBottom) * size;
-    bounds_ = { pos.x + offset.x, pos.x + offset.x + actualTextSize_.x, pos.y + offset.y + actualTextSize_.y, pos.y + offset.y };
-    pos.y -= f.baseLine.fromGlyphBottom * fontModifier * size;
-    generalBounds_ = { pos.x + offset.x, pos.x + offset.x + ((forceTextSize.x != -1) ? forceTextSize.x : actualTextSize_.x), pos.y + f.baseLine.fromGlyphTop * fontModifier * size, pos.y };
+    float adtRowHeight = anchorRowsOver ? 0.0f : additionalRowsHeight_;
+    float boundsOffsetY = offset.y - (adtRowHeight + baseLine_.fromGlyphBottom) * size;
+    bounds_ = {
+        pos.x + offset.x,
+        pos.x + offset.x + actualTextSize_.x,
+        pos.y + boundsOffsetY + actualTextSize_.y,
+        pos.y + boundsOffsetY
+    };
+    float generalBoundsOffsetY = offset.y - (adtRowHeight + f.baseLine.fromGlyphBottom * fontModifier) * size;
+    generalBounds_ = {
+        pos.x + offset.x,
+        pos.x + offset.x + ((forceTextSize.x != -1) ? forceTextSize.x : actualTextSize_.x),
+        pos.y + generalBoundsOffsetY + ((forceTextSize.y != -1) ? forceTextSize.y : fixedTextHeight_),
+        pos.y + generalBoundsOffsetY
+    };
 }
 
 void TextComponent::RenderTextToPos(glm::vec2 pos) {
@@ -132,6 +156,15 @@ void TextComponent::Render(const glm::mat4& proj) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
+
+        #ifdef LATREN_DEBUG_TEXT_TEXTURES
+        auto& f = Systems::GetResources().fontManager.Get(font);
+        Shader s = Shader(Shaders::ShaderID::UI_TEXT);
+        s.Use();
+        s.SetUniform("textColor", glm::vec4(glm::vec3(1.0f) - glm::vec3(color), 1.0f));
+        s.SetUniform("projection", proj);
+        Text::RenderText(f, fmt::format("{}x{}", textureSize_.x, textureSize_.y), glm::vec2(bounds_.left, bounds_.bottom), .35f * f.GetSizeModifier(), aspectRatioModifier_, HorizontalAlignment::LEFT, lineSpacing * .35f);
+        #endif
     }
 }
 
@@ -140,6 +173,7 @@ void TextComponent::RenderTexture() {
 
     glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetWindowSize() / glm::vec2(1280.0f, 720.0f);
     glm::ivec2 texSize = actualTextSize_ * wndRatio;
+    textureSize_ = texSize;
     glViewport(0, 0, (int) texSize.x, texSize.y);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
     glBindTexture(GL_TEXTURE_2D, texture_);
@@ -159,6 +193,10 @@ void TextComponent::RenderTexture() {
     textureShader_.Use();
     textureShader_.SetUniform("textColor", glm::vec4(1.0f));
     textureShader_.SetUniform("projection", glm::ortho(0.0f, texSize.x / wndRatio.x, 0.0f, texSize.y / wndRatio.y));
+    #ifdef LATREN_DEBUG_TEXT_TEXTURES
+    glClearColor(0.5f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    #endif
     RenderTextToPos(glm::vec2(0.0f));
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     Systems::GetRenderer().RestoreViewport();
@@ -168,9 +206,10 @@ void TextComponent::UpdateTextMetrics() {
     auto& f = Systems::GetResources().fontManager.Get(font);
     additionalRows_ = (int) std::count(text_.begin(), text_.end(), '\n');
     baseLine_ = Text::GetBaseLine(f, text_);
-    additionalRowsHeight_ = additionalRows_ * (f.fontHeight + lineSpacing);
+    additionalRowsHeight_ = additionalRows_ * (f.fontHeight * f.GetSizeModifier() + lineSpacing);
     textSize_.x = Text::GetTextWidth(f, text_) * GetTransform().size;
     textSize_.y = Text::GetTextHeight(f, text_, (int) lineSpacing) * GetTransform().size;
+    fixedTextHeight_ = Text::GetFixedTextHeight(f, text_, (int) lineSpacing) * GetTransform().size;
 }
 
 void TextComponent::SetText(const std::string& t) {

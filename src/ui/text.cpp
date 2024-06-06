@@ -2,6 +2,7 @@
 #include <latren/graphics/shape.h>
 #include <latren/graphics/textureatlas.h>
 #include <latren/io/resourcemanager.h>
+#include <latren/debugmacros.h>
 
 #include <stb/stb_image_write.h>
 
@@ -102,7 +103,6 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
         return std::nullopt;
     FT_Face& face = font.fontFace;
     FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
-    font.fontHeight = face->height >> 6;
     
     bool allGlyphsLoaded = true;
     FT_UInt i;
@@ -158,7 +158,9 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
 
         spdlog::info("Grouped {} characters into a {}x{} atlas texture", atlas.spriteData.size(), atlas.w, atlas.h);
 
-        // stbi_write_png(std::string(std::string(face->family_name) + ".png").c_str(), atlas.w, atlas.h, 1, atlas.buffer, atlas.w);
+        #ifdef LATREN_DUMP_FONT_ATLAS_PNGS
+        stbi_write_png(std::string(std::string(face->family_name) + ".png").c_str(), atlas.w, atlas.h, 1, atlas.buffer, atlas.w);
+        #endif
 
         for (const auto& sprite : atlas.spriteData) {
             Character& c = font.charMap[chars.at(sprite.id)];
@@ -178,6 +180,7 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
 
     // this is fucking genius
     font.baseLine = GetRowBaseLine(font, chars, false);
+    font.fontHeight = (face->size->metrics.ascender - face->size->metrics.descender) >> 6;
     font.size = fontSize;
 
     return std::optional<Font>(font);
@@ -193,8 +196,6 @@ void Resources::FontManager::SetFontSize(int size) {
 
 void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 pos, float size, float aspectRatio, HorizontalAlignment alignment, float lineSpacing) {    
     glActiveTexture(GL_TEXTURE0);
-    // glClearColor(.5, 0.0, 0.0, 1.0);
-    // glClear(GL_COLOR_BUFFER_BIT);
     Shapes::GetDefaultShape(Shapes::DefaultShape::RECTANGLE_VEC4).Bind();
     std::vector<int> lineWidths = GetLineWidths(font, text);
     int textWidth = *std::max_element(lineWidths.begin(), lineWidths.end());
@@ -206,12 +207,12 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
         const Character& c;
     };
     std::vector<CharToRender> charsToRender;
+    float m = font.GetSizeModifier();
     for (std::string::const_iterator it = text.begin(); it != text.end(); ++it) {
         const Character& c = font.GetChar(*it);
-        float fontModifier = ((float) font.size.y / BASE_FONT_SIZE);
         if (*it == '\n') {
             pos.x = startPos.x;
-            pos.y -= (font.fontHeight * fontModifier * size + lineSpacing);
+            pos.y -= (font.fontHeight * size + lineSpacing);
             ++line;
             continue;
         }
@@ -220,13 +221,13 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
         actualPos.y = pos.y - (c.size.y - c.bearing.y) * size;
         switch (alignment) {
             case HorizontalAlignment::LEFT:
-                actualPos.x = pos.x + c.bearing.x * size * fontModifier;
+                actualPos.x = pos.x + c.bearing.x * size;
                 break;
             case HorizontalAlignment::RIGHT:
-                actualPos.x = pos.x + (c.bearing.x + textWidth - lineWidths.at(line)) * size * fontModifier * aspectRatio;
+                actualPos.x = pos.x + (c.bearing.x * m + textWidth - lineWidths.at(line)) / m * size * aspectRatio;
                 break;
             case HorizontalAlignment::CENTER:
-                actualPos.x = pos.x + (c.bearing.x * size + (textWidth - lineWidths.at(line)) / 2.0f) * size * fontModifier * aspectRatio;
+                actualPos.x = pos.x + (c.bearing.x * m * size + (textWidth - lineWidths.at(line)) / 2.0f) / m * size * aspectRatio;
                 break;
         }
 
@@ -357,16 +358,18 @@ int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineS
     int h = 0;
     int linebreaks = (int) std::count(text.begin(), text.end(), '\n');
     if (linebreaks > 0) {
-        BaseLine firstRowBl = GetRowBaseLine(font, text.substr(0, text.find_first_of('\n')));
-        BaseLine lastRowBl = GetRowBaseLine(font, text.substr(text.find_last_of('\n') + 1));
-        h += 2 * std::max(firstRowBl.fromGlyphBottom + lastRowBl.fromGlyphTop, lastRowBl.fromGlyphBottom + firstRowBl.fromGlyphTop);
-        h += lineSpacing;
+        BaseLine bl = GetBaseLine(font, text);
+        h += bl.fromGlyphBottom + bl.fromGlyphTop;
         // rows in between
-        h += (linebreaks - 1) * (font.fontHeight + lineSpacing);
-        // h += GetRowHeight(font, firstRow) - ;
+        h += linebreaks * (font.fontHeight * font.GetSizeModifier() + lineSpacing);
     }
     else {
         h = GetRowHeight(font, text);
     }
     return h;
+}
+
+int UI::Text::GetFixedTextHeight(const Font& font, const std::string& text, int lineSpacing) {
+    int lines = (int) std::count(text.begin(), text.end(), '\n') + 1;
+    return lines * (font.fontHeight * font.GetSizeModifier()) + (lines - 1) * lineSpacing;
 }

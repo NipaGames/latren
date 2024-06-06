@@ -29,9 +29,11 @@ namespace UI {
         GLuint texture_ = GL_NONE;
         glm::vec2 textSize_ = glm::vec2(0.0f);
         glm::vec2 actualTextSize_ = glm::vec2(0.0f);
+        glm::ivec2 textureSize_ = glm::vec2(0);
+        float fixedTextHeight_ = 0.0f;
         UI::Text::BaseLine baseLine_;
         int additionalRows_ = 0;
-        float additionalRowsHeight_ = 0;
+        float additionalRowsHeight_ = 0.0f;
         TextRenderingMethod renderingMethod_;
         bool hasStarted_ = false;
         Shape shape_;
@@ -42,7 +44,7 @@ namespace UI {
         void RenderTextToPos(glm::vec2);
     public:
         std::string font;
-        float lineSpacing = 5.0f;
+        float lineSpacing = 0.0f;
         bool anchorRowsOver = false;
         glm::vec2 forceTextSize = glm::vec2(-1);
         glm::vec4 color = glm::vec4(1.0f);

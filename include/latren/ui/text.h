@@ -54,5 +54,8 @@ namespace UI::Text {
     LATREN_API std::vector<int> GetLineWidths(const Font&, const std::string&);
     LATREN_API int GetTextWidth(const Font&, const std::string&);
     LATREN_API int GetRowHeight(const Font&, const std::string&);
-    LATREN_API int GetTextHeight(const Font&, const std::string&, int = 5);
+    // return "tight" font height, returns the minimum font height required (variable first and last line heights)
+    LATREN_API int GetTextHeight(const Font&, const std::string&, int = 0);
+    // returns text height fixed to uniform font baselines (fixed line height)
+    LATREN_API int GetFixedTextHeight(const Font&, const std::string&, int = 0);
 };

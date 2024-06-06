@@ -1,8 +1,10 @@
 #include <latren/ui/canvas.h>
 #include <latren/ui/component/uicomponent.h>
+#include <latren/ui/materials.h>
 #include <latren/systems.h>
 #include <latren/input.h>
 #include <latren/gamewindow.h>
+#include <latren/debugmacros.h>
 
 using namespace UI;
 
@@ -53,6 +55,27 @@ void Canvas::Draw() {
             if (c.isVisible) {
                 if (!bgOverflow)
                     glEnable(GL_SCISSOR_TEST);
+                
+                #ifdef LATREN_DEBUG_UI_BOUNDS
+                UI::SOLID_UI_SHAPE_MATERIAL->Use();
+                UI::SOLID_UI_SHAPE_MATERIAL->GetShader().SetUniform("material.color", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+                UI::SOLID_UI_SHAPE_MATERIAL->GetShader().SetUniform("projection", glm::ortho(0.0f, 1280.0f, 0.0f, 720.0f));
+                const Rect& bounds = c.GetBounds();
+                Shape s = Shapes::GetDefaultShape(Shapes::DefaultShape::RECTANGLE_VEC4);
+                s.SetVertexData(new float[24] {
+                    bounds.left,    bounds.top,     0.0f, 0.0f,
+                    bounds.left,    bounds.bottom,  0.0f, 1.0f,
+                    bounds.right,   bounds.bottom,  1.0f, 1.0f,
+                    bounds.left,    bounds.top,     0.0f, 0.0f,
+                    bounds.right,   bounds.bottom,  1.0f, 1.0f,
+                    bounds.right,   bounds.top,     1.0f, 0.0f
+                }, false);
+                s.Bind();
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                #endif
+
                 c.Render(proj);
             }
         });
