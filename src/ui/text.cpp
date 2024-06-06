@@ -42,17 +42,16 @@ const Character& Font::GetChar(WCHAR_T c) const {
 }
 
 template <typename T>
-glm::ivec2 GetRowVerticalPadding(const Font& font, const T& text) {
-    int max = 0;
-    int min = 0;
+BaseLine GetRowBaseLine(const Font& font, const T& text) {
+    BaseLine line = { 0, 0 };
     auto it = text.begin();
     while (it != text.end()) {
         const Character& c = font.GetChar(*it);
-        max = std::max(c.bearing.y, max);
-        min = std::min(c.bearing.y - c.size.y, min);
+        line.fromGlyphBottom = std::max(c.size.y - c.bearing.y, line.fromGlyphBottom);
+        line.fromGlyphTop = std::max(c.bearing.y, line.fromGlyphTop);
         ++it;
     }
-    return glm::ivec2(-min, max);
+    return line;
 }
 
 // you should also free everything created with this wicked function
@@ -139,7 +138,7 @@ std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& pa
             break;
     }
     // this is fucking genius
-    font.padding = GetRowVerticalPadding(font, chars);
+    font.baseLine = GetRowBaseLine(font, chars);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     if (createAtlas) {
@@ -322,15 +321,15 @@ int UI::Text::GetTextWidth(const Font& font, const std::string& text) {
     return *std::max_element(widths.begin(), widths.end());
 }
 
-glm::ivec2 UI::Text::GetVerticalPadding(const Font& font, const std::string& text) {
+BaseLine UI::Text::GetBaseLine(const Font& font, const std::string& text) {
     if (std::count(text.begin(), text.end(), '\n') > 0) {
         size_t first = text.find_first_of('\n');
         size_t last = text.find_last_of('\n');
-        glm::ivec2 firstRowPadding = GetRowVerticalPadding(font, text.substr(0, first));
-        glm::ivec2 lastRowPadding = GetRowVerticalPadding(font, text.substr(last + 1));
-        return glm::ivec2(firstRowPadding[0], lastRowPadding[1]);
+        BaseLine firstRowPadding = GetRowBaseLine(font, text.substr(0, first));
+        BaseLine lastRowPadding = GetRowBaseLine(font, text.substr(last + 1));
+        return { firstRowPadding.fromGlyphBottom, lastRowPadding.fromGlyphTop };
     }
-    return GetRowVerticalPadding(font, text);
+    return GetRowBaseLine(font, text);
 }
 
 int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineSpacing) {

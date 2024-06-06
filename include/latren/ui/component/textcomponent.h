@@ -29,7 +29,7 @@ namespace UI {
         GLuint texture_ = GL_NONE;
         glm::vec2 textSize_ = glm::vec2(0.0f);
         glm::vec2 actualTextSize_ = glm::vec2(0.0f);
-        glm::vec2 padding_ = glm::vec2(0.0f);
+        UI::Text::BaseLine baseLine_;
         int additionalRows_ = 0;
         float additionalRowsHeight_ = 0;
         TextRenderingMethod renderingMethod_;
@@ -39,6 +39,7 @@ namespace UI {
         UI::Rect generalBounds_;
         glm::vec2 textOffset_ = glm::vec2(0.0f);
         void RenderTexture();
+        void RenderTextToPos(glm::vec2);
     public:
         std::string font;
         float lineSpacing = 5.0f;
