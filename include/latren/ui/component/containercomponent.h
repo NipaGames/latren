@@ -10,7 +10,6 @@ namespace UI {
     public:
         void Render(const glm::mat4&) override;
         void UIUpdate() override;
-        void UpdateWindowSize() override;
         glm::vec2 GetOffset() const override;
         Rect GetLocalBounds() const override;
     };

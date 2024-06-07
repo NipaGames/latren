@@ -109,7 +109,6 @@ const glm::vec2& Canvas::GetMousePosition() const {
 
 void Canvas::AddUIComponent(ComponentReference<UIComponent> c, int layer) {
     c->parent_ = this;
-    c->aspectRatioModifier_ = canvasAspectRatioModifier_;
     _AddUIComponent(c, layer);
 };
 
@@ -153,20 +152,6 @@ const glm::vec2& Canvas::GetBackgroundSize() const {
 
 void Canvas::SetBackgroundSize(const glm::vec2& s) {
     bgSize_ = s;
-}
-
-void Canvas::UpdateComponentsOnWindowSize(float m) {
-    for (auto& [p, layer] : components_) {
-        layer.ForEach([&](UIComponent& c) {
-            c.aspectRatioModifier_ = m;
-            c.UpdateWindowSize();
-        });
-    }
-}
-
-void Canvas::UpdateWindowSize(int w, int h) {
-    canvasAspectRatioModifier_ = ((float) h * 1280.0f) / ((float) w * 720.0f);
-    UpdateComponentsOnWindowSize(canvasAspectRatioModifier_);
 }
 
 void Canvas::BreakUpdates() {

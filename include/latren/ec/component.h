@@ -23,7 +23,7 @@ protected:
 public:
     ComponentData data;
     Entity parent;
-    IComponentMemoryPool* pool;
+    IComponentMemoryPool* pool = nullptr;
     
     IComponent() = default;
     IComponent(const IComponent&);
@@ -49,6 +49,23 @@ public:
     template <typename C>
     operator ComponentReference<C>() const { return CreateReference<C>(); }
     operator GeneralComponentReference() const { return CreateReference(); }
+
+    template <typename C, typename Return, typename... Params>
+    std::function<void(Params...)> LambdaByReference(const std::function<Return(C&, Params...)> lambda) {
+        ComponentReference<C> ref = *this;
+        if (ref.IsNull()) {
+            return [=](Params&&... params) {
+                lambda(static_cast<C&>(*this), params...);
+            };
+        }
+        return [=](Params&&... params) mutable {
+            lambda(ref, params...);
+        };
+    }
+    template <typename F>
+    auto LambdaByReference(F f) {
+        return LambdaByReference(std::function(f));
+    }
 
     static double GetTime();
 };

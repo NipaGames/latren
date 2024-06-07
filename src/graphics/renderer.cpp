@@ -282,10 +282,6 @@ void Renderer::UpdateCameraProjection(int width, int height) {
 
     camera_.aspectRatio = (float) width / (float) height;
     camera_.projectionMatrix = glm::perspective(glm::radians(camera_.fov), camera_.aspectRatio, camera_.clippingNear, camera_.clippingFar);
-    
-    for (auto& c : canvases_) {
-        c.second->UpdateWindowSize(width, height);
-    }
 }
 
 void Renderer::ApplyPostProcessing(const PostProcessing& postProcessing) {
@@ -330,7 +326,6 @@ UI::Canvas& Renderer::GetCanvas(const std::string& id) {
 void Renderer::AssignCanvas(const std::string& id, UI::Canvas* c) {
     canvases_.insert({ id, c });
     glm::ivec2 wndSize = window_->GetWindowSize();
-    c->UpdateWindowSize(wndSize.x, wndSize.y);
 }
 
 void Renderer::RemoveCanvas(const std::string& id) {

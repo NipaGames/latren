@@ -4,6 +4,7 @@
 #include <latren/gamewindow.h>
 #include <latren/debugmacros.h>
 #include <algorithm>
+#include <functional>
 
 using namespace UI;
 
@@ -29,6 +30,13 @@ void TextComponent::Start() {
     shape_.numVertexAttributes = 4;
     shape_.stride = 4;
     shape_.GenerateVAO();
+
+    Systems::GetGameWindow().eventHandler.Subscribe(WindowEventType::WINDOW_RESIZE,
+        LambdaByReference([](TextComponent& c, const glm::ivec2& size) {
+            c.UpdateWindowSize(size);
+        })
+    );
+    UpdateWindowSize(Systems::GetGameWindow().GetWindowSize());
 
     hasStarted_ = true;
     UpdateTextMetrics();
@@ -238,7 +246,8 @@ UI::Rect TextComponent::GetLocalBounds() const {
     return generalBounds_;
 }
 
-void TextComponent::UpdateWindowSize() {
+void TextComponent::UpdateWindowSize(const glm::ivec2& size) {
+    aspectRatioModifier_ = (16.0f * size.y) / (9.0f * size.x);
     CalculateBounds();
     if (renderingMethod_ == TextRenderingMethod::RENDER_TO_TEXTURE && hasStarted_)
         RenderTexture();

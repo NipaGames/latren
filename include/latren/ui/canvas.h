@@ -90,8 +90,6 @@ namespace UI {
         glm::vec2 mousePos_;
         glm::vec2 offset_ = glm::vec2(0.0f);
         glm::vec2 bgSize_ = glm::vec2(1280.0f, 720.0f);
-        float canvasAspectRatioModifier_ = (float) LATREN_BASE_WND_WIDTH / (float) LATREN_BASE_WND_HEIGHT;
-        void UpdateComponentsOnWindowSize(float);
     public:
         bool isOwnedByRenderer = false;
         bool isVisible = true;
@@ -107,7 +105,6 @@ namespace UI {
         void AddUIComponent(const SharedComponentPtr<T>& gen, int layer = 0) {
             auto c = SharedComponentPtrCast<UIComponent>(gen);
             c->Get().parent_ = this;
-            c->Get().aspectRatioModifier_ = canvasAspectRatioModifier_;
             _AddUIComponent(c, layer);
         };
         template <typename T, typename = std::enable_if_t<std::is_base_of_v<UIComponent, T>>>
@@ -124,7 +121,6 @@ namespace UI {
         Canvas* GetCanvas();
         void BreakUpdates();
         
-        virtual void UpdateWindowSize(int, int);
         virtual glm::mat4 GetProjectionMatrix() const;
         virtual const glm::vec2& GetMousePosition() const;
 

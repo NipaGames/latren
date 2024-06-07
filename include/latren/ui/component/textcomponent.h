@@ -40,6 +40,7 @@ namespace UI {
         UI::Rect bounds_;
         UI::Rect generalBounds_;
         glm::vec2 textOffset_ = glm::vec2(0.0f);
+        float aspectRatioModifier_ = 1.0f;
         void RenderTexture();
         void RenderTextToPos(glm::vec2);
     public:
@@ -56,7 +57,7 @@ namespace UI {
         void Start() override;
         void Delete() override;
         void Render(const glm::mat4&) override;
-        void UpdateWindowSize() override;
+        void UpdateWindowSize(const glm::ivec2&);
         void SetText(const std::string&);
         void SetShader(const Shader&);
         void CalculateBounds();

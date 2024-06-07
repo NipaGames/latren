@@ -33,7 +33,6 @@ namespace UI {
     friend class Canvas;
     friend class Interactable;
     protected:
-        float aspectRatioModifier_ = 1.0f;
         Canvas* parent_ = nullptr;
         InteractionState interaction_;
         Rect localBounds_;
@@ -47,7 +46,6 @@ namespace UI {
         
         UITransform GetTransform() const;
         virtual void SetTransform(const UITransform&);
-        virtual void UpdateWindowSize() { }
 
         virtual void Start() override;
         virtual void Render(const glm::mat4& proj);

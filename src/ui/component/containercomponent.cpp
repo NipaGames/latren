@@ -12,10 +12,6 @@ void ContainerComponent::UIUpdate() {
     UIComponent::UIUpdate();
 }
 
-void ContainerComponent::UpdateWindowSize() {
-    UpdateComponentsOnWindowSize(aspectRatioModifier_);
-}
-
 glm::vec2 ContainerComponent::GetOffset() const {
     return parent_->GetOffset() + GetTransform().pos + offset_;
 }

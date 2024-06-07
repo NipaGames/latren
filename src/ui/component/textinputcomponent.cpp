@@ -42,30 +42,35 @@ void TextInputComponent::Start() {
     TextComponent::Start();
     caretShape_ = Shapes::GetDefaultShape(Shapes::DefaultShape::RECTANGLE_VEC4);
 
-    specialKeyEvent_ = Systems::GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_SPECIAL, [&](Input::KeyboardEvent e) {
-        if (!inputFocus_)
-            return;
-        if (e.special == Input::SpecialKey::BACKSPACE) {
-            std::string val = value;
-            if (Systems::GetInputSystem().keyboardListener.IsDown(GLFW_KEY_LEFT_CONTROL) || Systems::GetInputSystem().keyboardListener.IsDown(GLFW_KEY_RIGHT_CONTROL))
-                SetValue("");
-            else if (val.length() > 0)
-                SetValue(val.substr(0, val.length() - 1));
-            else
-                SetValue("");
-        }
-        if (e.special == Input::SpecialKey::ENTER) {
-            eventHandler.Dispatch("enter");
-        }
-    });
-    asciiKeyEvent_ = Systems::GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_ASCII_CHAR, [&](Input::KeyboardEvent e) {
-        if (!inputFocus_)
-            return;
-        SetValue(value + e.character);
-    });
-    eventHandler.Subscribe("mouseUp", [&] {
-        Focus();
-    });
+    specialKeyEvent_ = Systems::GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_SPECIAL,
+        LambdaByReference([&](TextInputComponent& c, Input::KeyboardEvent e) {
+            if (!c.inputFocus_)
+                return;
+            if (e.special == Input::SpecialKey::BACKSPACE) {
+                if (Systems::GetInputSystem().keyboardListener.IsDown(GLFW_KEY_LEFT_CONTROL) || Systems::GetInputSystem().keyboardListener.IsDown(GLFW_KEY_RIGHT_CONTROL))
+                    c.SetValue("");
+                else if (c.value.length() > 0)
+                    c.SetValue(c.value.substr(0, c.value.length() - 1));
+                else
+                    c.SetValue("");
+            }
+            if (e.special == Input::SpecialKey::ENTER) {
+                eventHandler.Dispatch("enter");
+            }
+        })
+    );
+    asciiKeyEvent_ = Systems::GetGameWindow().keyboardEventHandler.Subscribe(Input::KeyboardEventType::TEXT_INPUT_ASCII_CHAR,
+        LambdaByReference([&](TextInputComponent& c, Input::KeyboardEvent e) {
+            if (!c.inputFocus_)
+                return;
+            c.SetValue(c.value + e.character);
+        })
+    );
+    eventHandler.Subscribe("mouseUp",
+        LambdaByReference([&](TextInputComponent& c) {
+            c.Focus();
+        })
+    );
 }
 
 void TextInputComponent::UIUpdate() {
