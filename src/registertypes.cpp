@@ -45,7 +45,7 @@ void Game::RegisterComponents() {
 #include <latren/systems.h>
 
 template <typename T>
-bool DeserializeJSONNumber(Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+bool DeserializeJSONNumber(Serializer::DeserializationContext& args, const nlohmann::json& j) {
     if (!j.is_number())
         return false;
     args.Return<T>(j);
@@ -53,7 +53,7 @@ bool DeserializeJSONNumber(Serializer::DeserializationArgs& args, const nlohmann
 }
 
 template <size_t S>
-bool DeserializeJSONVector(Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+bool DeserializeJSONVector(Serializer::DeserializationContext& args, const nlohmann::json& j) {
     typedef glm::vec<S, float> Vector;
     Vector vec;
     if (j.is_number()) vec = Vector(j);
@@ -69,7 +69,7 @@ bool DeserializeJSONVector(Serializer::DeserializationArgs& args, const nlohmann
 }
 
 template <size_t S, typename T>
-bool DeserializeCFGVector(Serializer::DeserializationArgs& args, const CFG::ICFGField* field, CFG::CFGFieldType type) {
+bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field, CFG::CFGFieldType type) {
     if (field->type != CFG::CFGFieldType::STRUCT && field->type != CFG::CFGFieldType::ARRAY)
         return false;
     const CFG::CFGObject* obj = static_cast<const CFG::CFGObject*>(field);
@@ -88,12 +88,12 @@ bool DeserializeCFGVector(Serializer::DeserializationArgs& args, const CFG::ICFG
 }
 
 template <size_t S, typename T, CFG::CFGFieldType F>
-bool DeserializeCFGVector(Serializer::DeserializationArgs& args, const CFG::ICFGField* field) {
+bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
     return DeserializeCFGVector<S, T>(args, field, F);
 }
 
 template <size_t S, typename T>
-bool DeserializeCFGVectorAuto(Serializer::DeserializationArgs& args, const CFG::ICFGField* field) {
+bool DeserializeCFGVectorAuto(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
     size_t typeHash = typeid(T).hash_code();
     if (CFG::CFG_TYPES_.find(typeHash) == CFG::CFG_TYPES_.end())
         return false;
@@ -106,29 +106,30 @@ void Game::RegisterDeserializers() {
     Serializer::AddJSONDeserializer<float>(DeserializeJSONNumber<float>);
     Serializer::AddJSONDeserializer<glm::vec2, glm::ivec2>(DeserializeJSONVector<2>);
     Serializer::AddJSONDeserializer<glm::vec3, glm::ivec3>(DeserializeJSONVector<3>);
-    Serializer::AddJSONDeserializer<glm::quat>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<glm::quat>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         glm::vec3 eulers;
-        Serializer::DeserializationArgs vecArgs(Serializer::DeserializerType::ANY_POINTER);
+        Serializer::DeserializationContext vecArgs;
+        vecArgs.type = Serializer::DeserializationContext::DeserializerType::ANY_POINTER;
         vecArgs.ptr = &eulers;
         if (!DeserializeJSONVector<3>(vecArgs, j))
             return false;
         args.Return(glm::quat(glm::radians(eulers)));
         return true;
     });
-    Serializer::AddJSONDeserializer<std::string>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<std::string>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (j.is_string()) {
-            args.Return((std::string) j);
+            args.Return(j.get<std::string>());
             return true;
         }
         return false;
     });
-    Serializer::AddJSONDeserializer<bool>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<bool>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_boolean())
             return false;
         args.Return((bool) j);
         return true;
     });
-    Serializer::AddJSONDeserializer<Shaders::ShaderID>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<Shaders::ShaderID>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_string())
             return false;
         auto s = magic_enum::enum_cast<Shaders::ShaderID>((std::string) j);
@@ -137,7 +138,7 @@ void Game::RegisterDeserializers() {
         args.Return(s.value());
         return true;
     });
-    Serializer::AddJSONDeserializer<std::shared_ptr<Material>>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<std::shared_ptr<Material>>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_string())
             return false;
         args.Return(Systems::GetRenderer().GetMaterial(j));
@@ -146,13 +147,13 @@ void Game::RegisterDeserializers() {
 
     // CFG serializers
     using namespace CFG;
-    Serializer::AddCFGDeserializer<float>([](Serializer::DeserializationArgs& args, const ICFGField* field) {
+    Serializer::AddCFGDeserializer<float>([](Serializer::DeserializationContext& args, const ICFGField* field) {
         if (!IsValidType(field->type, CFGFieldType::FLOAT))
             return false;
         args.Return(field->GetValue<float>());
         return true;
     });
-    Serializer::AddCFGDeserializer<int, bool>([](Serializer::DeserializationArgs& args, const ICFGField* field) {
+    Serializer::AddCFGDeserializer<int, bool>([](Serializer::DeserializationContext& args, const ICFGField* field) {
         if (!IsValidType(field->type, CFGFieldType::INTEGER))
             return false;
         args.Return(field->GetValue<int>());
@@ -162,7 +163,7 @@ void Game::RegisterDeserializers() {
     Serializer::AddCFGDeserializer<glm::vec2>(DeserializeCFGVectorAuto<2, float>);
     Serializer::AddCFGDeserializer<glm::ivec2>(DeserializeCFGVectorAuto<2, int>);
 
-    Serializer::AddJSONDeserializer<AudioBufferHandle>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<AudioBufferHandle>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_string())
             return false;
         args.Return(Systems::GetResources().audioManager.Get(j));
@@ -171,7 +172,7 @@ void Game::RegisterDeserializers() {
     Serializer::AddJSONEnumDeserializer<AudioSourceRelativeTo>();
 
     Serializer::AddJSONEnumDeserializer<RenderPass::Enum>();
-    Serializer::AddJSONDeserializer<std::shared_ptr<Mesh>>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<std::shared_ptr<Mesh>>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_object())
             return false;
         if (!j.contains("type") || !j["type"].is_string())
@@ -217,7 +218,7 @@ void Game::RegisterDeserializers() {
     Serializer::AddJSONEnumDeserializer<Physics::ColliderConstructor>();
 
     // TODO: create colliders from scratch
-    Serializer::AddJSONDeserializer<btCollisionShape*>([](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+    Serializer::AddJSONDeserializer<btCollisionShape*>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         btCollisionShape* collider = nullptr;
         args.Return(collider);
         return true;

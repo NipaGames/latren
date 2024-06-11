@@ -37,9 +37,9 @@ Rect::operator glm::vec2() const {
 UITransform UIComponent::GetTransform() const {
     if (transformFrom == UITransformFrom::ENTITY_TRANSFORM_2D) {
         UITransform trans;
-        trans.pos = glm::vec2(parent.GetTransform().position.x, parent.GetTransform().position.y);
+        trans.pos = glm::vec2(parent.GetTransform().position->x, parent.GetTransform().position->y);
         // janky ass way to determine the size
-        trans.size = parent.GetTransform().size.z;
+        trans.size = parent.GetTransform().size->z;
         return trans;
     }
     return transform;
@@ -48,9 +48,9 @@ UITransform UIComponent::GetTransform() const {
 void UIComponent::SetTransform(const UITransform& trans) {
     transform = trans;
     if (transformFrom == UITransformFrom::ENTITY_TRANSFORM_2D) {
-        parent.GetTransform().position.x = transform.pos.x;
-        parent.GetTransform().position.y = transform.pos.y;
-        parent.GetTransform().size.z = transform.size;
+        parent.GetTransform().position->x = transform.pos.x;
+        parent.GetTransform().position->y = transform.pos.y;
+        parent.GetTransform().size->z = transform.size;
     }
 }
 

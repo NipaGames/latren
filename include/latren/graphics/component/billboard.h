@@ -12,8 +12,8 @@ private:
     GLsizei pointsCount_ = 0;
     inline static Shader SHADER_ = Shaders::ShaderID::BILLBOARD;
 public:
-    std::vector<glm::vec3> positions; LE_RCDV(positions)
-    std::shared_ptr<Material> material; LE_RCDV(material)
+    SERIALIZABLE(std::vector<glm::vec3>, positions);
+    SERIALIZABLE(std::shared_ptr<Material>, material);
 
     virtual void Start();
     virtual void Delete();

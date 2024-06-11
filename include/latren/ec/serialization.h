@@ -3,8 +3,11 @@
 #include "component.h"
 
 namespace ComponentSerialization {
-    LATREN_API std::optional<ComponentTypeData> GetComponentType(const std::string&);
-    LATREN_API std::optional<ComponentTypeData> GetComponentType(ComponentType);
+    LATREN_API const std::vector<ComponentTypeData>& GetComponentTypes();
+    LATREN_API bool IsComponentRegistered(const std::string&);
+    LATREN_API bool IsComponentRegistered(ComponentType);
+    LATREN_API const ComponentTypeData& GetComponentType(const std::string&);
+    LATREN_API const ComponentTypeData& GetComponentType(ComponentType);
     template <typename T>
     static std::optional<ComponentTypeData> GetComponentType() { return GetComponentType(typeid(T)); }
 
@@ -17,24 +20,6 @@ namespace ComponentSerialization {
     static std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool() { return CreateComponentMemoryPool(typeid(T)); }
     LATREN_API ComponentPoolContainer CreateComponentMemoryPools();
 
-    LATREN_API IComponent* CreateComponent(ComponentType, const ComponentData& = ComponentData());
-    LATREN_API IComponent* CreateComponent(const std::string&, const ComponentData& = ComponentData());
-    template <typename T>
-    static IComponent* CreateComponent(const ComponentData& data = ComponentData()) { return CreateComponent(typeid(T), data); }
-
-    LATREN_API TypedComponentData CreateComponentData(ComponentType);
-    template <typename T>
-    static TypedComponentData CreateComponentData() { return CreateComponentData(typeid(T)); }
-
-    template <typename C>
-    IComponent* CreateRawInstance(const ComponentData& data) {
-        IComponent* c = new C();
-        for (const auto& [k, v] : data.vars) {
-            v->CloneValuesTo(c->data.vars[k]);
-        }
-        return c;
-    }
-
     template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<IComponent, T>>>
     std::shared_ptr<T> CreateInstance(Args... args) {
         std::shared_ptr<T> instance = std::make_shared<T>(args...);
@@ -44,7 +29,7 @@ namespace ComponentSerialization {
     LATREN_API const bool RegisterComponent(
         const char*,
         const std::type_info&,
-        const std::function<IComponent*(const ComponentData&)>&,
+        const std::function<IComponent*()>&,
         const std::function<std::unique_ptr<IComponentMemoryPool>()>&);
 
     template <typename C>
@@ -52,7 +37,11 @@ namespace ComponentSerialization {
         return RegisterComponent(
             name,
             typeid(C),
-            CreateRawInstance<C>,
+            []() {
+                C* c = new C();
+                c->OverrideType(typeid(C));
+                return c;
+            },
             std::make_unique<ComponentMemoryPool<C>>
         );
     }

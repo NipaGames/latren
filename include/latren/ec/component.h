@@ -12,7 +12,8 @@ class IComponent;
 struct ComponentTypeData {
     std::string name;
     ComponentType type;
-    std::function<IComponent*(const ComponentData&)> componentInitializer;
+    std::unordered_map<std::string, SerializableField> serializableFields;
+    std::function<IComponent*()> componentInitializer;
     std::function<std::unique_ptr<IComponentMemoryPool>()> memPoolInitializer;
 };
 
@@ -21,20 +22,18 @@ protected:
     bool hasStarted_ = false;
     bool useDeleteDestructor_ = false;
 public:
-    ComponentData data;
     Entity parent;
     IComponentMemoryPool* pool = nullptr;
     
     IComponent() = default;
-    IComponent(const IComponent&);
+    IComponent(const IComponent&) = default;
     virtual void IStart() = 0;
     virtual void IDelete() = 0;
     virtual void Delete() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
-    virtual bool ForwardType(ComponentType) = 0;
+    virtual bool OverrideType(ComponentType) = 0;
     virtual ComponentType GetType() const;
-    virtual ComponentData& GetData();
     virtual bool HasStarted() const;
     virtual void UseDeleteDestructor(bool);
 
@@ -89,21 +88,12 @@ public:
     void IFixedUpdate() override {
         static_cast<Derived*>(this)->FixedUpdate();
     }
-    virtual bool ForwardType(ComponentType t) override {
+    virtual bool OverrideType(ComponentType t) override {
         type_ = t;
         return true;
     }
     virtual ComponentType GetType() const override {
         return type_;
-    }
-
-    template <typename T>
-    const T& GetValue(const std::string& key) {
-        return data.Get<T>(key);
-    }
-    template <typename T>
-    void SetValue(const std::string& key, T val) {
-        data.Set(key, val);
     }
     
     virtual void Start() { }

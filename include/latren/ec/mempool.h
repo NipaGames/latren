@@ -95,6 +95,7 @@ public:
     GeneralComponentReference AllocNewComponent(EntityIndex entity) override {
         C& c = components_.emplace_back();
         c.pool = this;
+        c.OverrideType(typeid(C));
         references_[entity] = components_.size() - 1;
         return ComponentReference<C> { this, entity };
     }

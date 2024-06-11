@@ -15,9 +15,9 @@ private:
     bool isAssignedToRenderer_ = false;
 public:
     // enable this if the object transform doesn't update, no need to calculate model matrices every frame that way
-    std::string object = ""; LE_RCDV(object)
-    std::vector<std::shared_ptr<Mesh>> meshes; LE_RCDV(meshes)
-    bool copyMeshes = false; LE_RCDV(copyMeshes)
+    SERIALIZABLE(std::string, object) = { };
+    SERIALIZABLE(std::vector<std::shared_ptr<Mesh>>, meshes);
+    SERIALIZABLE(bool, copyMeshes) = false;
 
     void CalculateMatrices() override;
     virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::mat4&, const glm::vec3&) const;

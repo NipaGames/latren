@@ -6,40 +6,49 @@ std::vector<ComponentTypeData>& GetComponentTypes() {
     return componentTypes;
 }
 
-std::optional<ComponentTypeData> ComponentSerialization::GetComponentType(const std::string& name) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
+const std::vector<ComponentTypeData>& ComponentSerialization::GetComponentTypes() {
+    return ::GetComponentTypes();
+}
+
+bool ComponentSerialization::IsComponentRegistered(const std::string& name) {
+    return std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
+        return t.name == name;
+    }) != GetComponentTypes().end();
+}
+bool ComponentSerialization::IsComponentRegistered(ComponentType type) {
+    return std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
+        return t.type == type;
+    }) != GetComponentTypes().end();
+}
+
+const ComponentTypeData& ComponentSerialization::GetComponentType(const std::string& name) {
+    auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
         return t.name == name;
     });
-    if (it == GetComponentTypes().cend())
-        return std::nullopt;
-    else
-        return *it;
+    return *it;
 }
-std::optional<ComponentTypeData> ComponentSerialization::GetComponentType(ComponentType type) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
+const ComponentTypeData& ComponentSerialization::GetComponentType(ComponentType type) {
+    auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
         return t.type == type;
     });
-    if (it == GetComponentTypes().cend())
-        return std::nullopt;
-    else
-        return *it;
+    return *it;
 }
 
 std::optional<std::string> ComponentSerialization::GetComponentName(ComponentType type) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
+    auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
         return t.type == type;
     });
-    if (it == GetComponentTypes().cend())
+    if (it == GetComponentTypes().end())
         return std::nullopt;
     else
         return it->name;
 }
 
 std::unique_ptr<IComponentMemoryPool> ComponentSerialization::CreateComponentMemoryPool(ComponentType type) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
+    auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
         return t.type == type;
     });
-    if (it == GetComponentTypes().cend())
+    if (it == GetComponentTypes().end())
         return nullptr;
     return it->memPoolInitializer();
 }
@@ -52,46 +61,28 @@ ComponentPoolContainer ComponentSerialization::CreateComponentMemoryPools() {
     return pools;
 }
 
-IComponent* ComponentSerialization::CreateComponent(ComponentType type, const ComponentData& data) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
-        return t.type == type;
-    });
-    if (it == GetComponentTypes().cend())
-        return nullptr;
-    IComponent* c = it->componentInitializer(data);
-    c->UseDeleteDestructor(true);
-    return c;
-}
-IComponent* ComponentSerialization::CreateComponent(const std::string& name, const ComponentData& data) {
-    auto it = std::find_if(GetComponentTypes().cbegin(), GetComponentTypes().cend(), [&](const auto& t) {
-        return t.name == name;
-    });
-    if (it == GetComponentTypes().cend())
-        return nullptr;
-    return CreateComponent(it->type, data);
-}
-
-TypedComponentData ComponentSerialization::CreateComponentData(ComponentType type) {
-    TypedComponentData data = TypedComponentData(type);
-    IComponent* dummy = CreateComponent(type);
-    for (const auto& [k, v] : dummy->data.vars) {
-        data.vars[k] = v;
-        data.vars[k]->DetachPointer();
-    }
-    delete dummy;
-    return data;
-}
-
+#include <iostream>
 const bool ComponentSerialization::RegisterComponent(
     const char* name,
     const std::type_info& type,
-    const std::function<IComponent*(const ComponentData&)>& componentInitializer,
+    const std::function<IComponent*()>& componentInitializer,
     const std::function<std::unique_ptr<IComponentMemoryPool>()>& memPoolInitializer)
 {
-    if (GetComponentType(type) != std::nullopt)
+    if (IsComponentRegistered(name))
         return true;
 
-    GetComponentTypes().push_back({ std::string(name), type, componentInitializer, memPoolInitializer });
-    spdlog::info("Registered component {}", name);
+    GlobalSerialization::ToggleQueueing(true);
+    IComponent* dummy = componentInitializer();
+    auto fields = GlobalSerialization::PopSerializables(dummy);
+    delete dummy;
+    GlobalSerialization::ToggleQueueing(false);
+    ::GetComponentTypes().push_back({
+        std::string(name),
+        type,
+        fields,
+        componentInitializer,
+        memPoolInitializer
+    });
+    spdlog::info("Registered component {} (serializable fields: {})", name, fields.size());
     return true;
 }

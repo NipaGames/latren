@@ -21,15 +21,15 @@ namespace Physics {
         std::shared_ptr<btBvhTriangleMeshShape> CreateMeshCollider();
     public:
         std::shared_ptr<RAIIBtCollisionObject<btRigidBody>> rigidBody = nullptr;
-        std::shared_ptr<btCollisionShape> collider = nullptr; LE_RCDV(collider)
-        ColliderConstructor colliderFrom = ColliderConstructor::TRANSFORM; LE_RCDV(colliderFrom)
-        std::vector<int> colliderMeshes; LE_RCDV(colliderMeshes)
-        float mass = 1.0f; LE_RCDV(mass)
+        SERIALIZABLE(std::shared_ptr<btCollisionShape>, collider) = nullptr;
+        SERIALIZABLE(ColliderConstructor, colliderFrom) = ColliderConstructor::TRANSFORM;
+        SERIALIZABLE(std::vector<int>, colliderMeshes);
+        SERIALIZABLE(float, mass) = 1.0f;
         // interpolate transform every frame
-        bool enableSmoothInterpolation = false; LE_RCDV(enableSmoothInterpolation)
-        bool overwriteTransform = true; LE_RCDV(overwriteTransform)
-        bool doesMassAffectGravity = false; LE_RCDV(doesMassAffectGravity)
-        bool disableCollisions = false; LE_RCDV(disableCollisions)
+        SERIALIZABLE(bool, enableSmoothInterpolation) = false;
+        SERIALIZABLE(bool, overwriteTransform) = true;
+        SERIALIZABLE(bool, doesMassAffectGravity) = false;
+        SERIALIZABLE(bool, disableCollisions) = false;
         RigidBody() = default;
         void Start();
         void Update();

@@ -1,6 +1,7 @@
 #include <latren/stage.h>
 #include <latren/systems.h>
 #include <latren/ec/entitymanager.h>
+#include <latren/ec/serialization.h>
 #include <latren/io/files/stage.h>
 #include <latren/io/resourcemanager.h>
 #include <latren/graphics/renderer.h>
@@ -19,12 +20,6 @@ std::optional<Stage> Resources::StageManager::LoadResource(const std::fs::path& 
         return std::nullopt;
     SetItemID(s.id);
     return s;
-}
-
-void CloneComponentValuesFromData(IComponent& c, const TypedComponentData& data) {
-    for (const auto& [k, v] : data.vars) {
-        v->CloneValuesTo(c.data.vars[k]);
-    }
 }
 
 bool Resources::StageManager::LoadStage(const std::string& id) {
@@ -46,12 +41,17 @@ bool Resources::StageManager::LoadStage(const std::string& id) {
             entity = entityManager.CreateEntity(e.id);
             s.instantiatedEntities.insert(entity);
         }
-        for (const auto& data : e.components) {
-            if (!entity.HasComponent(data.type)) {
-                newComponents.push_back(entity.AddComponent(data.type));
+        for (const auto& c : e.components) {
+            if (!entity.HasComponent(c.type)) {
+                newComponents.push_back(entity.AddComponent(c.type));
             }
-            IComponent& c = entity.GetComponent(data.type);
-            CloneComponentValuesFromData(c, data);
+            IComponent& instance = entity.GetComponent(c.type);
+            const SerializableFieldMap& componentFields = ComponentSerialization::GetComponentType(instance.GetType()).serializableFields;
+            for (const auto& [name, field] : c.fields) {
+                if (field.value == nullptr || componentFields.count(name) == 0)
+                    continue;
+                field.value->CopyValueTo((char*) &instance + componentFields.at(name).offset);
+            }
         }
     }
     loadedStages_.insert(loadedStages_.begin(), s.id);

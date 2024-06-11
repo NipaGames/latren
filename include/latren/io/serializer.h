@@ -25,40 +25,116 @@
     These are defined in registertypes.cpp (Game::RegisterDeserializers).
 */
 #include <iostream>
-class ComponentData;
+
 namespace Serializer {
-    class DeserializationArgs;
+    class DeserializationContext;
     
-    template <typename T>
-    using DeserializerFunction = std::function<bool(DeserializationArgs&, T)>;
+    template <typename... Params>
+    using DeserializerFunction = std::function<bool(DeserializationContext&, Params...)>;
     typedef DeserializerFunction<const nlohmann::json&> JSONDeserializerFunction;
 
-    enum class DeserializerType {
-        COMPONENT_DATA,
-        ANY_POINTER
+
+    class ISerializableFieldValueWrapper {
+    public:
+        virtual void CopyValueTo(void*) const = 0;
+    };
+    template <typename T>
+    class SerializableFieldValueWrapper : public ISerializableFieldValueWrapper {
+    public:
+        T value;
+        SerializableFieldValueWrapper() = default;
+        SerializableFieldValueWrapper(const T& val) : value(val) { }
+        SerializableFieldValueWrapper(T&& val) : value(std::move(val)) { }
+
+        void CopyValueTo(void* ptr) const override {
+            *(T*) ptr = value;
+        }
+    };
+    class SerializableFieldValue {
+    public:
+        std::shared_ptr<ISerializableFieldValueWrapper> value;
+        std::type_index type;
+        ComponentDataContainerType containerType;
     };
 
-    class DeserializationArgs {
+    typedef std::unordered_map<std::string, SerializableFieldValue> SerializableFieldValueMap;
+    struct TypedComponentData {
+        ComponentType type;
+        Serializer::SerializableFieldValueMap fields;
+    };
+
+    class DeserializationContext {
+    private:
+        int itemIndex_ = -1;
+        size_t itemCount_ = 0;
+        std::any itemContainer_;
     public:
+        enum class DeserializerType {
+            FIELD_VALUE,
+            ANY_POINTER
+        };
         DeserializerType type;
 
         // metadata
         std::string entityId;
 
-        // SerializerType::COMPONENT_DATA
-        ComponentData* ctData = nullptr;
-        std::string ctK;
+        // SerializerType::FIELD_VALUE
+        SerializableFieldValue* field = nullptr;
 
         // SerializerType::ANY_POINTER
         void* ptr;
 
-        DeserializationArgs(const DeserializerType& t) : type(t) { }
+        template <typename... Params>
+        bool Deserialize(const DeserializerFunction<Params...>& fn, Params... params) {
+            itemIndex_ = -1;
+            return fn(*this, params...);
+        }
+
+        template <typename Param>
+        bool DeserializeVector(const DeserializerFunction<Param>& fn, const std::vector<std::decay_t<Param>>& paramList) {
+            itemCount_ = paramList.size();
+            itemIndex_ = 0;
+            for (const auto& params : paramList) {
+                if (!fn(*this, params))
+                    return false;
+                itemIndex_++;
+            }
+            return true;
+        }
+        template <typename... Params>
+        bool DeserializeVector(const DeserializerFunction<Params...>& fn, const std::vector<std::tuple<std::decay_t<Params>...>>& paramList) {
+            itemCount_ = paramList.size();
+            itemIndex_ = 0;
+            for (const auto& paramsTuple : paramList) {
+                auto params = std::tuple_cat(std::make_tuple(*this), paramsTuple);
+                if (!std::apply(fn, params))
+                    return false;
+                itemIndex_++;
+            }
+            return true;
+        }
 
         template <typename T>
         void Return(const T& val) {
+            if constexpr (ComponentDataContainerTypeDeduction<T>::TYPE != ComponentDataContainerType::VECTOR) {
+                if (itemIndex_ != -1) {
+                    // create
+                    if (itemIndex_ == 0) {
+                        itemContainer_ = std::vector<T>(itemCount_);
+                    }
+                    std::vector<T>& vec = std::any_cast<std::vector<T>&>(itemContainer_);
+                    vec[itemIndex_] = val;
+                    // assign
+                    if (itemIndex_ == vec.size() - 1) {
+                        itemIndex_ = -1;
+                        this->Return<std::vector<T>>(vec);
+                    }
+                    return;
+                }
+            }
             switch (type) {
-                case DeserializerType::COMPONENT_DATA:
-                    ctData->Set(ctK, val);
+                case DeserializerType::FIELD_VALUE:
+                    field->value = std::make_shared<SerializableFieldValueWrapper<T>>(val);
                     break;
                 case DeserializerType::ANY_POINTER:
                     *static_cast<T*>(ptr) = val;
@@ -71,18 +147,18 @@ namespace Serializer {
     class IValueDeserializer {
     public:
         F fn;
-        virtual bool CompareToComponentType(std::shared_ptr<IComponentDataValue>) const = 0;
+        virtual bool CompareToComponentType(const SerializableFieldValue&) const = 0;
         virtual bool HasType(const std::type_info*) const = 0;
     };
 
     template <typename F, typename... T>
     class ValueDeserializer : public IValueDeserializer<F> {
     public:
-        bool CompareToComponentType(std::shared_ptr<IComponentDataValue> d) const override {
+        bool CompareToComponentType(const SerializableFieldValue& field) const override {
             bool found = false;
             ([&] {
                 ComponentType type = typeid(T);
-                switch (d->containerType) {
+                switch (field.containerType) {
                     case ComponentDataContainerType::SINGLE:
                         type = typeid(T);
                         break;
@@ -90,7 +166,7 @@ namespace Serializer {
                         type = typeid(std::vector<T>);
                         break;
                 }
-                if (d->type.hash_code() == type.hash_code()) {
+                if (field.type.hash_code() == type.hash_code()) {
                     found = true;
                     return;
                 }
@@ -136,9 +212,10 @@ namespace Serializer {
         if (it == map.end())
             return false;
         const auto& deserializer = *it;
-        DeserializationArgs args(DeserializerType::ANY_POINTER);
-        args.ptr = ptr;
-        return (deserializer->fn)(args, param);
+        DeserializationContext context;
+        context.type = DeserializationContext::DeserializerType::ANY_POINTER;
+        context.ptr = ptr;
+        return context.Deserialize<const P&>(deserializer->fn, param);
     }
 
     typedef std::vector<std::shared_ptr<IValueDeserializer<JSONDeserializerFunction>>> JSONDeserializerList;
@@ -151,10 +228,10 @@ namespace Serializer {
 
     template <typename T>
     void AddJSONEnumDeserializer() {
-        AddDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serializer::DeserializationArgs& args, const nlohmann::json& j) {
+        AddDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serializer::DeserializationContext& args, const nlohmann::json& j) {
             if (!j.is_string())
                 return false;
-            auto e = magic_enum::enum_cast<T>((std::string) j);
+            auto e = magic_enum::enum_cast<T>(j.get<std::string>());
             if (!e.has_value())
                 return false;
             args.Return(e.value());
@@ -162,9 +239,10 @@ namespace Serializer {
         });
     }
 
-    LATREN_API bool ParseJSONComponentData(ComponentData&, const std::string&, const nlohmann::json&, const std::string& = "");
+    LATREN_API bool ParseJSONComponentData(SerializableFieldValueMap&, const std::string&, const nlohmann::json&, const std::string& = "");
     template <typename T>
-    bool SetJSONPointerValue(T* ptr, const nlohmann::json& jsonVal) {
+    bool SetJSONPointerValue(T *ptr, const nlohmann::json &jsonVal)
+    {
         return SetPointerValue<T>(ptr, jsonVal, GetJSONDeserializerList());
     }
 

@@ -12,7 +12,7 @@ std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
     meshData_ = std::make_shared<RAIIBtTriangleIndexVertexArray>();
     const std::vector<std::shared_ptr<Mesh>>& meshes = parent.GetComponent<MeshRenderer>().meshes;
     for (int meshIndex = 0; meshIndex < meshes.size(); meshIndex++) {
-        if (colliderMeshes.size() > 0 && std::find(colliderMeshes.begin(), colliderMeshes.end(), meshIndex) == colliderMeshes.end())
+        if (colliderMeshes->size() > 0 && std::find(colliderMeshes->begin(), colliderMeshes->end(), meshIndex) == colliderMeshes->end())
             continue;
         const std::shared_ptr<Mesh>& m = meshes.at(meshIndex);
         btIndexedMesh tempMesh;
@@ -74,32 +74,32 @@ void RigidBody::Start() {
     btTransform transform;
     transform.setIdentity();
     parent.GetComponent<MeshRenderer>().IStart();
-    if (collider == nullptr) {
+    if (collider.Get() == nullptr) {
         switch (colliderFrom) {
             case ColliderConstructor::TRANSFORM:
                 collider = std::make_shared<btBoxShape>(btVector3(.5f, .5f, .5f));
                 break;
             case ColliderConstructor::AABB:
                 collider = std::make_shared<btBoxShape>(Physics::GLMVectorToBtVector3(parent.GetComponent<MeshRenderer>().GetAABB().extents));
-                colliderOriginOffset_ = parent.GetComponent<MeshRenderer>().GetAABB().center * t.size;
-                transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation * colliderOriginOffset_));
+                colliderOriginOffset_ = parent.GetComponent<MeshRenderer>().GetAABB().center * t.size.Get();
+                transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation.Get() * colliderOriginOffset_));
                 break;
             case ColliderConstructor::MESH:
                 collider = CreateMeshCollider();
                 break;
         }
     }
-    collider->setLocalScaling(collider->getLocalScaling() * Physics::GLMVectorToBtVector3(t.size));
+    collider.Get()->setLocalScaling(collider.Get()->getLocalScaling() * Physics::GLMVectorToBtVector3(t.size));
     btVector3 localInertia(0, 0, 0);
     if (mass != 0.0f)
-        collider->calculateLocalInertia(mass, localInertia);
+        collider.Get()->calculateLocalInertia(mass, localInertia);
 
     transform.setOrigin(transform.getOrigin() + Physics::GLMVectorToBtVector3(t.position));
     transform.setRotation(Physics::GLMQuatToBtQuat(t.rotation));
 
     if (rigidBody == nullptr) {
         btDefaultMotionState* motionState = new btDefaultMotionState(transform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, collider.get(), localInertia);
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, collider->get(), localInertia);
         rbInfo.m_restitution = 0.0f;
         rigidBody = std::make_shared<RAIIBtCollisionObject<btRigidBody>>(rbInfo);
         rigidBody->AddToDynamicsWorld();
@@ -136,7 +136,7 @@ void RigidBody::CopyTransform() {
     btMotionState* ms = rigidBody->Get()->getMotionState();
     ms->getWorldTransform(transform);
     
-    transform.setOrigin(Physics::GLMVectorToBtVector3(t.position + t.rotation * colliderOriginOffset_));
+    transform.setOrigin(Physics::GLMVectorToBtVector3(t.position.Get() + t.rotation.Get() * colliderOriginOffset_));
     transform.setRotation(t.btGetRotation());
 
     ms->setWorldTransform(transform);

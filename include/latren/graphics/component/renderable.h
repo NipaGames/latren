@@ -34,14 +34,14 @@ public:
 template <typename Derived>
 class Renderable : public Component<Derived>, public IRenderable {
 public:
-    bool alwaysOnFrustum = false; LE_RCDV(alwaysOnFrustum)
-    bool disableDepthTest = false; LE_RCDV(disableDepthTest)
-    Material customMaterial; LE_RCDV(customMaterial)
+    SERIALIZABLE(bool, alwaysOnFrustum) = false;
+    SERIALIZABLE(bool, disableDepthTest) = false;
+    SERIALIZABLE(Material, customMaterial);
     // leave empty to affect all meshes
-    bool useCustomMaterial = false; LE_RCDV(useCustomMaterial)
-    std::unordered_set<int> meshesUsingCustomMaterial;
-    RenderPass::Enum renderPass = RenderPass::NORMAL; LE_RCDV(renderPass)
-    glm::vec3 offset = glm::vec3(0.0f); LE_RCDV(offset)
+    SERIALIZABLE(bool, useCustomMaterial) = false;
+    SERIALIZABLE(std::unordered_set<int>, meshesUsingCustomMaterial);
+    SERIALIZABLE(RenderPass::Enum, renderPass) = RenderPass::NORMAL;
+    SERIALIZABLE(glm::vec3, offset) = glm::vec3(0.0f);
 
     virtual bool IsStatic() const override {
         return this->parent.GetTransform().isStatic;
@@ -73,7 +73,7 @@ public:
     virtual bool IsOnFrustum(const ViewFrustum&) const override { return true; }
     virtual RenderPass::Enum GetRenderPass() const override { return renderPass; }
     virtual glm::vec3 GetPosition() const {
-        return this->parent.GetTransform().position + offset;
+        return this->parent.GetTransform().position.Get() + offset.Get();
     }
 
     virtual void CalculateMatrices() override { }

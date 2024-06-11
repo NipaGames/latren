@@ -5,7 +5,7 @@
 #include <latren/stage.h>
 
 namespace Serializer {
-    LATREN_API bool DeserializeComponentDataFromJSON(ComponentData&, const nlohmann::json&, const std::string& = "");
+    LATREN_API bool DeserializeComponentDataFromJSON(Serializer::SerializableFieldValueMap&, const nlohmann::json&, const std::string& = "");
     class LATREN_API StageSerializer : public JSONFileSerializer {
     protected:
         Stage stage_;

@@ -8,15 +8,11 @@
 using namespace Serializer;
 using json = nlohmann::json;
 
-bool Serializer::DeserializeComponentDataFromJSON(ComponentData& data, const nlohmann::json& json, const std::string& entityId) {
-    VariableMap copyableData;
+bool Serializer::DeserializeComponentDataFromJSON(SerializableFieldValueMap& fields, const nlohmann::json& json, const std::string& entityId) {
     for (const auto& [k, v] : json.items()) {
-        if (Serializer::ParseJSONComponentData(data, k, v, entityId))
-            copyableData.insert({ k, data.vars.at(k) });
-        else
+        if (!ParseJSONComponentData(fields, k, v, entityId))
             return false;
     }
-    data.vars = copyableData;
     return true;
 }
 
@@ -41,8 +37,18 @@ std::vector<DeserializedEntity> StageSerializer::ParseEntities(const json& entit
             for (const auto& [ck, cv] : ev.items()) {
                 if (!cv.is_object())
                     continue;
-                TypedComponentData data = ComponentSerialization::CreateComponentData(ComponentSerialization::GetComponentType(ck)->type);
-                bool success = DeserializeComponentDataFromJSON(data, cv, entity.id);
+
+                SerializableFieldValueMap map;
+                const ComponentTypeData& typeData = ComponentSerialization::GetComponentType(ck);
+                for (const auto& [name, field] : typeData.serializableFields) {
+                    map.insert({ name, { nullptr, field.type, field.containerType } });
+                }
+                TypedComponentData data {
+                    typeData.type,
+                    map
+                };
+
+                bool success = DeserializeComponentDataFromJSON(data.fields, cv, entity.id);
                 if (!success) {
                     spdlog::warn("Failed deserializing component '{}'!", ck);
                     // yeah yeah the whole entity isn't necessarily invalid but this will do now

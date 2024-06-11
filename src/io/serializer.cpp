@@ -26,43 +26,33 @@ bool Serializer::UseOutputFileStream(const std::string& path, std::ios_base::ope
     return fn(f);
 }
 
-bool Serializer::ParseJSONComponentData(ComponentData& data, const std::string& k, const nlohmann::json& jsonVal, const std::string& entityId) {
-    auto dataVal = data.GetComponentDataValue(k);
-    if (dataVal == nullptr)
+bool Serializer::ParseJSONComponentData(SerializableFieldValueMap& fields, const std::string& k, const nlohmann::json& jsonVal, const std::string& entityId) {
+    if (fields.count(k) == 0)
         return false;
     
+    const SerializableFieldValue& field = fields.at(k);
     auto it = std::find_if(GetJSONDeserializerList().begin(), GetJSONDeserializerList().end(), [&](const auto& s) {
-        return s->CompareToComponentType(data.GetComponentDataValue(k));
+        return s->CompareToComponentType(field);
     });
     if (it == GetJSONDeserializerList().end())
         return false;
     
     const auto& deserializer = *it;
-    DeserializationArgs args(DeserializerType::COMPONENT_DATA);
-    args.entityId = entityId;
-    switch (dataVal->containerType) {
+    DeserializationContext context;
+    context.type = DeserializationContext::DeserializerType::FIELD_VALUE;
+    context.field = &fields.at(k);
+    bool success = false;
+    switch (field.containerType) {
         case ComponentDataContainerType::SINGLE:
-            args.ctData = &data;
-            args.ctK = k;
-            return (deserializer->fn)(args, jsonVal);
+            success = context.Deserialize<const nlohmann::json&>(deserializer->fn, jsonVal);
+            break;
         case ComponentDataContainerType::VECTOR:
             if (!jsonVal.is_array())
                 return false;
-
-            ComponentData arrayWrapper;
-            args.ctData = &arrayWrapper;
-            bool hasAnyFailed = false;
-            int i = 0;
-            for (auto e : jsonVal) {
-                std::string key = std::to_string(i++);
-                args.ctK = key;
-                if (!(deserializer->fn)(args, e))
-                    hasAnyFailed = true;
-            }
-            dataVal->CopyValuesFromComponentDataArray(arrayWrapper);
-            return !hasAnyFailed;
+            success = context.DeserializeVector(deserializer->fn, jsonVal.get<std::vector<nlohmann::json>>());
+            break;
     }
-    return false; 
+    return success; 
 }
 
 bool JSONFileSerializer::StreamRead(std::ifstream& f) {

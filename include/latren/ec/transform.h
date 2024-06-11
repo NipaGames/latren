@@ -7,12 +7,12 @@
 
 class LATREN_API Transform : public Component<Transform> {
 public:
-    glm::vec3 position = glm::vec3(0.0f); LE_RCDV(position)
-    glm::vec3 size = glm::vec3(1.0f); LE_RCDV(size)
-    glm::quat rotation = glm::quat(0.0f, 0.0f, 0.0f, 0.0f); LE_RCDV(rotation)
+    SERIALIZABLE(glm::vec3, position) = glm::vec3(0.0f);
+    SERIALIZABLE(glm::vec3, size) = glm::vec3(1.0f);
+    SERIALIZABLE(glm::quat, rotation) = glm::quat(0.0f, 0.0f, 0.0f, 0.0f); 
     
     // enable this if the object transform doesn't update
-    bool isStatic = false; LE_RCDV(isStatic)
+    SERIALIZABLE(bool, isStatic) = false;
 
     btVector3 btGetPos();
     btVector3 btGetSize();

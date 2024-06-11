@@ -5,6 +5,9 @@
 #include <latren/io/files/cfg.h>
 #include <latren/io/paths.h>
 
+#include <latren/debugmacros.h>
+#include <latren/ec/serialization.h>
+
 bool Game::InitWindow() {
     window_ = GameWindow("", LATREN_BASE_WND_WIDTH, LATREN_BASE_WND_HEIGHT);
     if (!window_.Create(renderer_)) {
@@ -30,9 +33,31 @@ void Game::Run() {
     gameThread.join();
 }
 
+void DumpComponentData(const std::vector<ComponentTypeData>& types, const char* path) {
+    std::ofstream file(path);
+    for (const ComponentTypeData& type : types) {
+        std::vector<std::tuple<std::string, int, std::type_index>> fields;
+        fields.reserve(type.serializableFields.size());
+        for (const auto& [fName, f] : type.serializableFields) {
+            fields.push_back({ fName, f.offset, f.type });
+        }
+        std::sort(fields.begin(), fields.end(), [](const auto& lhs, const auto& rhs) {
+            return std::get<1>(lhs) < std::get<1>(rhs);
+        });
+        file << type.name << "\n";
+        for (const auto& f : fields) {
+            file << std::get<1>(f) << " " << std::get<0>(f) << " <" << std::get<2>(f).name() << ">\n";
+        }
+        file << "\n";
+    }
+}
+
 void Game::GameThreadInit() {
     srand(static_cast<unsigned int>(time(0)));
     RegisterComponents();
+    #ifdef LATREN_DUMP_COMPONENT_DATA
+    DumpComponentData(ComponentSerialization::GetComponentTypes(), LATREN_DUMP_COMPONENT_DATA);
+    #endif
     RegisterDeserializers();
     if (!audioPlayer_.Init())
         spdlog::error("Audio disabled!");

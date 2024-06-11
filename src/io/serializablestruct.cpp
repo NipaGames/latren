@@ -110,9 +110,10 @@ void SerializableStruct::CFGDeserialize(const CFGObject* obj) {
             spdlog::warn("No CFG serializer found for type {}!", data.type->name());
             continue;
         }
-        Serializer::DeserializationArgs args(Serializer::DeserializerType::ANY_POINTER);
-        args.ptr = data.addr;
-        bool success = (*it)->fn(args, f);
+        Serializer::DeserializationContext context;
+        context.type = Serializer::DeserializationContext::DeserializerType::ANY_POINTER;
+        context.ptr = data.addr;
+        bool success = context.Deserialize((*it)->fn, f);
         if (!success) {
             spdlog::warn("Invalid CFG value for field '{}'! (trying to serialize as {})",
                 f->name.value_or("UNNAMED_FIELD"),

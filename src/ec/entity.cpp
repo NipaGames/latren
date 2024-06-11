@@ -26,7 +26,7 @@ IComponent& Entity::AddComponent(ComponentType t) const {
     return ref;
 }
 IComponent& Entity::AddComponent(const std::string& t) const {
-    return AddComponent(ComponentSerialization::GetComponentType(t)->type);
+    return AddComponent(ComponentSerialization::GetComponentType(t).type);
 }
 
 void Entity::RemoveComponent(ComponentType t) const {
@@ -34,18 +34,18 @@ void Entity::RemoveComponent(ComponentType t) const {
 }
 void Entity::RemoveComponent(const std::string& t) const {
     auto ct = ComponentSerialization::GetComponentType(t);
-    if (!ct.has_value()) {
+    /*if (!ct.has_value()) {
         spdlog::warn("Component {} doesn't exist!", t);
         return;
-    }
-    RemoveComponent(ct->type);
+    }*/
+    RemoveComponent(ct.type);
 }
 
 IComponent& Entity::GetComponent(ComponentType t) const {
     return GetManager()->GetComponent(*this, t);
 }
 IComponent& Entity::GetComponent(const std::string& t) const {
-    return GetComponent(ComponentSerialization::GetComponentType(t)->type);
+    return GetComponent(ComponentSerialization::GetComponentType(t).type);
 }
 
 bool Entity::HasComponent(ComponentType t) const {
@@ -54,11 +54,11 @@ bool Entity::HasComponent(ComponentType t) const {
 }
 bool Entity::HasComponent(const std::string& t) const {
     auto ct = ComponentSerialization::GetComponentType(t);
-    if (!ct.has_value()) {
+    /*if (!ct.has_value()) {
         spdlog::warn("Component {} doesn't exist!", t);
         return false;
-    }
-    return HasComponent(ct->type);
+    }*/
+    return HasComponent(ct.type);
 }
 
 Transform& Entity::GetTransform() const {

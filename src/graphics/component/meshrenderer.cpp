@@ -9,22 +9,22 @@
 Shader aabbShader = Shader(Shaders::ShaderID::UNLIT);
 
 void MeshRenderer::Start() {
-    if (!object.empty()) {
+    if (!object->empty()) {
         for (const auto& mesh : Systems::GetResources().modelManager[object].meshes) {
             if (copyMeshes) {
                 std::shared_ptr<Mesh> meshCopy = std::make_shared<Mesh>(*mesh);
                 meshCopy->material = mesh->material;
                 meshCopy->GenerateVAO();
-                meshes.push_back(meshCopy);
+                meshes->push_back(meshCopy);
             }
             else {
-                meshes.push_back(mesh);
+                meshes->push_back(mesh);
             }
         }
     }
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
-    for (const auto& mesh : meshes) {
+    for (const auto& mesh : meshes.Get()) {
         glm::vec3 meshMin = mesh->aabb.GetMin();
         glm::vec3 meshMax = mesh->aabb.GetMax();
         aabbMin = glm::vec3(std::min(aabbMin.x, meshMin.x), std::min(aabbMin.y, meshMin.y), std::min(aabbMin.z, meshMin.z));
@@ -36,8 +36,8 @@ void MeshRenderer::Start() {
 
 void MeshRenderer::CalculateMatrices() {
     modelMatrix_ = glm::translate(glm::mat4(1.0f), GetPosition());
-    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation);
-    modelMatrix_ = glm::scale(modelMatrix_, parent.GetTransform().size);
+    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation.Get());
+    modelMatrix_ = glm::scale(modelMatrix_, parent.GetTransform().size.Get());
 }
 
 
@@ -48,8 +48,8 @@ void MeshRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& project
 
 void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, bool aabbDebug) const {
     bool useDefaultShaders = (shader == nullptr);
-    for (int i = 0; i < meshes.size(); i++) {
-        const std::shared_ptr<Mesh>& mesh = meshes.at(i);
+    for (int i = 0; i < meshes->size(); i++) {
+        const std::shared_ptr<Mesh>& mesh = meshes->at(i);
         if (mesh->material == nullptr)
             continue;
         
@@ -57,8 +57,8 @@ void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& vi
             const Shader& s = GetMaterialShader(mesh->material);
             UpdateUniforms(s, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
             mesh->material->Use(s);
-            if (useCustomMaterial && (meshesUsingCustomMaterial.empty() || meshesUsingCustomMaterial.count(i) > 0)) {
-                customMaterial.Use(s);
+            if (useCustomMaterial && (meshesUsingCustomMaterial->empty() || meshesUsingCustomMaterial->count(i) > 0)) {
+                customMaterial->Use(s);
                 s.SetUniform("material.hasTexture", mesh->material->GetTexture() != TEXTURE_NONE);
             }
         }
