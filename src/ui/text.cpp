@@ -266,14 +266,14 @@ void UI::Text::RenderText(const Font& font, const std::string& text, glm::vec2 p
             });
         }
         Shape s;
-        s.numVertices = 6 * vertices.size();
+        s.numVertices = 6 * (int) vertices.size();
         s.numVertexAttributes = 4;
         s.stride = 4;
         s.GenerateVAO();
         s.Bind();
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(CharQuad), vertices.data()); 
         glBindTexture(GL_TEXTURE_2D, font.atlasTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 6 * vertices.size());
+        glDrawArrays(GL_TRIANGLES, 0, 6 * (int) vertices.size());
     }
     else {
         Shapes::GetDefaultShape(Shapes::DefaultShape::RECTANGLE_VEC4).Bind();
@@ -361,7 +361,7 @@ int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineS
         BaseLine bl = GetBaseLine(font, text);
         h += bl.fromGlyphBottom + bl.fromGlyphTop;
         // rows in between
-        h += linebreaks * (font.fontHeight * font.GetSizeModifier() + lineSpacing);
+        h += linebreaks * ((int) (font.fontHeight * font.GetSizeModifier()) + lineSpacing);
     }
     else {
         h = GetRowHeight(font, text);
@@ -371,5 +371,5 @@ int UI::Text::GetTextHeight(const Font& font, const std::string& text, int lineS
 
 int UI::Text::GetFixedTextHeight(const Font& font, const std::string& text, int lineSpacing) {
     int lines = (int) std::count(text.begin(), text.end(), '\n') + 1;
-    return lines * (font.fontHeight * font.GetSizeModifier()) + (lines - 1) * lineSpacing;
+    return lines * ((int) (font.fontHeight * font.GetSizeModifier())) + (lines - 1) * lineSpacing;
 }

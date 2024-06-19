@@ -19,8 +19,8 @@ int FindOptimalSizeAndPack(std::vector<stbrp_rect>& rects, const std::set<int>& 
 
         stbrp_context context;
         std::vector<stbrp_node> nodes(s * 2); // no clue what this is used for lol
-        stbrp_init_target(&context, s, s, nodes.data(), nodes.size());
-        stbrp_pack_rects(&context, rectsCopy.data(), rectsCopy.size());
+        stbrp_init_target(&context, s, s, nodes.data(), (int) nodes.size());
+        stbrp_pack_rects(&context, rectsCopy.data(), (int) rectsCopy.size());
 
         auto firstNotFitting = std::find_if(rectsCopy.begin(), rectsCopy.end(), [](const stbrp_rect& r) {
             return !r.was_packed;

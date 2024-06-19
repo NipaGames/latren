@@ -48,7 +48,7 @@ struct ComponentDataContainerTypeDeduction<std::vector<T, A>> {
     static constexpr ComponentDataContainerType TYPE = ComponentDataContainerType::VECTOR;
 };
 
-template <typename T, typename... Other>
+template <typename T, const char* Name>
 class Serializable : ISerializable {
 public:
     using Type = T;
@@ -60,8 +60,8 @@ public:
     Serializable(Args... args) : val_(args...) {
         GlobalSerialization::PushSerializable(this);
     }
-    template <typename... Args>
-    Serializable<Type, Other...>& operator=(const Serializable<Type, Args...>& v) {
+    template <const char* OtherName>
+    Serializable<Type, Name>& operator=(const Serializable<Type, OtherName>& v) {
         val_ = v.Get();
         return *this;
     }
@@ -87,8 +87,8 @@ public:
     const void* GetPtr() const override {
         return &val_;
     }
-    virtual const char* GetName() const override {
-        return "";
+    const char* GetName() const override {
+        return Name;
     }
     ComponentType GetType() const override {
         return typeid(Type);
@@ -98,13 +98,4 @@ public:
     }
 };
 
-template <typename T, char... VarName>
-class Serializable<T, TemplateString<VarName...>> : public Serializable<T> {
-using Serializable<T>::Serializable;
-public:
-    virtual const char* GetName() const override {
-        return ReadTemplateString<VarName...>();
-    }
-};
-
-#define SERIALIZABLE(Type, name) Serializable<Type, decltype(#name""_tstr)> name
+#define SERIALIZABLE(Type, name) static constexpr const char _varName_##name[] = #name; Serializable<Type, _varName_##name> name

@@ -39,7 +39,7 @@ void DumpComponentData(const std::vector<ComponentTypeData>& types, const char* 
         std::vector<std::tuple<std::string, int, std::type_index>> fields;
         fields.reserve(type.serializableFields.size());
         for (const auto& [fName, f] : type.serializableFields) {
-            fields.push_back({ fName, f.offset, f.type });
+            fields.push_back({ fName, (int) f.offset, f.type });
         }
         std::sort(fields.begin(), fields.end(), [](const auto& lhs, const auto& rhs) {
             return std::get<1>(lhs) < std::get<1>(rhs);

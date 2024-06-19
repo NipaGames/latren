@@ -1,3 +1,6 @@
+// DON'T USE - NONSTANDARD BEHAVIOUR!!!
+// (only works on gcc)
+
 // allows us to pass string literals to templates
 // works using a clever string literal trick copied from https://stackoverflow.com/a/28209546
 
@@ -8,7 +11,7 @@
 template <char... Chars>
 using TemplateString = std::integer_sequence<char, Chars...>;
 
-template <typename T, T... Chars>
+template <char... Chars>
 constexpr TemplateString<Chars...> operator""_tstr() { return { }; }
 
 template <char... Chars>

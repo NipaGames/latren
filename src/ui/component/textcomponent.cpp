@@ -141,7 +141,7 @@ void TextComponent::Render(const glm::mat4& proj) {
             glEnable(GL_SCISSOR_TEST);
             glm::vec2 scissorPos = glm::vec2(generalBounds_.left, generalBounds_.bottom) * wndRatio;
             glm::vec2 scissorSize = forceTextSize * wndRatio;
-            glScissor(scissorPos.x, scissorPos.y, scissorSize.x, scissorSize.y);
+            glScissor((GLint) scissorPos.x, (GLint) scissorPos.y, (GLint) scissorSize.x, (GLint) scissorSize.y);
         }
         RenderTextToPos(glm::vec2(bounds_.left, bounds_.bottom));
         if (scissor)

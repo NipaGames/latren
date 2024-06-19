@@ -2,3 +2,4 @@
 
 cd bin/release
 call latreus
+cd ../..

@@ -5,7 +5,8 @@ set BUILD_TYPE=Release
 echo [BUILD STARTED]
 
 rem cmake %TARGET_OPTIONS% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -B build .
-cmake %TARGET_OPTIONS% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -B build . -G "Ninja"
+cmake %TARGET_OPTIONS% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -B build .
 cd build
 cmake --build . --config %BUILD_TYPE% || exit 1
 echo [BUILD COMPLETE]
+cd ..
