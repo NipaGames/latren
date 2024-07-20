@@ -20,26 +20,26 @@ std::shared_ptr<btBvhTriangleMeshShape> RigidBody::CreateMeshCollider() {
 
         btIndexedMesh& mesh = meshData_->Get()->getIndexedMeshArray()[meshIndex];
 
-        size_t numIndices = m->indices.size();
+        std::size_t numIndices = m->indices.size();
         mesh.m_numTriangles = (int) numIndices / 3;
         
         unsigned char* indices = nullptr;
         unsigned char* vertices = nullptr;
         if (numIndices < std::numeric_limits<int16_t>::max()) {
             // we can use 16-bit indices
-            indices = new unsigned char[sizeof(int16_t) * (size_t) numIndices];
+            indices = new unsigned char[sizeof(int16_t) * (std::size_t) numIndices];
             mesh.m_indexType = PHY_SHORT;
             mesh.m_triangleIndexStride = 3 * sizeof(int16_t);
         }
         else {
             // we need 32-bit indices
-            indices = new unsigned char[sizeof(int32_t) * (size_t) numIndices];
+            indices = new unsigned char[sizeof(int32_t) * (std::size_t) numIndices];
             mesh.m_indexType = PHY_INTEGER;
             mesh.m_triangleIndexStride = 3 * sizeof(int32_t);
         }
 
         mesh.m_numVertices = (int) m->vertices.size();
-        vertices = new unsigned char[sizeof(btScalar) * (size_t) mesh.m_numVertices];
+        vertices = new unsigned char[sizeof(btScalar) * (std::size_t) mesh.m_numVertices];
         mesh.m_vertexStride = 3 * sizeof(btScalar);
 
         // copy vertices into mesh

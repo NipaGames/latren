@@ -84,7 +84,7 @@ namespace UI {
     protected:
         // the key represents the priority
         std::map<int, UIComponentContainer> components_;
-        size_t componentCount_;
+        std::size_t componentCount_;
         Shape bgShape_;
         bool breakUpdates_ = false;
         glm::vec2 mousePos_;
@@ -117,7 +117,7 @@ namespace UI {
         void RemoveUIComponent(ComponentReference<UIComponent>);
 
         void ClearComponents();
-        size_t GetComponentCount() const;
+        std::size_t GetComponentCount() const;
         Canvas* GetCanvas();
         void BreakUpdates();
         

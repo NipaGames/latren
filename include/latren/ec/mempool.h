@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <typeindex>
 
-typedef size_t EntityIndex;
+typedef std::size_t EntityIndex;
 typedef std::type_index ComponentType;
 
 class IComponent;
@@ -37,10 +37,10 @@ public:
         return dynamic_cast<const C*>(GetFirstComponent()) != nullptr;
     }
     virtual void ForEach(const std::function<void(IComponent&)>&) = 0;
-    virtual size_t GetComponentCount() const = 0;
-    virtual size_t GetAllocatedBytes() const = 0;
-    virtual size_t GetReferenceOverheadBytes() const = 0;
-    size_t GetTotalBytes() { return GetAllocatedBytes() + GetReferenceOverheadBytes(); }
+    virtual std::size_t GetComponentCount() const = 0;
+    virtual std::size_t GetAllocatedBytes() const = 0;
+    virtual std::size_t GetReferenceOverheadBytes() const = 0;
+    std::size_t GetTotalBytes() { return GetAllocatedBytes() + GetReferenceOverheadBytes(); }
 };
 typedef std::unordered_map<ComponentType, std::unique_ptr<IComponentMemoryPool>> ComponentPoolContainer;
 
@@ -81,7 +81,7 @@ template <typename C, typename = VerifyNonVirtualComponent<C>>
 class ComponentMemoryPool : public IComponentMemoryPool {
 private:
     std::vector<C> components_;
-    std::unordered_map<EntityIndex, size_t> references_;
+    std::unordered_map<EntityIndex, std::size_t> references_;
 protected:
     const IComponent* GetFirstComponent() const override {
         if (components_.empty())
@@ -102,7 +102,7 @@ public:
     void DestroyComponent(EntityIndex entity) override {
         if (references_.find(entity) == references_.end())
             return;
-        size_t pos = references_.at(entity);
+        std::size_t pos = references_.at(entity);
         if (pos >= components_.size())
             return;
         components_.erase(components_.begin() + pos);
@@ -133,13 +133,13 @@ public:
         ForEach(static_cast<const std::function<void(C&)>&>(fn));
     }
     // todo implement
-    size_t GetReferenceOverheadBytes() const override {
+    std::size_t GetReferenceOverheadBytes() const override {
         return 0;
     }
-    size_t GetComponentCount() const override {
+    std::size_t GetComponentCount() const override {
         return components_.size();
     }
-    size_t GetAllocatedBytes() const override {
+    std::size_t GetAllocatedBytes() const override {
         return sizeof(std::vector<C>) + components_.size() * sizeof(C);
     }
 };

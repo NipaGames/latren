@@ -17,4 +17,4 @@ public:
     std::fs::path ParsePath(const std::fs::path&) const;
 };
 
-LATREN_API ResourcePath operator ""_res(const char*, size_t);
+LATREN_API ResourcePath operator ""_res(const char*, std::size_t);

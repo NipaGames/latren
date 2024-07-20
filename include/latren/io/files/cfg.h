@@ -275,7 +275,7 @@ namespace CFG {
     };
 
     #define CFG_TYPE_PAIR(T, CFGT) { typeid(T).hash_code(), { CFGT } }
-    typedef std::unordered_map<size_t, const std::vector<CFG::CFGFieldType>> CFGTypeMap;
+    typedef std::unordered_map<std::size_t, const std::vector<CFG::CFGFieldType>> CFGTypeMap;
     extern const CFGTypeMap CFG_TYPES_;
     const CFGTypeMap& GetCFGTypeMap();
 

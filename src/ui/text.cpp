@@ -340,8 +340,8 @@ int UI::Text::GetTextWidth(const Font& font, const std::string& text) {
 
 BaseLine UI::Text::GetBaseLine(const Font& font, const std::string& text) {
     if (std::count(text.begin(), text.end(), '\n') > 0) {
-        size_t first = text.find_first_of('\n');
-        size_t last = text.find_last_of('\n');
+        std::size_t first = text.find_first_of('\n');
+        std::size_t last = text.find_last_of('\n');
         BaseLine firstRowPadding = GetRowBaseLine(font, text.substr(0, first));
         BaseLine lastRowPadding = GetRowBaseLine(font, text.substr(last + 1));
         return { lastRowPadding.fromGlyphBottom, firstRowPadding.fromGlyphTop };

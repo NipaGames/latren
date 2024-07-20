@@ -124,7 +124,7 @@ void Canvas::ClearComponents() {
     componentCount_ = 0;
 }
 
-size_t Canvas::GetComponentCount() const {
+std::size_t Canvas::GetComponentCount() const {
     return componentCount_;
 }
 

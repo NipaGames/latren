@@ -2,7 +2,7 @@
 
 #include <latren/latren.h>
 
-template <typename CounterT = size_t>
+template <typename CounterT = std::size_t>
 class IDFactory {
 protected:
     CounterT counter_ = 0;
@@ -14,5 +14,5 @@ public:
     }
 };
 
-typedef size_t EventID;
-typedef size_t EntityID;
+typedef std::size_t EventID;
+typedef std::size_t EntityID;

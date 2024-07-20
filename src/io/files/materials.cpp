@@ -26,7 +26,7 @@ std::vector<ShaderUniform> ListMaterialUniforms(GLuint shader) {
         glGetActiveUniform(shader, (GLuint)i, bufSize, &length, &size, &type, name);
         std::string nameStr = name;
         std::string prefix = "material.";
-        size_t prefixPos = nameStr.rfind(prefix, 0);
+        std::size_t prefixPos = nameStr.rfind(prefix, 0);
         if (prefixPos != 0)
             continue;
         uniforms.push_back({ nameStr.substr(prefix.length()), type });

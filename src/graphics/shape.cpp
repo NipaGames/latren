@@ -94,7 +94,7 @@ Shape& Shape::operator=(Shape&& s) {
 
 #include <iostream>
 void Shape::SetVertexData(float* f, bool copy) {
-    size_t s = numVertices * numVertexAttributes;
+    std::size_t s = numVertices * numVertexAttributes;
     if (vertexData != nullptr)
         delete[] vertexData;
     if (copy) {

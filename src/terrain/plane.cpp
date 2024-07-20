@@ -103,8 +103,8 @@ void Plane::GenerateVertices() {
 }
 
 std::shared_ptr<btHeightfieldTerrainShape> Plane::CreateBtCollider() const {
-    size_t w = (tiling_.x + 1);
-    size_t h = (tiling_.y + 1);
+    std::size_t w = (tiling_.x + 1);
+    std::size_t h = (tiling_.y + 1);
     float* map = new float[w * h];
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {

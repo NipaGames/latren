@@ -38,7 +38,7 @@ public:
     float saturation = 1.0f;
 
     void ApplyUniforms(const Shader&) const;
-    template <size_t S>
+    template <std::size_t S>
     void ApplyKernel(const std::array<float, S>& k) {
         switch(S) {
             case 9:
@@ -59,7 +59,7 @@ public:
         }
         kernel.isActive = true;
     }
-    template <size_t S>
+    template <std::size_t S>
     void ApplyKernel(std::array<float, S> k, float factor) {
         for (auto& e : k) {
             e *= factor;
@@ -69,20 +69,20 @@ public:
 };
 
 namespace Convolution {
-    template <size_t S>
+    template <std::size_t S>
     constexpr void Normalize(std::array<float, S>& kernel) {
         float sum = std::accumulate(kernel.begin(), kernel.end(), 0.0f, std::plus<float>());
         for (float& f : kernel) {
             f /= sum;
         }
     }
-    template <size_t S>
+    template <std::size_t S>
     constexpr std::array<float, S * S> Fill(float f) {
         std::array<float, S * S> kernel;
         kernel.fill(f);
         return kernel;
     }
-    template <size_t S>
+    template <std::size_t S>
     constexpr std::array<float, S * S> BoxBlur() {
         return Fill<S>(1.0f / (S * S));
     }
@@ -90,7 +90,7 @@ namespace Convolution {
     // so, this isn't actually constexpr
     // anyway, the decompiling was pretty fun :)
     // obviously had no idea what i was doing but managed to make the player move 5 times as fast
-    template <size_t S>
+    template <std::size_t S>
     constexpr std::array<float, S * S> GaussianBlur(int sigma = S) {
         std::array<float, S * S> kernel;
         float s = 2.0f * (float) (sigma * sigma);

@@ -52,7 +52,7 @@ bool DeserializeJSONNumber(Serializer::DeserializationContext& args, const nlohm
     return true;
 }
 
-template <size_t S>
+template <std::size_t S>
 bool DeserializeJSONVector(Serializer::DeserializationContext& args, const nlohmann::json& j) {
     typedef glm::vec<S, float> Vector;
     Vector vec;
@@ -68,7 +68,7 @@ bool DeserializeJSONVector(Serializer::DeserializationContext& args, const nlohm
     return true;
 }
 
-template <size_t S, typename T>
+template <std::size_t S, typename T>
 bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field, CFG::CFGFieldType type) {
     if (field->type != CFG::CFGFieldType::STRUCT && field->type != CFG::CFGFieldType::ARRAY)
         return false;
@@ -87,14 +87,14 @@ bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::I
     return true;
 }
 
-template <size_t S, typename T, CFG::CFGFieldType F>
+template <std::size_t S, typename T, CFG::CFGFieldType F>
 bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
     return DeserializeCFGVector<S, T>(args, field, F);
 }
 
-template <size_t S, typename T>
+template <std::size_t S, typename T>
 bool DeserializeCFGVectorAuto(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
-    size_t typeHash = typeid(T).hash_code();
+    std::size_t typeHash = typeid(T).hash_code();
     if (CFG::CFG_TYPES_.find(typeHash) == CFG::CFG_TYPES_.end())
         return false;
     return DeserializeCFGVector<S, T>(args, field, CFG::CFG_TYPES_.at(typeHash).front());

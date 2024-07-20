@@ -6,7 +6,7 @@
 #include "../camera.h"
 
 namespace RenderPass {
-    enum Enum : size_t {
+    enum Enum : std::size_t {
         // until i fix transparency all transparent objects should be rendered late
         NORMAL,
         LATE,
@@ -14,7 +14,7 @@ namespace RenderPass {
         // doesn't render in the renderer pipeline
         CUSTOM
     };
-    inline constexpr size_t TOTAL_RENDER_PASSES = magic_enum::enum_count<Enum>();
+    inline constexpr std::size_t TOTAL_RENDER_PASSES = magic_enum::enum_count<Enum>();
 };
 
 class Renderer;

@@ -208,7 +208,7 @@ namespace Resources {
     };
 
     struct BinaryFile {
-        size_t size;
+        std::size_t size;
         uint8_t* buffer;
 
         virtual ~BinaryFile() {
@@ -246,7 +246,7 @@ namespace Resources {
     };
 
     enum class ResourceLoadEvent {
-        IMPORTS_INDEXED, // eventargs: size_t totalImports
+        IMPORTS_INDEXED, // eventargs: std::size_t totalImports
         ON_IMPORT_LOAD // eventargs: string id
     };
 };
@@ -276,7 +276,7 @@ public:
     } dataFiles;
 
     VariantEventHandler<Resources::ResourceLoadEvent,
-        void(size_t),
+        void(std::size_t),
         void(const std::string&)> eventHandler;
 
     void LoadImports(const CFG::CFGObject*);

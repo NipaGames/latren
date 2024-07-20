@@ -100,8 +100,8 @@ void EntityManager::ClearEverything() {
     entityNames_.clear();
 }
 
-size_t EntityManager::GetTotalPoolBytes() {
-    size_t total = 0;
+std::size_t EntityManager::GetTotalPoolBytes() {
+    std::size_t total = 0;
     componentMemoryManager_.ForEachPool([&total](IComponentMemoryPool& pool) {
         total += pool.GetTotalBytes();
     });

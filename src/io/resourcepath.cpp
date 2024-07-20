@@ -25,6 +25,6 @@ std::fs::path ResourcePath::ParsePath(const std::fs::path& dir) const {
     return d / p;
 }
 
-ResourcePath operator ""_res(const char* str, size_t s) {
+ResourcePath operator ""_res(const char* str, std::size_t s) {
     return ResourcePath(std::string(str, s));
 }

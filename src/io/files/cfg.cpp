@@ -16,7 +16,7 @@ using namespace CFG;
 namespace CFGStrUtils {
     std::string StrReplace(const std::string& str, const std::string& from, const std::string& to) {
         std::string s = str;
-        size_t pos;
+        std::size_t pos;
         while ((pos = s.find(from)) != std::string::npos) {
             s.replace(pos, from.length(), to);
         }
@@ -38,7 +38,7 @@ namespace CFGStrUtils {
     }
 };
 
-bool ShouldParseAsNumber(const std::string& val, size_t first = 0) {
+bool ShouldParseAsNumber(const std::string& val, std::size_t first = 0) {
     if (val.length() <= first)
         return false;
     if (std::isdigit(val.at(first)))
@@ -59,18 +59,18 @@ bool ShouldParseAsNumber(const std::string& val, size_t first = 0) {
     }
     return false;
 }
-bool ShouldParseAsString(const std::string& val, size_t first = 0) {
+bool ShouldParseAsString(const std::string& val, std::size_t first = 0) {
     if (val.length() <= first)
         return false;
     return std::isalpha(val.at(first)) || val.at(first) == '"' || val.at(first) == '\'';
 }
 
-std::optional<std::string> ParseString(const std::string& val, size_t first, size_t last, size_t* next, bool needsToBeWhole = false) {
+std::optional<std::string> ParseString(const std::string& val, std::size_t first, std::size_t last, std::size_t* next, bool needsToBeWhole = false) {
     // with literals
     if (val.at(first) == '\'' || val.at(first) == '"') {
         char lit = val.at(first);
-        size_t endLit = std::string::npos;
-        for (size_t i = first + 1; i <= last; i++) {
+        std::size_t endLit = std::string::npos;
+        for (std::size_t i = first + 1; i <= last; i++) {
             if (val.at(i) == lit) {
                 endLit = i;
                 break;
@@ -86,7 +86,7 @@ std::optional<std::string> ParseString(const std::string& val, size_t first, siz
     }
     // without literals
     else {
-        for (size_t i = first + 1; i <= last; i++) {
+        for (std::size_t i = first + 1; i <= last; i++) {
             if (!(std::isalnum(val.at(i)) || val.at(i) == '_')) {
                 if (!needsToBeWhole && std::isspace(val.at(i))) {
                     if (next != nullptr)
@@ -102,15 +102,15 @@ std::optional<std::string> ParseString(const std::string& val, size_t first, siz
     }
     return std::nullopt;
 }
-std::optional<std::string> ParseString(const std::string& val, size_t first = 0, bool needsToBeWhole = false) {
+std::optional<std::string> ParseString(const std::string& val, std::size_t first = 0, bool needsToBeWhole = false) {
     if (val.empty())
         return std::nullopt;
     return ParseString(val, first, val.length() - 1, nullptr, needsToBeWhole);
 }
 
-size_t RNextWithoutSpace(const std::string& val, size_t from) {
-    size_t pos = 0;
-    for (size_t i = from; i != 0; i--) {
+std::size_t RNextWithoutSpace(const std::string& val, std::size_t from) {
+    std::size_t pos = 0;
+    for (std::size_t i = from; i != 0; i--) {
         if (!std::isspace(val.at(i))) {
             pos = i;
             break;
@@ -119,10 +119,10 @@ size_t RNextWithoutSpace(const std::string& val, size_t from) {
     return pos;
 }
 
-size_t GetFirstNotInStringLiteral(const std::string& val, char find, size_t first = 0) {
+std::size_t GetFirstNotInStringLiteral(const std::string& val, char find, std::size_t first = 0) {
     bool inLit = false;
     char lit;
-    for (size_t i = first; i < val.length(); i++) {
+    for (std::size_t i = first; i < val.length(); i++) {
         char c = val.at(i);
         if (c == find && !inLit) {
             return i;
@@ -139,7 +139,7 @@ size_t GetFirstNotInStringLiteral(const std::string& val, char find, size_t firs
     return std::string::npos;
 }
 
-ICFGField* ParseFieldValue(const std::string& val, size_t first = 0, size_t* next = nullptr) {
+ICFGField* ParseFieldValue(const std::string& val, std::size_t first = 0, std::size_t* next = nullptr) {
     if (next != nullptr)
         *next = std::string::npos;
     // number
@@ -148,11 +148,11 @@ ICFGField* ParseFieldValue(const std::string& val, size_t first = 0, size_t* nex
     if (ShouldParseAsNumber(val, first)) {
         ICFGField* thisNode = nullptr;
         bool isFloat = false;
-        size_t last = val.length();
-        size_t fstnum = first;
+        std::size_t last = val.length();
+        std::size_t fstnum = first;
         if (val.at(fstnum) == '-')
             fstnum++;
-        for (size_t i = fstnum; i < val.length(); i++) {
+        for (std::size_t i = fstnum; i < val.length(); i++) {
             if (val.at(i) == '.') {
                 if (!isFloat)
                     isFloat = true;
@@ -205,8 +205,8 @@ bool IsValidTypeAnnotationSymbol(char c) {
 }
 
 // read type annotations from right starting from pos, return empty if no annotations were found
-std::string ReadTypeAnnotation(const std::string& str, size_t& pos) {
-    size_t len = 0;
+std::string ReadTypeAnnotation(const std::string& str, std::size_t& pos) {
+    std::size_t len = 0;
     bool isTyped = false;
     for (int i = (int) pos; i >= 0; i--, len++) {
         char c = str.at(i);
@@ -222,7 +222,7 @@ std::string ReadTypeAnnotation(const std::string& str, size_t& pos) {
         std::string typeAnnotation = str.substr(pos - len + 1, len);
         CFGStrUtils::TrimWhitespace(typeAnnotation);
         // remove spaces when necessary
-        for (size_t i = 0; i < typeAnnotation.length(); i++) {
+        for (std::size_t i = 0; i < typeAnnotation.length(); i++) {
             if (std::isspace(typeAnnotation.at(i))) {
                 // this should be safe since the whitespace is trimmed first regardless
                 if (TYPE_ANNOTATION_SPECIAL_SYMBOLS.find(typeAnnotation.at(i - 1)) != TYPE_ANNOTATION_SPECIAL_SYMBOLS.end()) {
@@ -255,7 +255,7 @@ std::optional<std::vector<CFGFieldType>> ParseTypeAnnotation(const std::string& 
     int structIndents = 0;
     int arrayIndents = 0;
     bool awaitingTypeAfterComma = false;
-    for (size_t pos = 0; pos < str.length(); pos++) {
+    for (std::size_t pos = 0; pos < str.length(); pos++) {
         char c = str.at(pos);
         switch (c) {
             case '[':
@@ -275,7 +275,7 @@ std::optional<std::vector<CFGFieldType>> ParseTypeAnnotation(const std::string& 
         }
         if (std::isalpha(c) || c == '_') {
             // fuck it
-            size_t end = str.find_first_not_of(
+            std::size_t end = str.find_first_not_of(
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 "abcdefghijklmnopqrstuvwxyz"
                 "0123456789_",
@@ -368,9 +368,9 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
     std::string val = node->value;
     std::string typeAnnotation = "";
 
-    size_t equals = GetFirstNotInStringLiteral(node->value, '=');
+    std::size_t equals = GetFirstNotInStringLiteral(node->value, '=');
     
-    size_t lastOfName = 0;
+    std::size_t lastOfName = 0;
     if (equals != std::string::npos && equals > 0) {
         lastOfName = RNextWithoutSpace(node->value, equals - 1);
         // type annotation before equals
@@ -416,7 +416,7 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
         }
     }
 
-    size_t valLast = val.length() - 1;
+    std::size_t valLast = val.length() - 1;
     // type annotations after equals
     if (typeAnnotation.empty()) {
         typeAnnotation = ReadTypeAnnotation(val, valLast);
@@ -429,7 +429,7 @@ ICFGField* ParseIndentTreeNodes(CFGParseTreeNode<std::string>* node, bool isRoot
 
     // struct elements
     std::vector<ICFGField*> fields;
-    size_t next = 0;
+    std::size_t next = 0;
     while (next != std::string::npos && next <= valLast) {
         ICFGField* f = ParseFieldValue(val, next, &next);
         if (f != nullptr)

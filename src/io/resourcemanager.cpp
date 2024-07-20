@@ -160,7 +160,7 @@ Resources::Imports<Resources::ShaderImport> Resources::ListShaderImports(const C
 }
 
 template <typename T>
-std::function<void(const CFG::CFGObject*, Resources::ResourceType)> CreateLoader(T& mgr, VariantEventHandler<Resources::ResourceLoadEvent, void(size_t), void(const std::string&)>& eventHandler) {
+std::function<void(const CFG::CFGObject*, Resources::ResourceType)> CreateLoader(T& mgr, VariantEventHandler<Resources::ResourceLoadEvent, void(std::size_t), void(const std::string&)>& eventHandler) {
     using namespace Resources;
     
     return [&](const CFG::CFGObject* obj, ResourceType t) {
@@ -210,7 +210,7 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
         { ResourceType::CFG, CreateLoader(dataFiles.cfgFileManager, eventHandler) }
     };
     
-    size_t importCount = 0;
+    std::size_t importCount = 0;
     std::unordered_map<ResourceType, std::vector<const CFG::CFGObject*>> imports;
     for (const auto& importList : root->GetItems()) {
         if (importList->type != CFG::CFGFieldType::ARRAY)

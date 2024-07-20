@@ -66,7 +66,7 @@ namespace Serializer {
     class DeserializationContext {
     private:
         int itemIndex_ = -1;
-        size_t itemCount_ = 0;
+        std::size_t itemCount_ = 0;
         std::any itemContainer_;
     public:
         enum class DeserializerType {

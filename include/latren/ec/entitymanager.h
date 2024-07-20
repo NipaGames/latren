@@ -43,5 +43,5 @@ public:
     void DestroyComponent(EntityIndex, ComponentType);
     void DestroyEntity(EntityIndex);
     void ClearEverything();
-    size_t GetTotalPoolBytes();
+    std::size_t GetTotalPoolBytes();
 };
