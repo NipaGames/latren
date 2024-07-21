@@ -40,9 +40,9 @@ std::string GetProgramInfoLog(GLuint program) {
     return "";
 }
 
-void LoadShaderFromFile(GLuint shader, const std::string& path) {
+void LoadShaderFromFile(GLuint shader, const ResourcePath& path) {
     std::string shaderData;
-    std::ifstream shaderStream(path, std::ios::in);
+    std::ifstream shaderStream(path.GetParsedPathStr(), std::ios::in);
     if (shaderStream.is_open()) {
         std::stringstream ss;
         ss << shaderStream.rdbuf();
@@ -50,7 +50,7 @@ void LoadShaderFromFile(GLuint shader, const std::string& path) {
         shaderStream.close();
     }
     else {
-        spdlog::error("Cannot read shader file!", path);
+        spdlog::error("Cannot read shader file!");
         return;
     }
     char const* shaderDataPtr = shaderData.c_str();
@@ -62,7 +62,7 @@ void LoadShaderFromFile(GLuint shader, const std::string& path) {
 		spdlog::info(shaderMessage);
 }
 
-void Resources::ShaderManager::LoadShader(GLuint program, const std::string& path, Shaders::ShaderType t) {
+void Resources::ShaderManager::LoadShader(GLuint program, const ResourcePath& path, Shaders::ShaderType t) {
     GLuint shaderType;
     switch (t) {
         case ShaderType::VERT:
@@ -75,29 +75,29 @@ void Resources::ShaderManager::LoadShader(GLuint program, const std::string& pat
             shaderType = GL_GEOMETRY_SHADER;
             break;
         case ShaderType::VERT_FRAG:
-            LoadShader(program, path + EXT_VERT, ShaderType::VERT);
-            LoadShader(program, path + EXT_FRAG, ShaderType::FRAG);
+            LoadShader(program, path.GetUnparsedPathStr() + EXT_VERT, ShaderType::VERT);
+            LoadShader(program, path.GetUnparsedPathStr() + EXT_FRAG, ShaderType::FRAG);
             return;
         case ShaderType::VERT_FRAG_GEOM:
-            LoadShader(program, path + EXT_VERT, ShaderType::VERT);
-            LoadShader(program, path + EXT_FRAG, ShaderType::FRAG);
-            LoadShader(program, path + EXT_GEOM, ShaderType::GEOM);
+            LoadShader(program, path.GetUnparsedPathStr() + EXT_VERT, ShaderType::VERT);
+            LoadShader(program, path.GetUnparsedPathStr() + EXT_FRAG, ShaderType::FRAG);
+            LoadShader(program, path.GetUnparsedPathStr() + EXT_GEOM, ShaderType::GEOM);
             return;
         default:
             return;
     }
     GLuint shader = glCreateShader(shaderType);
-    spdlog::info("Compiling shader '" + std::fs::path(path).filename().generic_string() + "'");
+    spdlog::info("Compiling shader '" + std::fs::path(path.GetParsedPathStr()).filename().generic_string() + "'");
     LoadShaderFromFile(shader, path);
     glAttachShader(program, shader);
     glDeleteShader(shader);
 }
 
-void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const std::string& path, Shaders::ShaderType t) {
+void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const ResourcePath& path, Shaders::ShaderType t) {
     std::string strId = std::string(magic_enum::enum_name(id));
     onResourceLoad.Dispatch(strId);
     GLuint program = glCreateProgram();
-    LoadShader(program, Paths::Path(Paths::LATREN_CORE_SHADER_DIR, path), t);
+    LoadShader(program, ResourcePath("${core_shaders}", path), t);
     glLinkProgram(program);
     auto programMessage = GetProgramInfoLog(program);
 	if (programMessage != "")
@@ -105,12 +105,12 @@ void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const st
     items_[strId] = program;
 }
 
-void Resources::ShaderManager::LoadShader(const std::string& id, const std::string& vert, const std::string& frag, const std::string& geom) {
+void Resources::ShaderManager::LoadShader(const std::string& id, const ResourcePath& vert, const ResourcePath& frag, const ResourcePath& geom) {
     onResourceLoad.Dispatch(id);
     GLuint program = glCreateProgram();
     LoadShader(program, vert, ShaderType::VERT);
     LoadShader(program, frag, ShaderType::FRAG);
-    if (!geom.empty())
+    if (!geom.IsEmpty())
         LoadShader(program, geom, ShaderType::GEOM);
     glLinkProgram(program);
     auto programMessage = GetProgramInfoLog(program);
@@ -119,12 +119,12 @@ void Resources::ShaderManager::LoadShader(const std::string& id, const std::stri
     items_[id] = program;
 }
 
-void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const std::string& vert, const std::string& frag, const std::string& geom) {
+void Resources::ShaderManager::LoadStandardShader(Shaders::ShaderID id, const ResourcePath& vert, const ResourcePath& frag, const ResourcePath& geom) {
     LoadShader(
         (std::string) magic_enum::enum_name(id),
-        Paths::Path(Paths::LATREN_CORE_SHADER_DIR, vert),
-        Paths::Path(Paths::LATREN_CORE_SHADER_DIR, frag),
-        geom.empty() ? geom : Paths::Path(Paths::LATREN_CORE_SHADER_DIR, geom)
+        ResourcePath("${core_shaders}", vert),
+        ResourcePath("${core_shaders}", frag),
+        geom.IsEmpty() ? geom : ResourcePath("${core_shaders}", geom)
     );
 }
 
@@ -145,9 +145,9 @@ void Resources::ShaderManager::LoadStandardShaders() {
 void Resources::ShaderManager::Load(const Resources::ShaderImport& import) {
     LoadShader(
         import.id,
-        Paths::Path(path_, import.vertexPath.ParsePath(path_).generic_string()),
-        Paths::Path(path_, import.fragmentPath.ParsePath(path_).generic_string()),
-        import.geometryPath.IsEmpty() ? "" : Paths::Path(path_, import.geometryPath.ParsePath(path_).generic_string())
+        MakeImportPath(import.vertexPath),
+        MakeImportPath(import.fragmentPath),
+        import.geometryPath.IsEmpty() ? "" : MakeImportPath(import.geometryPath)
     );
 }
 
@@ -163,7 +163,7 @@ GLuint& Resources::ShaderManager::Get(ShaderID shader) {
     return ResourceTypeManager::Get((std::string) magic_enum::enum_name(shader));
 }
 
-std::optional<GLuint> Resources::ShaderManager::LoadResource(const std::fs::path&) {
+std::optional<GLuint> Resources::ShaderManager::LoadResource(const ResourcePath&) {
     throw "not implemented yet";
 }
 

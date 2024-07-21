@@ -12,7 +12,6 @@
 
 #include "resourcepath.h"
 #include "resourcetype.h"
-#include "fs.h"
 #include "configs.h"
 #include "files/materials.h"
 #include "files/objects.h"
@@ -35,14 +34,14 @@ namespace Resources {
         std::string id;
         AdditionalImportData additionalData;
     };
-    LATREN_API const std::fs::path& GetDefaultPath(ResourceType);
+    LATREN_API const ResourcePath& GetDefaultPath(ResourceType);
     template <typename ImportType = Import>
     struct Imports {
         ResourceType resourceType;
-        std::fs::path parentPath;
+        ResourcePath parentPath;
         std::vector<ImportType> imports;
 
-        Imports(ResourceType t, const std::fs::path& p, const std::vector<ImportType>& i = { }) : resourceType(t), parentPath(p), imports(i) { }
+        Imports(ResourceType t, const ResourcePath& p, const std::vector<ImportType>& i = { }) : resourceType(t), parentPath(p), imports(i) { }
         Imports(ResourceType t, const std::vector<ImportType>& i = { }) : resourceType(t), parentPath(GetDefaultPath(t)), imports(i) { }
     };
     struct ShaderImport {
@@ -66,26 +65,39 @@ namespace Resources {
         AdditionalImportData additionalData_;
     protected:
         std::map<std::string, T, ItemComp> items_;
-        std::fs::path path_;
-        const std::fs::path defaultPath_;
-        virtual std::optional<T> LoadResource(const std::fs::path&) = 0;
+        ResourcePath path_;
+        const ResourcePath defaultPath_;
+        virtual std::optional<T> LoadResource(const ResourcePath&) = 0;
         void SetItemID(const std::string& id) { itemID_ = id; }
         void SetAdditionalData(const AdditionalImportData& data) { additionalData_ = data; }
         const std::string& GetItemID() { return itemID_; }
+        ResourcePath MakeImportPath(const ResourcePath& p) {
+            const std::string& rawPath = p.GetUnparsedPathStr();
+            if (rawPath.length() >= 2 && rawPath.at(1) == '!') {
+                // just an escape
+                if (rawPath.at(0) == '\\')
+                    return ResourcePath(path_, rawPath.substr(1, rawPath.length() - 1));
+                // starts with "!!"; override parent path
+                else if (rawPath.at(0) == '!')
+                    return rawPath.substr(2, rawPath.length() - 2);
+            }
+            return ResourcePath(path_, rawPath);
+        }
         const AdditionalImportData& GetAdditionalData() { return additionalData_; }
     public:
         SingleEventHandler<const std::string&> onResourceLoad;
         virtual ~ResourceTypeManager() = default;
-        ResourceTypeManager(const std::fs::path& p, const std::string& t = "resource") : defaultPath_(p), typeStr_(t) {
+        ResourceTypeManager(const ResourcePath& p, const std::string& t = "resource") : defaultPath_(p), typeStr_(t) {
             path_ = defaultPath_;
         }
-        virtual void Load(const std::fs::path& p) {
+        virtual void Load(const ResourcePath& p) {
             onResourceLoad.Dispatch(itemID_);
             if (items_.find(itemID_) != items_.end())
                 return;
-            std::string fileName = std::fs::proximate(p, path_.parent_path()).generic_string();
+            std::fs::path importPath = p.GetParsedPath();
+            std::string fileName = std::fs::proximate(importPath, path_.GetParsedPath().parent_path()).generic_string();
             spdlog::info("Loading {} '{}'", typeStr_, fileName);
-            std::optional<T> resource = LoadResource(std::fs::absolute(p));
+            std::optional<T> resource = LoadResource(std::fs::absolute(importPath));
             spdlog::debug("  (id: {})", itemID_);
             if (resource.has_value())
                 items_[itemID_] = resource.value();
@@ -93,22 +105,22 @@ namespace Resources {
                 spdlog::info("Failed loading {} '{}'", typeStr_, fileName);
         }
         virtual void Load(const Import& import) {
-            std::fs::path importPath = import.path.ParsePath(path_);
+            ResourcePath importPath = MakeImportPath(import.path);
             if (import.id.empty())
-                SetItemID(std::fs::proximate(importPath, path_).generic_string());
+                SetItemID(std::fs::proximate(importPath.GetParsedPath(), path_.GetParsedPath()).generic_string());
             else
                 SetItemID(import.id);
             SetAdditionalData(import.additionalData);
             Load(importPath);
         }
-        void SetPath(const std::fs::path& p) {
+        void SetPath(const ResourcePath& p) {
             path_ = p;
         }
         void RestoreDefaultPath() {
             path_ = defaultPath_;
         }
         virtual void LoadImports() {
-            for (const auto& f : std::fs::directory_iterator(path_))
+            for (const auto& f : std::fs::directory_iterator(path_.GetParsedPath()))
                 Load(f.path());
         }
         void LoadImports(const Imports<Import>& imports) {
@@ -140,18 +152,18 @@ namespace Resources {
 
     class LATREN_API TextureManager : public ResourceTypeManager<Texture::TextureID> {
     protected:
-        std::optional<Texture::TextureID> LoadResource(const std::fs::path&) override;
+        std::optional<Texture::TextureID> LoadResource(const ResourcePath&) override;
     public:
         TextureManager();
     };
 
     class LATREN_API ShaderManager : public ResourceTypeManager<GLuint> {
     protected:
-        std::optional<GLuint> LoadResource(const std::fs::path&) override;
-        void LoadShader(GLuint, const std::string&, Shaders::ShaderType);
-        void LoadShader(const std::string&, const std::string&, const std::string&, const std::string& = "");
-        void LoadStandardShader(Shaders::ShaderID, const std::string&, Shaders::ShaderType);
-        void LoadStandardShader(Shaders::ShaderID, const std::string&, const std::string&, const std::string& = "");
+        std::optional<GLuint> LoadResource(const ResourcePath&) override;
+        void LoadShader(GLuint, const ResourcePath&, Shaders::ShaderType);
+        void LoadShader(const std::string&, const ResourcePath&, const ResourcePath&, const ResourcePath& = "");
+        void LoadStandardShader(Shaders::ShaderID, const ResourcePath&, Shaders::ShaderType);
+        void LoadStandardShader(Shaders::ShaderID, const ResourcePath&, const ResourcePath&, const ResourcePath& = "");
     public:
         void Load(const Resources::ShaderImport&);
         void LoadImports(const Imports<ShaderImport>&);
@@ -165,7 +177,7 @@ namespace Resources {
     class LATREN_API FontManager : public ResourceTypeManager<UI::Text::Font> {
     protected:
         glm::ivec2 fontSize_ = { 0, BASE_FONT_SIZE };
-        std::optional<UI::Text::Font> LoadResource(const std::fs::path&) override;
+        std::optional<UI::Text::Font> LoadResource(const ResourcePath&) override;
     public:
         FontManager();
         void SetFontSize(const glm::ivec2&);
@@ -174,21 +186,21 @@ namespace Resources {
 
     class LATREN_API ModelManager : public ResourceTypeManager<Model> {
     protected:
-        std::optional<Model> LoadResource(const std::fs::path&) override;
+        std::optional<Model> LoadResource(const ResourcePath&) override;
     public:
         ModelManager();
     };
 
     class LATREN_API AudioManager : public ResourceTypeManager<AudioBufferHandle> {
     protected:
-        std::optional<AudioBufferHandle> LoadResource(const std::fs::path&) override;
+        std::optional<AudioBufferHandle> LoadResource(const ResourcePath&) override;
     public:
         AudioManager();
     };
 
     class LATREN_API StageManager : public ResourceTypeManager<Stage> {
     protected:
-        std::optional<Stage> LoadResource(const std::fs::path&) override;
+        std::optional<Stage> LoadResource(const ResourcePath&) override;
         std::vector<std::string> loadedStages_;
         Serializer::BlueprintSerializer* blueprints_ = nullptr;
     public:
@@ -202,7 +214,7 @@ namespace Resources {
 
     class LATREN_API TextFileManager : public ResourceTypeManager<std::string> {
     protected:
-        std::optional<std::string> LoadResource(const std::fs::path&) override;
+        std::optional<std::string> LoadResource(const ResourcePath&) override;
     public:
         TextFileManager();
     };
@@ -217,19 +229,19 @@ namespace Resources {
     };
     class LATREN_API BinaryFileManager : public ResourceTypeManager<BinaryFile> {
     protected:
-        std::optional<BinaryFile> LoadResource(const std::fs::path&) override;
+        std::optional<BinaryFile> LoadResource(const ResourcePath&) override;
     public:
         BinaryFileManager();
     };
     class LATREN_API JSONFileManager : public ResourceTypeManager<nlohmann::json> {
     protected:
-        std::optional<nlohmann::json> LoadResource(const std::fs::path&) override;
+        std::optional<nlohmann::json> LoadResource(const ResourcePath&) override;
     public:
         JSONFileManager();
     };
     class LATREN_API CFGFileManager : public ResourceTypeManager<CFG::CFGObject*> {
     protected:
-        std::optional<CFG::CFGObject*> LoadResource(const std::fs::path&) override;
+        std::optional<CFG::CFGObject*> LoadResource(const ResourcePath&) override;
     public:
         virtual ~CFGFileManager();
         CFGFileManager();

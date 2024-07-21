@@ -71,7 +71,7 @@ std::vector<DeserializedEntity> StageSerializer::ParseEntities(const json& entit
 }
 
 bool StageSerializer::ParseJSON() {
-    std::string relativePath = std::fs::proximate(path_, Paths::RESOURCE_DIRS.at(Resources::ResourceType::STAGE)).string();
+    std::string relativePath = std::fs::proximate(path_, ResourcePath(Paths::RESOURCE_DIRS.at(Resources::ResourceType::STAGE)).GetParsedPath()).string();
     if (!data_.contains("id") || !data_.at("id").is_string()) {
         spdlog::error("[" + relativePath + "] Missing 'id'!");
         return false;

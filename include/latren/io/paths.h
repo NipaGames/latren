@@ -2,43 +2,68 @@
 
 #include <unordered_map>
 
-#include "fs.h"
+#include "resourcepath.h"
 #include "resourcetype.h"
 
 namespace Paths {
-    inline const std::fs::path RESOURCES_DIR = "../../res";
+    inline const std::unordered_map<std::string, ResourcePath> DEFAULT_PATH_VARS = {
+        { "gamedir", "${cwd}" }, // cwd is internally declared as std::filesystem::current_path()
+        { "res", "${gamedir}/res" },
+        { "core_res", "${res}/.latren" },
+        { "usr", "${gamedir}/usr" },
 
-    inline const std::unordered_map<Resources::ResourceType, std::fs::path> RESOURCE_DIRS = {
-        { Resources::ResourceType::SHADER, RESOURCES_DIR / "shaders" },
-        { Resources::ResourceType::TEXTURE, RESOURCES_DIR / "textures" },
-        { Resources::ResourceType::FONT, RESOURCES_DIR / "fonts" },
-        { Resources::ResourceType::STAGE, RESOURCES_DIR / "stages" },
-        { Resources::ResourceType::MODEL, RESOURCES_DIR / "models" },
-        { Resources::ResourceType::AUDIO, RESOURCES_DIR / "audio" },
-        { Resources::ResourceType::DATA, RESOURCES_DIR / "data" },
+        // resource dirs
+        { "shaders", "${res}/shaders" },
+        { "textures", "${res}/textures" },
+        { "fonts", "${res}/fonts" },
+        { "stages", "${res}/stages" },
+        { "models", "${res}/models" },
+        { "audio", "${res}/audio" },
+        { "data", "${res}/data" },
+        { "data_bin", "${data}" },
+        { "data_text", "${data}" },
+        { "data_json", "${data}" },
+        { "data_cfg", "${data}" },
 
-        { Resources::ResourceType::TEXT, RESOURCES_DIR / "data" },
-        { Resources::ResourceType::BINARY, RESOURCES_DIR / "data" },
-        { Resources::ResourceType::JSON, RESOURCES_DIR / "data" },
-        { Resources::ResourceType::CFG, RESOURCES_DIR / "data" }
+        // core resource dirs
+        { "core_shaders", "${core_res}/shaders" },
+        { "core_textures", "${core_res}/textures" },
+        { "core_fonts", "${core_res}/fonts" },
+        { "core_stages", "${core_res}/stages" },
+        { "core_models", "${core_res}/models" },
+        { "core_audio", "${core_res}/audio" },
+        { "core_data", "${core_res}/data" },
+        { "core_data_bin", "${core_data}" },
+        { "core_data_text", "${core_data}" },
+        { "core_data_json", "${core_data}" },
+        { "core_data_cfg", "${core_data}" },
+
+        // resource configs
+        { "imports.cfg", "${res}/imports.cfg" },
+        { "materials.json", "${res}/materials.json" },
+        { "objects.json", "${res}/objects.json" },
+        { "blueprints.json", "${res}/blueprints.json" },
+
+        // user
+        { "video.cfg", "${usr}/video.cfg" },
+        { "savedata", "${usr}/savedata" }
     };
 
-    inline const std::fs::path IMPORTS_PATH = RESOURCES_DIR / "imports.cfg";
-    inline const std::fs::path MATERIALS_PATH = RESOURCES_DIR / "materials.json";
-    inline const std::fs::path OBJECTS_PATH = RESOURCES_DIR / "objects.json";
-    inline const std::fs::path BLUEPRINTS_PATH = RESOURCES_DIR / "blueprints.json";
+    const ResourcePath& GetGlobalPathVar(const std::string&);
+    void SetGlobalPathVar(const std::string&, const ResourcePath&);
 
-    inline const std::fs::path LATREN_CORE_RESOURCES_DIR = RESOURCES_DIR / ".latren";
-    inline const std::fs::path LATREN_CORE_SHADER_DIR = LATREN_CORE_RESOURCES_DIR / "shaders";
+    inline const std::unordered_map<Resources::ResourceType, ResourcePath> RESOURCE_DIRS = {
+        { Resources::ResourceType::SHADER, "${shaders}" },
+        { Resources::ResourceType::TEXTURE, "${textures}" },
+        { Resources::ResourceType::FONT, "${fonts}" },
+        { Resources::ResourceType::STAGE, "${stages}" },
+        { Resources::ResourceType::MODEL, "${models}" },
+        { Resources::ResourceType::AUDIO, "${audio}" },
+        { Resources::ResourceType::DATA, "${data}" },
 
-    inline const std::fs::path USER_DIR = "../../user";
-    inline const std::fs::path VIDEO_SETTINGS_PATH = USER_DIR / "video.cfg";
-    inline const std::fs::path SAVEDATA_DIR = USER_DIR / "savedata";
-
-    inline std::string Path(const std::fs::path& p, const std::string& subPath) {
-        return std::fs::path(p / subPath).string();
-    }
-    inline std::string Path(const std::string& p, const std::string& subPath) {
-        return Path(std::fs::path(p), subPath);
-    }
+        { Resources::ResourceType::TEXT, "${data_text}" },
+        { Resources::ResourceType::BINARY, "${data_bin}" },
+        { Resources::ResourceType::JSON, "${data_json}" },
+        { Resources::ResourceType::CFG, "${data_cfg}" }
+    };
 };

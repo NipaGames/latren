@@ -9,10 +9,10 @@
 #include <fstream>
 #include <spdlog/spdlog.h>
 
-std::optional<Stage> Resources::StageManager::LoadResource(const std::fs::path& path) {
+std::optional<Stage> Resources::StageManager::LoadResource(const ResourcePath& path) {
     Serializer::StageSerializer serializer;
     serializer.UseBlueprints(blueprints_);
-    serializer.DeserializeFile(path.generic_string());
+    serializer.DeserializeFile(path.GetParsedPathStr());
     if (!serializer.Success())
         return std::nullopt;
     Stage s = serializer.GetStage();

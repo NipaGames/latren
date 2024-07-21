@@ -5,13 +5,12 @@
 
 using namespace Texture;
 
-std::optional<TextureID> Resources::TextureManager::LoadResource(const std::fs::path& path) {
-    if (!std::filesystem::exists(path)) {
+std::optional<TextureID> Resources::TextureManager::LoadResource(const ResourcePath& path) {
+    std::fs::path parsedPath = path.GetParsedPath();
+    if (!std::filesystem::exists(parsedPath)) {
         spdlog::warn("Texture does not exist!");
         return std::optional<TextureID>(TEXTURE_NONE);
     }
-
-    std::string absPath = path.generic_string();
 
     TextureID texture;
     glGenTextures(1, &texture);
@@ -23,7 +22,7 @@ std::optional<TextureID> Resources::TextureManager::LoadResource(const std::fs::
 
     int width, height, imgChannels;
     uint8_t* data = nullptr;
-    data = stbi_load(absPath.c_str(), &width, &height, &imgChannels, 0);
+    data = stbi_load(parsedPath.generic_string().c_str(), &width, &height, &imgChannels, 0);
 
     if (data == nullptr) {
         spdlog::warn("Can't load texture!");

@@ -35,12 +35,13 @@ Texture::TextureID Cubemap::LoadTextureFromFaces(const std::string& dir, const c
     Texture::TextureID texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-    std::string textureDir = Paths::Path(Paths::RESOURCE_DIRS.at(Resources::ResourceType::TEXTURE), dir);
+    std::fs::path resourceDir = ResourcePath(Paths::RESOURCE_DIRS.at(Resources::ResourceType::TEXTURE)).GetParsedPath();
+    std::string textureDir = (resourceDir / std::fs::path(dir)).generic_string();
 
     for (int i = 0; i < 6; i++) {
         int width, height, nChannels;
-        std::string path = Paths::Path(textureDir, faces[i]);
-        std::string pathStr = std::fs::proximate(path, Paths::RESOURCE_DIRS.at(Resources::ResourceType::TEXTURE).parent_path()).generic_string();
+        std::string path = textureDir + "/" + faces[i];
+        std::string pathStr = std::fs::proximate(path, resourceDir.parent_path()).generic_string();
         spdlog::info("Loading (cubemap) texture '{}'", pathStr);
         uint8_t* img = stbi_load(path.c_str(), &width, &height, &nChannels, 0);
         if (img) {

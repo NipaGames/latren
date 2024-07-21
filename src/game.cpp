@@ -69,7 +69,7 @@ void Game::GameThreadInit() {
     ShowAndWaitForWindow(resources_.videoSettings.resolution);
     glfwMakeContextCurrent(window_.GetWindow());
     Serializer::CFGSerializer importsSerializer = Serializer::CFGSerializer(Resources::ImportsFileTemplate());
-    importsSerializer.DeserializeFile(Paths::IMPORTS_PATH.string());
+    importsSerializer.DeserializeFile("${imports.cfg}"_resp);
     entityManager_.Setup();
     PreLoad();
     resources_.shaderManager.LoadStandardShaders();

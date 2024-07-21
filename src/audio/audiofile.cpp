@@ -4,10 +4,11 @@
 #include <latren/systems.h>
 #include <latren/audio/audioplayer.h>
 
-std::optional<AudioBufferHandle> Resources::AudioManager::LoadResource(const std::fs::path& path) {
+std::optional<AudioBufferHandle> Resources::AudioManager::LoadResource(const ResourcePath& path) {
     AudioBufferData bufferData;
-    if (path.extension() == ".ogg") {
-        int len = stb_vorbis_decode_filename(path.string().c_str(), &bufferData.channels, &bufferData.sampleRate, reinterpret_cast<short**>(&bufferData.data));
+    std::fs::path p = path.GetParsedPath();
+    if (p.extension() == ".ogg") {
+        int len = stb_vorbis_decode_filename(p.generic_string().c_str(), &bufferData.channels, &bufferData.sampleRate, reinterpret_cast<short**>(&bufferData.data));
         if (len < 0)
             return std::nullopt;
         bufferData.size = len * 2 * bufferData.channels;

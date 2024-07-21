@@ -64,9 +64,9 @@ void Model::LoadModel(const std::string& path) {
     ProcessNodes(rootNode, scene);
 }
 
-std::optional<Model> Resources::ModelManager::LoadResource(const std::fs::path& path) {
+std::optional<Model> Resources::ModelManager::LoadResource(const ResourcePath& path) {
     Model model;
-    model.LoadModel(path.string());
+    model.LoadModel(path.GetParsedPathStr());
     std::string id = GetItemID();
     const auto& items = Systems::GetResources().objectsFile.GetItems();
     if (items.find(id) != items.end()) {

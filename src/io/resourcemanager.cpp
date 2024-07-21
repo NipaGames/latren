@@ -9,7 +9,7 @@
 
 typedef std::string ResourceName;
 
-const std::fs::path& Resources::GetDefaultPath(Resources::ResourceType t) {
+const ResourcePath& Resources::GetDefaultPath(Resources::ResourceType t) {
     return Paths::RESOURCE_DIRS.at(t);
 }
 namespace Resources {
@@ -63,12 +63,14 @@ void Resources::LoadConfig(const std::fs::path& path, SerializableStruct& config
 }
 
 void ResourceManager::LoadConfigs() {
-    if (!std::fs::is_directory(Paths::USER_DIR) || !std::fs::exists(Paths::USER_DIR))
-        std::fs::create_directory(Paths::USER_DIR);
-    if (!std::fs::is_directory(Paths::SAVEDATA_DIR) || !std::fs::exists(Paths::SAVEDATA_DIR))
-        std::fs::create_directory(Paths::SAVEDATA_DIR);
+    std::fs::path usrDir = ResourcePath("${usr}").GetParsedPath();
+    std::fs::path saveDataDir = ResourcePath("${savedata}").GetParsedPath();
+    if (!std::fs::is_directory(usrDir) || !std::fs::exists(usrDir))
+        std::fs::create_directory(usrDir);
+    if (!std::fs::is_directory(saveDataDir) || !std::fs::exists(saveDataDir))
+        std::fs::create_directory(saveDataDir);
     
-    Resources::LoadConfig(Paths::VIDEO_SETTINGS_PATH, videoSettings);
+    Resources::LoadConfig(ResourcePath("${video.cfg}").GetParsedPath(), videoSettings);
 }
 
 Resources::Imports<Resources::Import> Resources::ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj, ResourceType t) {
@@ -78,7 +80,7 @@ Resources::Imports<Resources::Import> Resources::ListImports(const CFG::CFGField
     if (obj == nullptr)
         return imports;
     if (obj->name.has_value())
-        imports.parentPath = Paths::Path(Paths::RESOURCES_DIR, obj->name.value());
+        imports.parentPath = "${res}/" + obj->name.value();
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {
@@ -130,7 +132,7 @@ Resources::Imports<Resources::ShaderImport> Resources::ListShaderImports(const C
     if (obj == nullptr)
         return imports;
     if (obj->name.has_value())
-        imports.parentPath = Paths::Path(Paths::RESOURCES_DIR, obj->name.value());
+        imports.parentPath = "${res}/" + obj->name.value();
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {
@@ -234,17 +236,17 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::TEXTURE);
     loadImports(ResourceType::SHADER);
 
-    materialsFile.DeserializeFile(Paths::MATERIALS_PATH.string());
+    materialsFile.DeserializeFile("${materials.json}"_resp);
     materialsFile.Register(Systems::GetRenderer().GetMaterials());
 
-    objectsFile.DeserializeFile(Paths::OBJECTS_PATH.string());
+    objectsFile.DeserializeFile("${objects.json}"_resp);
 
     loadImports(ResourceType::MODEL);
     loadImports(ResourceType::FONT);
     loadImports(ResourceType::AUDIO);
 
     Serializer::BlueprintSerializer blueprints;
-    blueprints.DeserializeFile(Paths::BLUEPRINTS_PATH.string());
+    blueprints.DeserializeFile("${blueprints.json}"_resp);
     stageManager.UseBlueprints(&blueprints);
     loadImports(ResourceType::STAGE);
     stageManager.UseBlueprints(nullptr);

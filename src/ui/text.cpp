@@ -89,8 +89,8 @@ GLuint CreateOpenGLFontTexture(const uint8_t* buffer, int w, int h) {
     return texture;
 }
 
-std::optional<Font> Resources::FontManager::LoadResource(const std::fs::path& path) {
-    std::string pathStr = path.string();
+std::optional<Font> Resources::FontManager::LoadResource(const ResourcePath& path) {
+    std::string pathStr = path.GetParsedPathStr();
     Font font;
     const auto& additional = GetAdditionalData();
     glm::ivec2 fontSize = fontSize_;
@@ -340,8 +340,8 @@ int UI::Text::GetTextWidth(const Font& font, const std::string& text) {
 
 BaseLine UI::Text::GetBaseLine(const Font& font, const std::string& text) {
     if (std::count(text.begin(), text.end(), '\n') > 0) {
-        std::size_t first = text.find_first_of('\n');
-        std::size_t last = text.find_last_of('\n');
+        std::size_t first = text.find('\n');
+        std::size_t last = text.rfind('\n');
         BaseLine firstRowPadding = GetRowBaseLine(font, text.substr(0, first));
         BaseLine lastRowPadding = GetRowBaseLine(font, text.substr(last + 1));
         return { lastRowPadding.fromGlyphBottom, firstRowPadding.fromGlyphTop };
