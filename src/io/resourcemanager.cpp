@@ -80,7 +80,7 @@ Resources::Imports<Resources::Import> Resources::ListImports(const CFG::CFGField
     if (obj == nullptr)
         return imports;
     if (obj->name.has_value())
-        imports.parentPath = "${res}/" + obj->name.value();
+        imports.parentPath = ResourcePath("${res}", obj->name.value());
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {
@@ -132,7 +132,7 @@ Resources::Imports<Resources::ShaderImport> Resources::ListShaderImports(const C
     if (obj == nullptr)
         return imports;
     if (obj->name.has_value())
-        imports.parentPath = "${res}/" + obj->name.value();
+        imports.parentPath = ResourcePath("${res}", obj->name.value());
     const std::vector<ICFGField*>& items = obj->GetItems();
     for (const ICFGField* v : items) {
         if (v->type != CFGFieldType::STRUCT) {

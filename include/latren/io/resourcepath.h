@@ -13,7 +13,7 @@ public:
     ResourcePath(const char* p) : path_(p) { }
     ResourcePath(const std::string& p) : path_(p) { }
     ResourcePath(const std::fs::path& p) : path_(p.generic_string()) { }
-    ResourcePath(const ResourcePath& p0, const ResourcePath& p1) : path_(p0.GetUnparsedPathStr() + p1.GetUnparsedPathStr()) { }
+    ResourcePath(const ResourcePath& p0, const ResourcePath& p1) : path_(p0.GetUnparsedPathStr() + "/" + p1.GetUnparsedPathStr()) { }
     const std::string& GetUnparsedPathStr() const { return path_; }
     std::fs::path GetParsedPath() const;
     std::string GetParsedPathStr() const { return GetParsedPath().generic_string(); }

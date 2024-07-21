@@ -17,9 +17,9 @@ std::fs::path ResourcePath::GetParsedPath() const {
         if (end == std::string::npos)
             break;
         
-        std::string pathVar = p.substr(begin + 2, end - begin + 1);
+        std::string pathVar = p.substr(begin + 2, end - begin - 2);
         // preferring this over the recursive GetParsedPath for pathVar
-        p.replace(begin, end - begin, Paths::GetGlobalPathVar(pathVar).GetUnparsedPathStr());
+        p.replace(begin, end - begin + 1, Paths::GetGlobalPathVar(pathVar).GetUnparsedPathStr());
     }
     return std::fs::path(p);
 }
