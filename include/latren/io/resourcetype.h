@@ -19,10 +19,34 @@ namespace Resources {
         ALL = TEXTURE | SHADER | FONT | MODEL | STAGE | AUDIO | DATA | TEXT | BINARY | JSON | CFG
     };
 
-    constexpr uint32_t operator|(const enum ResourceType l, const enum ResourceType r) {
-        return static_cast<uint32_t>(l) | static_cast<uint32_t>(r);
+    constexpr ResourceType operator~(ResourceType t) {
+        return static_cast<ResourceType>(~static_cast<uint32_t>(t));
     }
-    constexpr uint32_t operator&(const enum ResourceType l, const enum ResourceType r) {
-        return static_cast<uint32_t>(l) & static_cast<uint32_t>(r);
+    constexpr ResourceType operator|(ResourceType l, ResourceType r) {
+        return static_cast<ResourceType>(static_cast<uint32_t>(l) | static_cast<uint32_t>(r));
+    }
+    constexpr ResourceType operator&(ResourceType l, ResourceType r) {
+        return static_cast<ResourceType>(static_cast<uint32_t>(l) & static_cast<uint32_t>(r));
+    }
+    constexpr ResourceType operator^(ResourceType l, ResourceType r) {
+        return static_cast<ResourceType>(static_cast<uint32_t>(l) ^ static_cast<uint32_t>(r));
+    }
+    constexpr ResourceType& operator|=(ResourceType& l, ResourceType r) {
+        l = l | r;
+        return l;
+    }
+    constexpr ResourceType& operator&=(ResourceType& l, ResourceType r) {
+        l = l & r;
+        return l;
+    }
+    constexpr ResourceType& operator^=(ResourceType& l, ResourceType r) {
+        l = l ^ r;
+        return l;
+    }
+    constexpr bool operator==(ResourceType t, uint32_t cmp) {
+        return static_cast<uint32_t>(t) == cmp;
+    }
+    constexpr bool operator!=(ResourceType t, uint32_t cmp) {
+        return !(t == cmp);
     }
 };
