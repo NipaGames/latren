@@ -244,17 +244,17 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::MODEL);
     loadImports(ResourceType::FONT);
     loadImports(ResourceType::AUDIO);
+    
+    loadImports(ResourceType::TEXT);
+    loadImports(ResourceType::BINARY);
+    loadImports(ResourceType::JSON);
+    loadImports(ResourceType::CFG);
 
     Serializer::BlueprintSerializer blueprints;
     blueprints.DeserializeFile("${blueprints.json}"_resp);
     stageManager.UseBlueprints(&blueprints);
     loadImports(ResourceType::STAGE);
     stageManager.UseBlueprints(nullptr);
-
-    loadImports(ResourceType::TEXT);
-    loadImports(ResourceType::BINARY);
-    loadImports(ResourceType::JSON);
-    loadImports(ResourceType::CFG);
 }
 
 void ResourceManager::UnloadAll() {
