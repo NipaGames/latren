@@ -256,12 +256,12 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::CFG);
 
     Serializer::BlueprintSerializer blueprints;
-    if ((resourceTypesToLoad & ResourceType::STAGE) != 0) {
+    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0) {
         blueprints.DeserializeFile("${blueprints.json}"_resp);
         stageManager.UseBlueprints(&blueprints);
     }
     loadImports(ResourceType::STAGE);
-    if ((resourceTypesToLoad & ResourceType::STAGE) != 0)
+    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0)
         stageManager.UseBlueprints(nullptr);
 }
 
