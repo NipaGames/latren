@@ -8,10 +8,10 @@
 #include "shader.h"
 #include "mesh.h"
 #include "shape.h"
+#include "viewport.h"
 #include <latren/ec/mempool.h>
 
 // forward declarations
-class GameWindow;
 class PostProcessing;
 namespace UI {
     class Canvas;
@@ -25,7 +25,7 @@ namespace Config {
 
 class LATREN_API Renderer {
 private:
-    GameWindow* window_ = nullptr;
+    Viewport* viewport_;
     GLuint fbo_ = GL_NONE;
     GLuint rbo_ = GL_NONE;
     GLuint framebufferTexture_ = GL_NONE;
@@ -51,10 +51,10 @@ public:
     bool showAabbs = false;
 
     Renderer() = default;
-    Renderer(GameWindow*);
+    Renderer(Viewport*);
     virtual ~Renderer();
     void UpdateLighting();
-    void SetWindow(GameWindow* window) { window_ = window; }
+    void SetViewport(Viewport* viewport) { viewport_ = viewport; }
     Camera& GetCamera() { return camera_; }
     bool Init();
     void Start();

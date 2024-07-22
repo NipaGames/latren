@@ -28,7 +28,7 @@ void Canvas::Draw() {
 
     if (!bgOverflow) {
         glEnable(GL_SCISSOR_TEST);
-        glm::vec2 wndSizeFactor = glm::vec2(Systems::GetGameWindow().GetWindowSize()) / glm::vec2(1280.0f, 720.0f);
+        glm::vec2 wndSizeFactor = glm::vec2(Systems::GetGameWindow().GetSize()) / glm::vec2(1280.0f, 720.0f);
         glm::vec2 pos = GetOffset();
         glm::ivec2 scissorPos = glm::vec2(pos.x, pos.y + bottom) * wndSizeFactor;
         glm::ivec2 scissorSize = glm::vec2(w, h) * wndSizeFactor;

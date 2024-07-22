@@ -11,6 +11,7 @@
 
 #include "event/eventhandler.h"
 #include "graphics/renderer.h"
+#include "graphics/viewport.h"
 #include "threads/atomic.h"
 #include "input.h"
 
@@ -28,7 +29,7 @@ namespace Input {
     enum class KeyboardEventType;
 };
 
-class LATREN_API GameWindow {
+class LATREN_API GameWindow : public Viewport {
 private:
     GLFWwindow* window_ = nullptr;
     std::string title_;
@@ -72,8 +73,8 @@ public:
     void SetupInputSystem();
     bool IsUsingVsync() { return useVsync_; }
     void UseVsync(bool);
-    glm::ivec2 GetWindowSize();
-    glm::ivec2 GetVideoModeSize();
+    glm::ivec2 GetSize() const override;
+    glm::ivec2 GetVideoModeSize() const;
     bool IsMouseLocked();
     const glm::vec2& GetMousePosition();
     // returns mouse position in window bounds in range (0, 0), (720, 1280)

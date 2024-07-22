@@ -141,7 +141,7 @@ void Game::GameThreadPrepareUpdate() {
     }
     if (window_.inputSystem.windowSizeChangePending) {
         window_.inputSystem.windowSizeChangePending = false;
-        glm::ivec2 wndSize = window_.GetWindowSize();
+        glm::ivec2 wndSize = window_.GetSize();
         if (wndSize.x > 0 && wndSize.y > 0)
             renderer_.UpdateCameraProjection(wndSize.x, wndSize.y);
         window_.eventHandler.Dispatch<const glm::ivec2&>(WindowEventType::WINDOW_RESIZE, wndSize);
@@ -179,6 +179,7 @@ void Game::GameThreadUpdate() {
     cam.UpdateFrustum();
     
     renderer_.Render();
+    glfwSwapBuffers(window_.GetWindow());
 
     audioPlayer_.UseCameraTransform(cam);
 }

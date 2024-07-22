@@ -11,8 +11,8 @@
 
 #include <spdlog/spdlog.h>
 
-Renderer::Renderer(GameWindow* window) {
-    SetWindow(window);
+Renderer::Renderer(Viewport* window) {
+    SetViewport(window);
 }
 
 Renderer::~Renderer() {
@@ -102,7 +102,7 @@ bool Renderer::Init() {
     };
     framebufferShape_.SetVertexData(quadVertices);
 
-    viewportSize_ = window_->GetWindowSize();
+    viewportSize_ = viewport_->GetSize();
 
     std::shared_ptr<Material> missingMaterial = std::make_shared<Material>(Shaders::ShaderID::STROBE_UNLIT);
     missingMaterial->SetShaderUniform("colors[0]", glm::vec3(0.0f));
@@ -262,7 +262,6 @@ void Renderer::Render() {
     }
 
     glEnable(GL_DEPTH_TEST);
-    glfwSwapBuffers(window_->GetWindow());
 }
 
 void Renderer::RestoreViewport() {
@@ -300,7 +299,7 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
 
     camera_.fov = settings.fov;
 
-    glm::ivec2 wndSize = window_->GetWindowSize();
+    glm::ivec2 wndSize = viewport_->GetSize();
     if (wndSize.x > 0 && wndSize.y > 0)
         UpdateCameraProjection(wndSize.x, wndSize.y);
 }
@@ -325,7 +324,7 @@ UI::Canvas& Renderer::GetCanvas(const std::string& id) {
 
 void Renderer::AssignCanvas(const std::string& id, UI::Canvas* c) {
     canvases_.insert({ id, c });
-    glm::ivec2 wndSize = window_->GetWindowSize();
+    glm::ivec2 wndSize = viewport_->GetSize();
 }
 
 void Renderer::RemoveCanvas(const std::string& id) {

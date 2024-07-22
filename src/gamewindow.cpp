@@ -59,7 +59,7 @@ bool GameWindow::Create(Renderer& renderer) {
     spdlog::info("OpenGL version: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
     renderer.skyboxColor = glm::vec3(0.0f);
-    renderer.SetWindow(this);
+    renderer.SetViewport(this);
     if(!renderer.Init())
         return false;
     if(!UI::Text::Init())
@@ -199,11 +199,11 @@ void GameWindow::UseVsync(bool enabled) {
     inputSystem.vsyncPollRateChangePending = true;
 }
 
-glm::ivec2 GameWindow::GetWindowSize() {
+glm::ivec2 GameWindow::GetSize() const {
     return glm::ivec2(wndWidth_, wndHeight_);
 }
 
-glm::ivec2 GameWindow::GetVideoModeSize() {
+glm::ivec2 GameWindow::GetVideoModeSize() const {
     return glm::ivec2(videoModeWidth_, videoModeHeight_);
 }
 
@@ -235,7 +235,7 @@ void GameWindow::Update() {
     if (inputSystem.mouseMovePending) {
         inputSystem.mouseMovePending = false;
         currentMousePos_ = { inputSystem.mousePosX, inputSystem.mousePosY };
-        glm::ivec2 wndSize = GetWindowSize();
+        glm::ivec2 wndSize = GetSize();
         relativeMousePos_ = currentMousePos_ / (glm::vec2) wndSize * glm::vec2(1280, 720);
         relativeMousePos_.y = 720.0f - relativeMousePos_.y;
 

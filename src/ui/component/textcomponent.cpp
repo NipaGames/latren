@@ -36,7 +36,7 @@ void TextComponent::Start() {
             c.UpdateWindowSize(size);
         })
     );
-    UpdateWindowSize(Systems::GetGameWindow().GetWindowSize());
+    UpdateWindowSize(Systems::GetGameWindow().GetSize());
 
     hasStarted_ = true;
     UpdateTextMetrics();
@@ -137,7 +137,7 @@ void TextComponent::Render(const glm::mat4& proj) {
     if (renderingMethod_ == TextRenderingMethod::RENDER_EVERY_FRAME) {
         bool scissor = (forceTextSize.x != -1 || forceTextSize.y != -1);
         if (scissor) {
-            glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetWindowSize() / glm::vec2(1280.0f, 720.0f);
+            glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetSize() / glm::vec2(1280.0f, 720.0f);
             glEnable(GL_SCISSOR_TEST);
             glm::vec2 scissorPos = glm::vec2(generalBounds_.left, generalBounds_.bottom) * wndRatio;
             glm::vec2 scissorSize = forceTextSize * wndRatio;
@@ -179,7 +179,7 @@ void TextComponent::Render(const glm::mat4& proj) {
 void TextComponent::RenderTexture() {
     auto& f = Systems::GetResources().fontManager.Get(font);
 
-    glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetWindowSize() / glm::vec2(1280.0f, 720.0f);
+    glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetSize() / glm::vec2(1280.0f, 720.0f);
     glm::ivec2 texSize = actualTextSize_ * wndRatio;
     textureSize_ = texSize;
     glViewport(0, 0, (int) texSize.x, texSize.y);
