@@ -238,10 +238,13 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::TEXTURE);
     loadImports(ResourceType::SHADER);
 
-    materialsFile.DeserializeFile("${materials.json}"_resp);
-    materialsFile.Register(Systems::GetRenderer().GetMaterials());
+    if ((resourceTypesToLoad & ResourceType::MATERIAL) != 0) {
+        materialsFile.DeserializeFile("${materials.json}"_resp);
+        materialsFile.Register(Systems::GetRenderer().GetMaterials());
+    }
 
-    objectsFile.DeserializeFile("${objects.json}"_resp);
+    if ((resourceTypesToLoad & ResourceType::OBJECT) != 0)
+        objectsFile.DeserializeFile("${objects.json}"_resp);
 
     loadImports(ResourceType::MODEL);
     loadImports(ResourceType::FONT);
@@ -256,9 +259,10 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
         Serializer::BlueprintSerializer blueprints;
         blueprints.DeserializeFile("${blueprints.json}"_resp);
         stageManager.UseBlueprints(&blueprints);
-        loadImports(ResourceType::STAGE);
-        stageManager.UseBlueprints(nullptr);
     }
+    loadImports(ResourceType::STAGE);
+    if ((resourceTypesToLoad & ResourceType::STAGE) != 0)
+        stageManager.UseBlueprints(nullptr);
 }
 
 void ResourceManager::UnloadAll() {
