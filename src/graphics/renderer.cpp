@@ -148,7 +148,7 @@ void Renderer::Start() {
 }
 
 void Renderer::SortMeshesByDistance() {
-    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&] (GeneralComponentReference& r1, GeneralComponentReference& r2) {
+    std::sort(renderablesOnFrustum_.begin(), renderablesOnFrustum_.end(), [&](GeneralComponentReference& r1, GeneralComponentReference& r2) {
         glm::vec3 pos1 = r1.CastComponent<IRenderable>().GetPosition();
         glm::vec3 pos2 = r2.CastComponent<IRenderable>().GetPosition();
         return glm::distance(camera_.pos, pos1) > glm::distance(camera_.pos, pos2);

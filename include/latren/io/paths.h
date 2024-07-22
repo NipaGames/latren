@@ -49,6 +49,8 @@ namespace Paths {
         { "savedata", "${usr}/savedata" }
     };
 
+    // return a copy of pathvar map as a vector ordered alphabetically by var name
+    std::vector<std::pair<std::string, ResourcePath>> ListGlobalPathVars();
     const ResourcePath& GetGlobalPathVar(const std::string&);
     void SetGlobalPathVar(const std::string&, const ResourcePath&);
 
