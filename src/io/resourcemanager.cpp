@@ -177,19 +177,6 @@ std::function<void(const CFG::CFGObject*, Resources::ResourceType)> CreateLoader
 void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     using namespace Resources;
 
-    std::unordered_map<std::string, ResourceType> cfgTypes = {
-        { "[Texture]", ResourceType::TEXTURE },
-        { "[Model]", ResourceType::MODEL },
-        { "[Font]", ResourceType::FONT },
-        { "[Stage]", ResourceType::STAGE },
-        { "[Shader]", ResourceType::SHADER },
-        { "[Audio]", ResourceType::AUDIO },
-
-        { "[Text]", ResourceType::TEXT },
-        { "[Binary]", ResourceType::BINARY },
-        { "[JSON]", ResourceType::JSON },
-        { "[CFG]", ResourceType::CFG }
-    };
     std::unordered_map<ResourceType, std::function<void(const CFG::CFGObject*, ResourceType)>> loaders = {
         { ResourceType::TEXTURE, CreateLoader(textureManager, eventHandler) },
         { ResourceType::MODEL, CreateLoader(modelManager, eventHandler) },
@@ -211,6 +198,19 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
         { ResourceType::JSON, CreateLoader(dataFiles.jsonFileManager, eventHandler) },
         { ResourceType::CFG, CreateLoader(dataFiles.cfgFileManager, eventHandler) }
     };
+    std::unordered_map<std::string, ResourceType> cfgTypes = {
+        { "[Texture]", ResourceType::TEXTURE },
+        { "[Model]", ResourceType::MODEL },
+        { "[Font]", ResourceType::FONT },
+        { "[Stage]", ResourceType::STAGE },
+        { "[Shader]", ResourceType::SHADER },
+        { "[Audio]", ResourceType::AUDIO },
+
+        { "[Text]", ResourceType::TEXT },
+        { "[Binary]", ResourceType::BINARY },
+        { "[JSON]", ResourceType::JSON },
+        { "[CFG]", ResourceType::CFG }
+    };
     
     std::size_t importCount = 0;
     std::unordered_map<ResourceType, std::vector<const CFG::CFGObject*>> imports;
@@ -219,6 +219,8 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
             continue;
         auto t = cfgTypes.find(importList->typeAnnotation);
         if (t == cfgTypes.end())
+            continue;
+        if ((resourceTypesToLoad & t->second) == 0)
             continue;
         const CFG::CFGObject* importListObj = static_cast<const CFG::CFGObject*>(importList);
         imports[t->second].push_back(static_cast<const CFG::CFGObject*>(importListObj));
@@ -250,11 +252,13 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::JSON);
     loadImports(ResourceType::CFG);
 
-    Serializer::BlueprintSerializer blueprints;
-    blueprints.DeserializeFile("${blueprints.json}"_resp);
-    stageManager.UseBlueprints(&blueprints);
-    loadImports(ResourceType::STAGE);
-    stageManager.UseBlueprints(nullptr);
+    if ((resourceTypesToLoad & ResourceType::STAGE) != 0) {
+        Serializer::BlueprintSerializer blueprints;
+        blueprints.DeserializeFile("${blueprints.json}"_resp);
+        stageManager.UseBlueprints(&blueprints);
+        loadImports(ResourceType::STAGE);
+        stageManager.UseBlueprints(nullptr);
+    }
 }
 
 void ResourceManager::UnloadAll() {

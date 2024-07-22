@@ -265,6 +265,8 @@ namespace Resources {
 
 class LATREN_API ResourceManager {
 public:
+    Resources::ResourceType resourceTypesToLoad = Resources::ResourceType::ALL;
+
     Serializer::MaterialSerializer materialsFile;
     Serializer::ObjectSerializer objectsFile;
 
