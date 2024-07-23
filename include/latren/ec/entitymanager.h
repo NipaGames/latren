@@ -26,6 +26,7 @@ public:
     void FixedUpdateAll();
     Entity GetNamedEntity(const std::string&);
     bool HasNamedEntity(const std::string&);
+    const std::unordered_map<EntityIndex, GlobalEntityData>& GetEntityTable() const;
     const GlobalEntityData& GetEntityData(EntityIndex);
     ComponentMemoryManager& GetComponentMemory();
     Entity CreateEntity(const std::string& = "");

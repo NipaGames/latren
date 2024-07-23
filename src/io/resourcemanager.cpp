@@ -239,12 +239,16 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::SHADER);
 
     if ((resourceTypesToLoad & ResourceType::MATERIAL) != 0) {
+        spdlog::info("Loading materials.json");
         materialsFile.DeserializeFile("${materials.json}"_resp);
+        spdlog::info("Assigning materials to renderer");
         materialsFile.Register(Systems::GetRenderer().GetMaterials());
     }
 
-    if ((resourceTypesToLoad & ResourceType::OBJECT) != 0)
+    if ((resourceTypesToLoad & ResourceType::OBJECT) != 0) {
+        spdlog::info("Loading objects.json");
         objectsFile.DeserializeFile("${objects.json}"_resp);
+    }
 
     loadImports(ResourceType::MODEL);
     loadImports(ResourceType::FONT);
@@ -257,12 +261,16 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
 
     Serializer::BlueprintSerializer blueprints;
     if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0) {
+        spdlog::info("Loading blueprints.json");
         blueprints.DeserializeFile("${blueprints.json}"_resp);
+        spdlog::info("Using blueprints for stage loading");
         stageManager.UseBlueprints(&blueprints);
     }
     loadImports(ResourceType::STAGE);
-    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0)
+    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0) {
+        spdlog::info("Unactivating blueprints");
         stageManager.UseBlueprints(nullptr);
+    }
 }
 
 void ResourceManager::UnloadAll() {

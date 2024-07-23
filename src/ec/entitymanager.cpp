@@ -52,6 +52,10 @@ bool EntityManager::HasNamedEntity(const std::string& name) {
     return entityNames_.find(name) != entityNames_.end();
 }
 
+const std::unordered_map<EntityIndex, GlobalEntityData>& EntityManager::GetEntityTable() const {
+    return entityData_;
+}
+
 const GlobalEntityData& EntityManager::GetEntityData(EntityIndex entity) {
     return entityData_.at(entity);
 }
