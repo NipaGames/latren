@@ -14,7 +14,7 @@
 #include <latren/ui/component/textinputcomponent.h>
 #include <latren/ui/component/uicomponent.h>
 
-void Game::RegisterComponents() {
+void ComponentSerialization::RegisterCoreComponents() {
     LATREN_REGISTER_COMPONENT(Transform);
 
     LATREN_REGISTER_COMPONENT(AudioSourceComponent);
@@ -100,7 +100,7 @@ bool DeserializeCFGVectorAuto(Serializer::DeserializationContext& args, const CF
     return DeserializeCFGVector<S, T>(args, field, CFG::CFG_TYPES_.at(typeHash).front());
 }
 
-void Game::RegisterDeserializers() {
+void ComponentSerialization::RegisterCoreDeserializers() {
     // JSON serializers
     Serializer::AddJSONDeserializer<int>(DeserializeJSONNumber<int>);
     Serializer::AddJSONDeserializer<float>(DeserializeJSONNumber<float>);

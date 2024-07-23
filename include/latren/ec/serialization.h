@@ -45,6 +45,9 @@ namespace ComponentSerialization {
             std::make_unique<ComponentMemoryPool<C>>
         );
     }
+
+    LATREN_API void RegisterCoreComponents();
+    LATREN_API void RegisterCoreDeserializers();
 };
 
 #define LATREN_REGISTER_COMPONENT(C) ComponentSerialization::RegisterComponent<C>(#C)

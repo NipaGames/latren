@@ -108,9 +108,7 @@ void Game::GameThreadCleanUp() {
     audioPlayer_.DeleteAllSources();
 }
 
-void Game::GameThreadDestroy() {
-    audioPlayer_.Destroy();
-}
+void Game::GameThreadDestroy() { }
 
 void Game::GameThreadPrepareUpdate() {
     window_.inputSystem.keyboardListener.UpdateStates();
@@ -240,4 +238,11 @@ AudioPlayer& Game::GetAudioPlayer() {
 
 PhysicsWorld& Game::GetPhysics() {
     return physics_;
+}
+
+void Game::RegisterComponents() {
+    ComponentSerialization::RegisterCoreComponents();
+}
+void Game::RegisterDeserializers() {
+    ComponentSerialization::RegisterCoreDeserializers();
 }

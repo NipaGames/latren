@@ -6,6 +6,10 @@
 #include <spdlog/spdlog.h>
 #include <algorithm>
 
+AudioPlayer::~AudioPlayer() {
+    Destroy();
+}
+
 bool AudioPlayer::Init() {
     const char* alcDeviceName = alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER);
     alcDevice_ = alcOpenDevice(alcDeviceName);

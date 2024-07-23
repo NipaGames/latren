@@ -17,6 +17,7 @@ private:
     std::vector<ALuint> buffers_;
     std::vector<ALuint> sources_;
 public:
+    virtual ~AudioPlayer();
     bool Init();
     AudioBufferHandle CreateAudioBuffer(const AudioBufferData&);
     AudioSourceHandle CreateAudioSource();
