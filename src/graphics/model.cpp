@@ -90,5 +90,8 @@ std::optional<Model> Resources::ModelManager::LoadResource(const ResourcePath& p
             model.meshes.at(i)->material = mat;
         }
     }
+    else {
+        spdlog::warn("Object '{}' not defined in objects.json!", id);
+    }
     return model;
 }
