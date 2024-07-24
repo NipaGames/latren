@@ -167,7 +167,9 @@ void Game::GameThreadUpdate() {
     }
     Update();
     entityManager_.UpdateAll();
+    
     Camera& cam = renderer_.GetCamera();
+    cam.viewMatrix = glm::lookAt(cam.pos, cam.pos + cam.front, cam.up);
     cam.UpdateFrustum();
     
     renderer_.Render();
