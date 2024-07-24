@@ -27,7 +27,7 @@ SerializableFieldMap GlobalSerialization::PopSerializables(const IComponent* par
         serializables.insert({
             field->GetName(),
             {
-                (char*) field->GetPtr() - (char*) parent,
+                static_cast<const char*>(field->GetPtr()) - reinterpret_cast<const char*>(parent),
                 i++,
                 field->GetType(),
                 field->GetContainerType()

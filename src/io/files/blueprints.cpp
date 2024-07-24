@@ -21,6 +21,10 @@ bool BlueprintSerializer::ParseJSON() {
             if (!cv.is_object())
                 continue;
             
+            if (!ComponentSerialization::IsComponentRegistered(ck)) {
+                spdlog::warn("Component '{}' not found!", ck);
+                continue;
+            }
             SerializableFieldValueMap map;
             const ComponentTypeData& typeData = ComponentSerialization::GetComponentType(ck);
             for (const auto& [name, field] : typeData.serializableFields) {

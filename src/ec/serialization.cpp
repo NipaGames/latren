@@ -17,7 +17,7 @@ bool ComponentSerialization::IsComponentRegistered(const std::string& name) {
 }
 bool ComponentSerialization::IsComponentRegistered(ComponentType type) {
     return std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
-        return t.type == type;
+        return t.type.hash_code() == type.hash_code();
     }) != GetComponentTypes().end();
 }
 
@@ -29,14 +29,14 @@ const ComponentTypeData& ComponentSerialization::GetComponentType(const std::str
 }
 const ComponentTypeData& ComponentSerialization::GetComponentType(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
-        return t.type == type;
+        return t.type.hash_code() == type.hash_code();
     });
     return *it;
 }
 
 std::optional<std::string> ComponentSerialization::GetComponentName(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
-        return t.type == type;
+        return t.type.hash_code() == type.hash_code();
     });
     if (it == GetComponentTypes().end())
         return std::nullopt;
@@ -46,7 +46,7 @@ std::optional<std::string> ComponentSerialization::GetComponentName(ComponentTyp
 
 std::unique_ptr<IComponentMemoryPool> ComponentSerialization::CreateComponentMemoryPool(ComponentType type) {
     auto it = std::find_if(GetComponentTypes().begin(), GetComponentTypes().end(), [&](const auto& t) {
-        return t.type == type;
+        return t.type.hash_code() == type.hash_code();
     });
     if (it == GetComponentTypes().end())
         return nullptr;

@@ -52,7 +52,7 @@ bool Renderer::Init() {
 
     camera_.aspectRatio = aspectRatio;
     camera_.projectionMatrix = glm::perspective(glm::radians(camera_.fov), aspectRatio, camera_.clippingNear, camera_.clippingFar);
-    camera_.pos = glm::vec3(0.0f, 0.0f, -10.0f);
+    camera_.pos = glm::vec3(0.0f);
 
     viewportSize_ = viewport_->GetSize();
 
@@ -172,8 +172,6 @@ void Renderer::Render() {
     glClearColor(skyboxColor.r, skyboxColor.g, skyboxColor.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::mat4 viewMatrix = glm::lookAt(camera_.pos, camera_.pos + camera_.front, camera_.up);
-
     glUseProgram(0);
     Systems::GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
         if (!r.IsStatic())
@@ -193,7 +191,7 @@ void Renderer::Render() {
     }
 
     for (GeneralComponentReference& ref : passes[RenderPass::NORMAL]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
     }
 
     // draw skybox
@@ -204,7 +202,7 @@ void Renderer::Render() {
 
         const Shader* shader = &skybox->material->GetShader();
         shader->Use();
-        glm::mat4 skyboxView = glm::mat4(glm::mat3(viewMatrix));
+        glm::mat4 skyboxView = glm::mat4(glm::mat3(camera_.viewMatrix));
         shader->SetUniform("view", skyboxView);
         shader->SetUniform("projection", camera_.projectionMatrix);
         shader->SetUniform("clippingFar", camera_.clippingFar);
@@ -222,12 +220,12 @@ void Renderer::Render() {
     }
     
     for (GeneralComponentReference& ref : passes[RenderPass::LATE]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
     }
     
     if (highlightNormals) {
         Systems::GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
-            r.IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, &normalShader_);
+            r.IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, &normalShader_);
         });
     }
     if (showHitboxes) {
@@ -253,7 +251,7 @@ void Renderer::Render() {
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
     for (GeneralComponentReference& ref : passes[RenderPass::AFTER_POST_PROCESSING]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, viewMatrix, camera_.pos, nullptr, showAabbs);
+        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
     }
     glDisable(GL_DEPTH_TEST);
     for (auto& c : canvases_) {
