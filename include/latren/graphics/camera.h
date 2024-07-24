@@ -38,8 +38,6 @@ class LATREN_API Camera {
 public:
     ViewFrustum frustum;
     float fov = 60.0f;
-    float yaw = 90.0f;
-    float pitch = 0.0f;
     float clippingFar = 1000.0f;
     float clippingNear = .1f;
     float aspectRatio;
