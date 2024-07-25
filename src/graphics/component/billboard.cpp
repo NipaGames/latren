@@ -41,7 +41,7 @@ void BillboardRenderer::Start() {
 
 void BillboardRenderer::CalculateMatrices() {
     modelMatrix_ = glm::translate(glm::mat4(1.0f), parent.GetTransform().position.Get());
-    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation.Get());
+    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation->GetOrientation());
     modelMatrix_ = glm::scale(modelMatrix_, parent.GetTransform().size.Get());
 }
 

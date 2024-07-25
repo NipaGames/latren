@@ -10,7 +10,7 @@ btVector3 Transform::btGetSize() {
 }
 
 btQuaternion Transform::btGetRotation() {
-    return Physics::GLMQuatToBtQuat(rotation);
+    return Physics::GLMQuatToBtQuat(rotation->GetOrientation());
 }
 
 btTransform Transform::btGetTransform() {

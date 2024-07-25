@@ -319,8 +319,8 @@ namespace Serializer {
     LATREN_API CFGDeserializerList& GetCFGDeserializerList();
     
     template <typename... T>
-    void AddCFGDeserializer(const CFGDeserializerFunction& f) {
-        AddDeserializer<CFGDeserializerFunction, T...>(GetCFGDeserializerList(), f);
+    void AssignCFGDeserializer(const CFGDeserializerFunction& f) {
+        AssignDeserializer<CFGDeserializerFunction, T...>(GetCFGDeserializerList(), f);
     }
 
     template <typename T>

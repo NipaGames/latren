@@ -186,30 +186,18 @@ namespace Serializer {
     };
     
     template <typename F,  typename... T>
-    void AddDeserializer(std::vector<std::shared_ptr<IValueDeserializer<F>>>& vec, const F& f) {
-        auto count = std::count_if(vec.begin(), vec.end(), [&](const auto& s) {
-            bool found = false;
-            ([&] {
-                if (s->HasType(&typeid(T))) {
-                    found = true;
-                    return;
-                }
-            } (), ...);
-            return found;
-        });
-        if (count == 0) {
-            auto v = std::make_shared<ValueDeserializer<F, T...>>();
-            v->fn = f;
-            vec.push_back(v);
-        }
+    void AssignDeserializer(std::vector<std::shared_ptr<IValueDeserializer<F>>>& vec, const F& f) {
+        auto v = std::make_shared<ValueDeserializer<F, T...>>();
+        v->fn = f;
+        vec.push_back(v);
     }
 
     template <typename T, typename P, typename M>
     bool SetPointerValue(T* ptr, const P& param, const M& map) {
-        auto it = std::find_if(map.begin(), map.end(), [&](const auto& s) {
+        auto it = std::find_if(map.rbegin(), map.rend(), [&](const auto& s) {
             return s->HasType(&typeid(T));
         });
-        if (it == map.end())
+        if (it == map.rend())
             return false;
         const auto& deserializer = *it;
         DeserializationContext context;
@@ -222,13 +210,13 @@ namespace Serializer {
     LATREN_API JSONDeserializerList& GetJSONDeserializerList();
 
     template <typename... T>
-    void AddJSONDeserializer(const JSONDeserializerFunction& f) {
-        AddDeserializer<JSONDeserializerFunction, T...>(GetJSONDeserializerList(), f);
+    void AssignJSONDeserializer(const JSONDeserializerFunction& f) {
+        AssignDeserializer<JSONDeserializerFunction, T...>(GetJSONDeserializerList(), f);
     }
 
     template <typename T>
-    void AddJSONEnumDeserializer() {
-        AddDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serializer::DeserializationContext& args, const nlohmann::json& j) {
+    void AssignJSONEnumDeserializer() {
+        AssignDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serializer::DeserializationContext& args, const nlohmann::json& j) {
             if (!j.is_string())
                 return false;
             auto e = magic_enum::enum_cast<T>(j.get<std::string>());

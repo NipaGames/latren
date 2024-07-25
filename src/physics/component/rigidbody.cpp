@@ -82,7 +82,7 @@ void RigidBody::Start() {
             case ColliderConstructor::AABB:
                 collider = std::make_shared<btBoxShape>(Physics::GLMVectorToBtVector3(parent.GetComponent<MeshRenderer>().GetAABB().extents));
                 colliderOriginOffset_ = parent.GetComponent<MeshRenderer>().GetAABB().center * t.size.Get();
-                transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation.Get() * colliderOriginOffset_));
+                transform.setOrigin(Physics::GLMVectorToBtVector3(t.rotation->GetOrientation() * colliderOriginOffset_));
                 break;
             case ColliderConstructor::MESH:
                 collider = CreateMeshCollider();
@@ -95,7 +95,7 @@ void RigidBody::Start() {
         collider.Get()->calculateLocalInertia(mass, localInertia);
 
     transform.setOrigin(transform.getOrigin() + Physics::GLMVectorToBtVector3(t.position));
-    transform.setRotation(Physics::GLMQuatToBtQuat(t.rotation));
+    transform.setRotation(Physics::GLMQuatToBtQuat(t.rotation->GetOrientation()));
 
     if (rigidBody == nullptr) {
         btDefaultMotionState* motionState = new btDefaultMotionState(transform);
@@ -127,7 +127,7 @@ void RigidBody::UpdateTransform() {
     glm::quat rot = Physics::BtQuatToGLMQuat(transform.getRotation());
 
     t.position = Physics::BtVectorToGLMVector3(transform.getOrigin()) - rot * colliderOriginOffset_;
-    t.rotation = rot;
+    t.rotation->SetOrientation(rot);
 }
 
 void RigidBody::CopyTransform() {
@@ -136,7 +136,7 @@ void RigidBody::CopyTransform() {
     btMotionState* ms = rigidBody->Get()->getMotionState();
     ms->getWorldTransform(transform);
     
-    transform.setOrigin(Physics::GLMVectorToBtVector3(t.position.Get() + t.rotation.Get() * colliderOriginOffset_));
+    transform.setOrigin(Physics::GLMVectorToBtVector3(t.position.Get() + t.rotation->GetOrientation() * colliderOriginOffset_));
     transform.setRotation(t.btGetRotation());
 
     ms->setWorldTransform(transform);

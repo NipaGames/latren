@@ -31,10 +31,10 @@ bool Serializer::ParseJSONComponentData(SerializableFieldValueMap& fields, const
         return false;
     
     const SerializableFieldValue& field = fields.at(k);
-    auto it = std::find_if(GetJSONDeserializerList().begin(), GetJSONDeserializerList().end(), [&](const auto& s) {
+    auto it = std::find_if(GetJSONDeserializerList().rbegin(), GetJSONDeserializerList().rend(), [&](const auto& s) {
         return s->CompareToComponentType(field);
     });
-    if (it == GetJSONDeserializerList().end())
+    if (it == GetJSONDeserializerList().rend())
         return false;
     
     const auto& deserializer = *it;
