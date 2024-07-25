@@ -16,9 +16,12 @@ public:
     // enable this if the object transform doesn't update
     SERIALIZABLE(bool, isStatic) = false;
 
-    btVector3 btGetPos();
-    btVector3 btGetSize();
-    btQuaternion btGetRotation();
-    btTransform btGetTransform();
+    glm::mat4 CreateTransformationMatrix() const;
+
+    // bullet stuff
+    btVector3 btGetPos() const;
+    btVector3 btGetSize() const;
+    btQuaternion btGetRotation() const;
+    btTransform btGetTransform() const;
     void btSetTransform(const btTransform&);
 };

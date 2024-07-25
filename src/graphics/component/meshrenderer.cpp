@@ -35,11 +35,9 @@ void MeshRenderer::Start() {
 }
 
 void MeshRenderer::CalculateMatrices() {
-    modelMatrix_ = glm::translate(glm::mat4(1.0f), GetPosition());
-    modelMatrix_ *= glm::mat4_cast(parent.GetTransform().rotation->GetOrientation());
-    modelMatrix_ = glm::scale(modelMatrix_, parent.GetTransform().size.Get());
+    modelMatrix_ = glm::translate(glm::mat4(1.0f), offset.Get());
+    modelMatrix_ *= parent.GetTransform().CreateTransformationMatrix();
 }
-
 
 void MeshRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::mat4& transformMatrix, const glm::vec3& viewPos) const {
     Renderable::UpdateUniforms(shader, projectionMatrix, viewMatrix, viewPos);
