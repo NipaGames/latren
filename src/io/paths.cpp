@@ -1,5 +1,6 @@
 #include <latren/io/paths.h>
 
+#include <algorithm>
 #include <spdlog/spdlog.h>
 
 std::unordered_map<std::string, ResourcePath> CreateDefaultPathVars() {
