@@ -34,14 +34,6 @@ namespace Lights {
         return LIGHTS_INDEX;
     }
 
-    void ILight::ApplyForAllShaders() const {
-        for (GLuint shader : Systems::GetRenderer().GetShaders()) {
-            glUseProgram(shader);
-            ApplyLight(shader);
-        }
-        glUseProgram(0);
-    }
-
     void PointLight::ApplyLight(GLuint shader) const {
         Light::ApplyLight(shader);
         glm::vec3 pos = parent.GetTransform().position.Get() + offset.Get();

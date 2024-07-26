@@ -302,7 +302,7 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
         UpdateCameraProjection(wndSize.x, wndSize.y);
 }
 
-std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) {
+std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) const {
     if (materials_.find(mat) == materials_.end())
         return materials_.at(MATERIAL_MISSING);
     return materials_.at(mat);

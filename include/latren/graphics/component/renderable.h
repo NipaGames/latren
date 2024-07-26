@@ -27,8 +27,9 @@ public:
     virtual bool IsAlwaysOnFrustum() const = 0;
     virtual bool IsOnFrustum(const ViewFrustum&) const = 0;
     virtual glm::vec3 GetPosition() const = 0;
-    virtual operator IComponent&() = 0;
     virtual void IRender(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const = 0;
+    
+    virtual operator IComponent&() = 0;
 };
 
 template <typename Derived>
@@ -68,7 +69,6 @@ public:
         shader.SetUniform("time", (float) IComponent::GetTime());
     }
 
-    virtual operator IComponent&() override { return *this; }
     virtual bool IsAlwaysOnFrustum() const override { return alwaysOnFrustum; }
     virtual bool IsOnFrustum(const ViewFrustum&) const override { return true; }
     virtual RenderPass::Enum GetRenderPass() const override { return renderPass; }
@@ -86,4 +86,6 @@ public:
             glEnable(GL_DEPTH_TEST);
     }
     virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const { }
+
+    virtual operator IComponent&() override { return *this; }
 };

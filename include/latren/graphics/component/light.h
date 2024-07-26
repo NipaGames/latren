@@ -25,11 +25,14 @@ namespace Lights {
     LATREN_API int& GetIndex(LightType);
     LATREN_API void ResetIndices();
 
-    class LATREN_API ILight {
+    class ILight {
     public:
+        virtual ~ILight() = default;
         virtual void UseAsNext() = 0;
         virtual void ApplyLight(GLuint) const = 0;
-        virtual void ApplyForAllShaders() const;
+        virtual void ApplyForShaders(const std::vector<GLuint>&) const = 0;
+
+        virtual operator IComponent&() = 0;
     };
 
     template <typename Derived>
@@ -53,6 +56,15 @@ namespace Lights {
             glUniform3f(glGetUniformLocation(shader, std::string(lightUniform_ + ".color").c_str()), color->x, color->y, color->z);
             glUniform1f(glGetUniformLocation(shader, std::string(lightUniform_ + ".intensity").c_str()), intensity);
         }
+        virtual void ApplyForShaders(const std::vector<GLuint>& shaders) const override {
+            for (GLuint shader : shaders) {
+                glUseProgram(shader);
+                ApplyLight(shader);
+            }
+            glUseProgram(0);
+        }
+
+        virtual operator IComponent&() override { return *this; }
     };
 
     class LATREN_API PointLight : public Light<PointLight> {

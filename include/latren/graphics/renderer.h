@@ -75,8 +75,8 @@ public:
     void MoveCanvas(const std::string&, UI::Canvas*);
     void RemoveCanvas(const std::string&);
     void CleanUp();
-    std::size_t CountEntitiesOnFrustum() { return renderablesOnFrustum_.size(); }
-    std::shared_ptr<Material> GetMaterial(const std::string&);
+    std::size_t CountEntitiesOnFrustum() const { return renderablesOnFrustum_.size(); }
+    std::shared_ptr<Material> GetMaterial(const std::string&) const;
     std::unordered_map<std::string, std::shared_ptr<Material>>& GetMaterials() { return materials_; }
-    const std::vector<GLuint>& GetShaders() { return shaders_; }
+    const std::vector<GLuint>& GetShaders() const { return shaders_; }
 };
