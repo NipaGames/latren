@@ -29,16 +29,22 @@ public:
         return glm::eulerAngles(GetOrientation());
     }
     #endif
-    void SetOrientation(const glm::quat& orientation) {
+    void SetOnlyOrientation(const glm::quat& orientation) {
         orientation_ = orientation;
+    }
+    void SetOnlyEulers(const glm::vec3& eulers) {
+        #ifdef LATREN_QUATERNION_STORE_EULERS
+        eulers_ = eulers;
+        #endif
+    }
+    void SetOrientation(const glm::quat& orientation) {
+        SetOnlyOrientation(orientation);
         #ifdef LATREN_QUATERNION_STORE_EULERS
         eulers_ = glm::eulerAngles(orientation);
         #endif
     }
     void SetEulers(const glm::vec3& eulers) {
-        #ifdef LATREN_QUATERNION_STORE_EULERS
-        eulers_ = eulers;
-        #endif
+        SetOnlyEulers(eulers);
         orientation_ = glm::quat(eulers);
     }
 };
