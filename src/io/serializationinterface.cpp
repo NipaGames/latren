@@ -89,8 +89,6 @@ bool JSONComponentDeserializer::DeserializeComponentDataFromJSON(SerializableFie
 }
 
 std::optional<TypedComponentData> JSONComponentDeserializer::DeserializeComponent(const std::string& component, const nlohmann::json& json) const {
-    if (!json.is_object())
-        return std::nullopt;
     if (!ComponentSerialization::IsComponentRegistered(component)) {
         spdlog::warn("Component '{}' not found!", component);
         return std::nullopt;
@@ -108,13 +106,16 @@ std::optional<TypedComponentData> JSONComponentDeserializer::DeserializeComponen
 
 bool JSONComponentDeserializer::DeserializeComponents(std::vector<Serialization::TypedComponentData>& components, const nlohmann::json& json, const std::string& entityId) const {
     for (const auto& [ck, cv] : json.items()) {
+        // not a component
+        if (!cv.is_object())
+            continue;
         auto data = DeserializeComponent(ck, cv);
+        // fucked up early component deserialization
         if (!data.has_value())
             return false;
         bool success = DeserializeComponentDataFromJSON(data->fields, cv, entityId);
         if (!success) {
             spdlog::warn("Failed deserializing component '{}'!", ck);
-            // yeah yeah the whole entity isn't necessarily invalid but this will do now
             return false;
         }
         components.push_back(data.value());
