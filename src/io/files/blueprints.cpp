@@ -4,7 +4,7 @@
 #include <latren/ec/serialization.h>
 #include <spdlog/spdlog.h>
 
-using namespace Serializer;
+using namespace Serialization;
 
 bool BlueprintSerializer::ParseJSON() {
     if (!data_.is_object()) {
@@ -17,31 +17,8 @@ bool BlueprintSerializer::ParseJSON() {
             spdlog::error("A blueprint must be an object!");
             continue;
         }
-        for (const auto& [ck, cv] : componentsJson.items()) {
-            if (!cv.is_object())
-                continue;
-            
-            if (!ComponentSerialization::IsComponentRegistered(ck)) {
-                spdlog::warn("Component '{}' not found!", ck);
-                continue;
-            }
-            SerializableFieldValueMap map;
-            const ComponentTypeData& typeData = ComponentSerialization::GetComponentType(ck);
-            for (const auto& [name, field] : typeData.serializableFields) {
-                map.insert({ name, { nullptr, field.type, field.containerType } });
-            }
-            TypedComponentData data {
-                typeData.type,
-                map
-            };
-
-            bool success = DeserializeComponentDataFromJSON(data.fields, cv);
-            if (!success) {
-                spdlog::warn("Failed deserializing component '{}' for a blueprint!", ck);
-                continue;
-            }
-            components.push_back(data);
-        }
+        if (!DeserializeComponents(components, componentsJson))
+            continue;
         items_.insert({ id, components });
     }
     return true;

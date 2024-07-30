@@ -103,15 +103,15 @@ void SerializableStruct::CFGDeserialize(const CFGObject* obj) {
         if (data.addr == nullptr)
             continue;
         
-        auto it = std::find_if(Serializer::GetCFGDeserializerList().rbegin(), Serializer::GetCFGDeserializerList().rend(), [&](const auto& s) {
+        auto it = std::find_if(Serialization::GetCFGDeserializerList().rbegin(), Serialization::GetCFGDeserializerList().rend(), [&](const auto& s) {
             return s->HasType(data.type);
         });
-        if (it == Serializer::GetCFGDeserializerList().rend()) {
+        if (it == Serialization::GetCFGDeserializerList().rend()) {
             spdlog::warn("No CFG serializer found for type {}!", data.type->name());
             continue;
         }
-        Serializer::DeserializationContext context;
-        context.type = Serializer::DeserializationContext::DeserializerType::ANY_POINTER;
+        Serialization::DeserializationContext context;
+        context.type = Serialization::DeserializationContext::DeserializerType::ANY_POINTER;
         context.ptr = data.addr;
         bool success = context.Deserialize((*it)->fn, f);
         if (!success) {

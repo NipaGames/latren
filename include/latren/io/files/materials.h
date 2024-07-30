@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../serializer.h"
+#include "../serializationinterface.h"
 #include <latren/graphics/material.h>
 
-namespace Serializer {
+namespace Serialization {
     class LATREN_API MaterialSerializer : public JSONFileSerializer, public SerializerItemInterface<std::shared_ptr<Material>> {
     using JSONFileSerializer::JSONFileSerializer;
     protected:

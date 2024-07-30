@@ -26,7 +26,7 @@
 */
 #include <iostream>
 
-namespace Serializer {
+namespace Serialization {
     class DeserializationContext;
     
     template <typename... Params>
@@ -60,7 +60,7 @@ namespace Serializer {
     typedef std::unordered_map<std::string, SerializableFieldValue> SerializableFieldValueMap;
     struct TypedComponentData {
         ComponentType type;
-        Serializer::SerializableFieldValueMap fields;
+        Serialization::SerializableFieldValueMap fields;
     };
 
     class DeserializationContext {
@@ -216,7 +216,7 @@ namespace Serializer {
 
     template <typename T>
     void AssignJSONEnumDeserializer() {
-        AssignDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serializer::DeserializationContext& args, const nlohmann::json& j) {
+        AssignDeserializer<JSONDeserializerFunction, T>(GetJSONDeserializerList(), [](Serialization::DeserializationContext& args, const nlohmann::json& j) {
             if (!j.is_string())
                 return false;
             auto e = magic_enum::enum_cast<T>(j.get<std::string>());
@@ -227,10 +227,8 @@ namespace Serializer {
         });
     }
 
-    LATREN_API bool ParseJSONComponentData(SerializableFieldValueMap&, const std::string&, const nlohmann::json&, const std::string& = "");
     template <typename T>
-    bool SetJSONPointerValue(T *ptr, const nlohmann::json &jsonVal)
-    {
+    bool SetJSONPointerValue(T *ptr, const nlohmann::json &jsonVal) {
         return SetPointerValue<T>(ptr, jsonVal, GetJSONDeserializerList());
     }
 
@@ -316,5 +314,13 @@ namespace Serializer {
         virtual bool StreamWrite(std::ofstream&) override;
     public:
         virtual ~JSONFileSerializer() = default;
+    };
+
+    class JSONComponentDeserializer {
+    public:
+        virtual bool ParseJSONComponentData(SerializableFieldValueMap&, const std::string&, const nlohmann::json&, const std::string& = "") const;
+        virtual bool DeserializeComponentDataFromJSON(SerializableFieldValueMap&, const nlohmann::json&, const std::string& = "") const;
+        virtual std::optional<TypedComponentData> DeserializeComponent(const std::string&, const nlohmann::json&) const;
+        virtual bool DeserializeComponents(std::vector<Serialization::TypedComponentData>&, const nlohmann::json&, const std::string& = "") const;
     };
 };

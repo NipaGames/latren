@@ -7,11 +7,11 @@
 #include <nlohmann/json.hpp>
 
 #include "ec/entity.h"
-#include "io/serializer.h"
+#include "io/serializationinterface.h"
 
 struct DeserializedEntity {
     std::string id;
-    std::vector<Serializer::TypedComponentData> components;
+    std::vector<Serialization::TypedComponentData> components;
 };
 
 struct Stage {

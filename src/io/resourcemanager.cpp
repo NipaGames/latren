@@ -44,13 +44,13 @@ CFG::CFGCustomTypes Resources::ImportsFileTemplate::DefineCustomTypes() const {
 }
 
 void Resources::SaveConfig(const std::fs::path& path, const SerializableStruct& config) {
-    Serializer::CFGSerializer serializer = Serializer::CFGSerializer();
+    Serialization::CFGSerializer serializer = Serialization::CFGSerializer();
     serializer.SetData(config.CFGSerialize());
     serializer.SerializeFile(path.string());
 }
 
 void Resources::LoadConfig(const std::fs::path& path, SerializableStruct& config) {
-    Serializer::CFGSerializer serializer = Serializer::CFGSerializer();
+    Serialization::CFGSerializer serializer = Serialization::CFGSerializer();
     serializer.DeserializeFile(path.string());
     auto templateFields = config.CreateCFGTemplate();
     if (serializer.Success() && serializer.Validate(templateFields)) {
@@ -65,9 +65,9 @@ void Resources::LoadConfig(const std::fs::path& path, SerializableStruct& config
 ModularResourceManager::ModularResourceManager(Resources::ResourceType types) {
     using Resources::ResourceType;
 
-    AddBasicResourceLoaderIf<Serializer::MaterialSerializer>(types, ResourceType::MATERIAL);
-    AddBasicResourceLoaderIf<Serializer::ObjectSerializer>(types, ResourceType::OBJECT);
-    AddBasicResourceLoaderIf<Serializer::BlueprintSerializer>(types, ResourceType::BLUEPRINT);
+    AddBasicResourceLoaderIf<Serialization::MaterialSerializer>(types, ResourceType::MATERIAL);
+    AddBasicResourceLoaderIf<Serialization::ObjectSerializer>(types, ResourceType::OBJECT);
+    AddBasicResourceLoaderIf<Serialization::BlueprintSerializer>(types, ResourceType::BLUEPRINT);
     AddBasicResourceLoaderIf<Resources::TextureManager>(types, ResourceType::TEXTURE);
     AddBasicResourceLoaderIf<Resources::ShaderManager>(types, ResourceType::SHADER);
     AddBasicResourceLoaderIf<Resources::FontManager>(types, ResourceType::FONT);
@@ -288,14 +288,14 @@ void ModularResourceManager::UnloadAll() {
     // TODO: clear all resourcemanagers
 }
 
-Serializer::MaterialSerializer* ModularResourceManager::GetMaterialSerializer() {
-    return GetBasicResourceLoader<Serializer::MaterialSerializer>(Resources::ResourceType::MATERIAL);
+Serialization::MaterialSerializer* ModularResourceManager::GetMaterialSerializer() {
+    return GetBasicResourceLoader<Serialization::MaterialSerializer>(Resources::ResourceType::MATERIAL);
 }
-Serializer::ObjectSerializer* ModularResourceManager::GetObjectSerializer() {
-    return GetBasicResourceLoader<Serializer::ObjectSerializer>(Resources::ResourceType::OBJECT);
+Serialization::ObjectSerializer* ModularResourceManager::GetObjectSerializer() {
+    return GetBasicResourceLoader<Serialization::ObjectSerializer>(Resources::ResourceType::OBJECT);
 }
-Serializer::BlueprintSerializer* ModularResourceManager::GetBlueprintSerializer() {
-    return GetBasicResourceLoader<Serializer::BlueprintSerializer>(Resources::ResourceType::BLUEPRINT);
+Serialization::BlueprintSerializer* ModularResourceManager::GetBlueprintSerializer() {
+    return GetBasicResourceLoader<Serialization::BlueprintSerializer>(Resources::ResourceType::BLUEPRINT);
 }
 
 Resources::TextureManager* ModularResourceManager::GetTextureManager() {

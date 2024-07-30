@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../serializer.h"
+#include "../serializationinterface.h"
 #include <vector>
 #include <initializer_list>
 #include <string>
@@ -296,7 +296,7 @@ namespace CFG {
     };
 }
 
-namespace Serializer {
+namespace Serialization {
     class LATREN_API CFGSerializer : public IFileSerializer<CFG::CFGObject*> {
     private:
         CFG::CFGFileTemplate fileTemplate_;
@@ -313,7 +313,7 @@ namespace Serializer {
 }
 
 
-namespace Serializer {
+namespace Serialization {
     typedef DeserializerFunction<const CFG::ICFGField*> CFGDeserializerFunction;
     typedef std::vector<std::shared_ptr<IValueDeserializer<CFGDeserializerFunction>>> CFGDeserializerList;
     LATREN_API CFGDeserializerList& GetCFGDeserializerList();

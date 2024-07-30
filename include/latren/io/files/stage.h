@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../serializer.h"
+#include "../serializationinterface.h"
 #include "blueprints.h"
 #include <latren/stage.h>
 
-namespace Serializer {
-    LATREN_API bool DeserializeComponentDataFromJSON(Serializer::SerializableFieldValueMap&, const nlohmann::json&, const std::string& = "");
-    class LATREN_API StageSerializer : public JSONFileSerializer {
+namespace Serialization {
+    class LATREN_API StageSerializer : public JSONFileSerializer, public Serialization::JSONComponentDeserializer {
     protected:
         Stage stage_;
-        Serializer::BlueprintSerializer* blueprints_ = nullptr;
-        bool ParseJSON() override;
-        std::vector<DeserializedEntity> ParseEntities(const nlohmann::json& entities, int* = nullptr);
+        Serialization::BlueprintSerializer* blueprints_ = nullptr;
+        virtual bool ParseJSON() override;
+        virtual bool ParseEntityBlueprints(DeserializedEntity&, const std::string&);
+        virtual std::vector<DeserializedEntity> ParseEntities(const nlohmann::json& entities, int* = nullptr);
     public:
-        Stage& GetStage();
-        void UseBlueprints(Serializer::BlueprintSerializer* blueprints) {
+        virtual Stage& GetStage();
+        void UseBlueprints(Serialization::BlueprintSerializer* blueprints) {
             blueprints_ = blueprints;
         }
         StageSerializer(const std::string& p) {

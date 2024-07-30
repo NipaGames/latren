@@ -1,11 +1,11 @@
 #pragma once
 
-#include "serializer.h"
+#include "serializationinterface.h"
 #include "files/cfg.h"
 
 namespace ComponentSerialization {
     template <typename T>
-    bool DeserializeJSONNumber(Serializer::DeserializationContext& args, const nlohmann::json& j) {
+    bool DeserializeJSONNumber(Serialization::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_number())
             return false;
         args.Return<T>(j);
@@ -13,7 +13,7 @@ namespace ComponentSerialization {
     }
 
     template <std::size_t S>
-    bool DeserializeJSONVector(Serializer::DeserializationContext& args, const nlohmann::json& j) {
+    bool DeserializeJSONVector(Serialization::DeserializationContext& args, const nlohmann::json& j) {
         typedef glm::vec<S, float> Vector;
         Vector vec;
         if (j.is_number()) vec = Vector(j);
@@ -29,7 +29,7 @@ namespace ComponentSerialization {
     }
 
     template <std::size_t S, typename T>
-    bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field, CFG::CFGFieldType type) {
+    bool DeserializeCFGVector(Serialization::DeserializationContext& args, const CFG::ICFGField* field, CFG::CFGFieldType type) {
         if (field->type != CFG::CFGFieldType::STRUCT && field->type != CFG::CFGFieldType::ARRAY)
             return false;
         const CFG::CFGObject* obj = static_cast<const CFG::CFGObject*>(field);
@@ -48,12 +48,12 @@ namespace ComponentSerialization {
     }
 
     template <std::size_t S, typename T, CFG::CFGFieldType F>
-    bool DeserializeCFGVector(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
+    bool DeserializeCFGVector(Serialization::DeserializationContext& args, const CFG::ICFGField* field) {
         return DeserializeCFGVector<S, T>(args, field, F);
     }
 
     template <std::size_t S, typename T>
-    bool DeserializeCFGVectorAuto(Serializer::DeserializationContext& args, const CFG::ICFGField* field) {
+    bool DeserializeCFGVectorAuto(Serialization::DeserializationContext& args, const CFG::ICFGField* field) {
         std::size_t typeHash = typeid(T).hash_code();
         if (CFG::GetCFGTypeMap().find(typeHash) == CFG::GetCFGTypeMap().end())
             return false;

@@ -68,7 +68,7 @@ void Game::GameThreadInit() {
         window_.inputSystem.updateFullscreen = true;
     ShowAndWaitForWindow(resources_.videoSettings.resolution);
     glfwMakeContextCurrent(window_.GetWindow());
-    Serializer::CFGSerializer importsSerializer = Serializer::CFGSerializer(Resources::ImportsFileTemplate());
+    Serialization::CFGSerializer importsSerializer = Serialization::CFGSerializer(Resources::ImportsFileTemplate());
     importsSerializer.DeserializeFile("${imports.cfg}"_resp);
     entityManager_.Setup();
     PreLoad();

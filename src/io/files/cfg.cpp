@@ -10,7 +10,7 @@
 #include <fmt/format.h>
 #include <latren/defines/opengl.h>
 
-using namespace Serializer;
+using namespace Serialization;
 using namespace CFG;
 
 namespace CFGStrUtils {
@@ -826,7 +826,7 @@ const CFGTypeMap& CFG::GetCFGTypeMap() {
     return CFG_TYPES_;
 }
 
-CFGDeserializerList& Serializer::GetCFGDeserializerList() {
+CFGDeserializerList& Serialization::GetCFGDeserializerList() {
     static CFGDeserializerList cfgDeserializers;
     return cfgDeserializers;
 }

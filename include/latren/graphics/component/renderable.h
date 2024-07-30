@@ -1,7 +1,7 @@
 #pragma once
 
 #include <latren/ec/component.h>
-#include <latren/io/serializer.h>
+#include <latren/io/serializationinterface.h>
 #include "../material.h"
 #include "../camera.h"
 

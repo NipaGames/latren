@@ -2,7 +2,7 @@
 #include <latren/systems.h>
 #include <latren/graphics/renderer.h>
 
-using namespace Serializer;
+using namespace Serialization;
 using namespace nlohmann;
 
 typedef std::pair<std::string, Object> ObjectPair;

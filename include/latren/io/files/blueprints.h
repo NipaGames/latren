@@ -1,9 +1,13 @@
 #pragma once
 
-#include "../serializer.h"
+#include "../serializationinterface.h"
 
-namespace Serializer {
-    class LATREN_API BlueprintSerializer : public JSONFileSerializer, public SerializerItemInterface<std::vector<TypedComponentData>> {
+namespace Serialization {
+    class LATREN_API BlueprintSerializer :
+        public JSONFileSerializer,
+        public SerializerItemInterface<std::vector<TypedComponentData>>,
+        public Serialization::JSONComponentDeserializer
+    {
     using JSONFileSerializer::JSONFileSerializer;
     protected:
         bool ParseJSON() override;

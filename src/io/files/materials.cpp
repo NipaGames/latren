@@ -2,7 +2,7 @@
 #include <latren/systems.h>
 #include <latren/io/resourcemanager.h>
 
-using namespace Serializer;
+using namespace Serialization;
 using json = nlohmann::json;
 
 struct ShaderUniform {

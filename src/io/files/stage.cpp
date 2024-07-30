@@ -5,15 +5,18 @@
 #include <latren/ec/serialization.h>
 #include <spdlog/spdlog.h>
 
-using namespace Serializer;
+using namespace Serialization;
 using json = nlohmann::json;
 
-bool Serializer::DeserializeComponentDataFromJSON(SerializableFieldValueMap& fields, const nlohmann::json& json, const std::string& entityId) {
-    for (const auto& [k, v] : json.items()) {
-        if (!ParseJSONComponentData(fields, k, v, entityId))
-            return false;
+bool StageSerializer::ParseEntityBlueprints(DeserializedEntity& entity, const std::string& blueprint) {
+    if (blueprint.empty() || blueprints_ == nullptr)
+        return false;
+    if (!blueprints_->HasItem(blueprint)) {
+        spdlog::warn("Cannot find blueprint '{}'!", blueprint);
+        return false;
     }
-    return true;
+    entity.components = blueprints_->GetItem(blueprint);
+    return false;
 }
 
 std::vector<DeserializedEntity> StageSerializer::ParseEntities(const json& entities, int* invalidEntities) {
@@ -23,44 +26,10 @@ std::vector<DeserializedEntity> StageSerializer::ParseEntities(const json& entit
             DeserializedEntity entity;
             if (ev.contains("id") && ev.at("id").is_string())
                 entity.id = ev.at("id");
-            std::string blueprint;
             if (ev.contains("blueprint") && ev.at("blueprint").is_string())
-                blueprint = ev.at("blueprint");
-            if (!blueprint.empty() && blueprints_ != nullptr) {
-                if (blueprints_->HasItem(blueprint)) {
-                    entity.components = blueprints_->GetItem(blueprint);
-                }
-                else {
-                    spdlog::warn("Cannot find blueprint '{}'!", blueprint);
-                }
-            }
-            for (const auto& [ck, cv] : ev.items()) {
-                if (!cv.is_object())
-                    continue;
-
-                if (!ComponentSerialization::IsComponentRegistered(ck)) {
-                    spdlog::warn("Component '{}' not found!", ck);
-                    continue;
-                }
-                SerializableFieldValueMap map;
-                const ComponentTypeData& typeData = ComponentSerialization::GetComponentType(ck);
-                for (const auto& [name, field] : typeData.serializableFields) {
-                    map.insert({ name, { nullptr, field.type, field.containerType } });
-                }
-                TypedComponentData data {
-                    typeData.type,
-                    map
-                };
-
-                bool success = DeserializeComponentDataFromJSON(data.fields, cv, entity.id);
-                if (!success) {
-                    spdlog::warn("Failed deserializing component '{}'!", ck);
-                    // yeah yeah the whole entity isn't necessarily invalid but this will do now
-                    if (invalidEntities != nullptr)
-                        (*invalidEntities)++;
-                }
-                entity.components.push_back(data);
-            }
+                ParseEntityBlueprints(entity, ev.at("blueprint"));
+            if (!DeserializeComponents(entity.components, ev, entity.id))
+                (*invalidEntities)++;
             parsedEntities.push_back(entity);
         }
         else if (ev.is_array()) {
