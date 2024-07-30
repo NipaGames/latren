@@ -76,7 +76,7 @@ bool Renderer::Init() {
 
     glGenTextures(1, &framebufferTexture_);
     glBindTexture(GL_TEXTURE_2D, framebufferTexture_);
-    Systems::GetResources().textureManager.Set("FRAMEBUFFER", framebufferTexture_);
+    Systems::GetResources().GetTextureManager()->Set("FRAMEBUFFER", framebufferTexture_);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportSize_.x, viewportSize_.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -136,7 +136,7 @@ void Renderer::UpdateLighting() {
 }
 
 void Renderer::CopyShadersFromResources() {
-    const auto& shaderMap = Systems::GetResources().shaderManager.GetAll();
+    const auto& shaderMap = Systems::GetResources().GetShaderManager()->GetAll();
     shaders_.clear();
     std::transform(shaderMap.begin(), shaderMap.end(), std::back_inserter(shaders_), [](const auto& s) { return s.second; });
 }

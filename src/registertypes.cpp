@@ -109,7 +109,7 @@ void ComponentSerialization::RegisterCoreDeserializers() {
     Serializer::AssignJSONDeserializer<AudioBufferHandle>([](Serializer::DeserializationContext& args, const nlohmann::json& j) {
         if (!j.is_string())
             return false;
-        args.Return(Systems::GetResources().audioManager.Get(j));
+        args.Return(Systems::GetResources().GetAudioManager()->Get(j));
         return true;
     });
     Serializer::AssignJSONEnumDeserializer<AudioSourceRelativeTo>();

@@ -62,15 +62,22 @@ void Resources::LoadConfig(const std::fs::path& path, SerializableStruct& config
     }
 }
 
-void ResourceManager::LoadConfigs() {
-    std::fs::path usrDir = ResourcePath("${usr}").GetParsedPath();
-    std::fs::path saveDataDir = ResourcePath("${savedata}").GetParsedPath();
-    if (!std::fs::is_directory(usrDir) || !std::fs::exists(usrDir))
-        std::fs::create_directory(usrDir);
-    if (!std::fs::is_directory(saveDataDir) || !std::fs::exists(saveDataDir))
-        std::fs::create_directory(saveDataDir);
-    
-    Resources::LoadConfig(ResourcePath("${video.cfg}").GetParsedPath(), videoSettings);
+ModularResourceManager::ModularResourceManager(Resources::ResourceType types) {
+    using Resources::ResourceType;
+
+    AddBasicResourceLoaderIf<Serializer::MaterialSerializer>(types, ResourceType::MATERIAL);
+    AddBasicResourceLoaderIf<Serializer::ObjectSerializer>(types, ResourceType::OBJECT);
+    AddBasicResourceLoaderIf<Serializer::BlueprintSerializer>(types, ResourceType::BLUEPRINT);
+    AddBasicResourceLoaderIf<Resources::TextureManager>(types, ResourceType::TEXTURE);
+    AddBasicResourceLoaderIf<Resources::ShaderManager>(types, ResourceType::SHADER);
+    AddBasicResourceLoaderIf<Resources::FontManager>(types, ResourceType::FONT);
+    AddBasicResourceLoaderIf<Resources::ModelManager>(types, ResourceType::MODEL);
+    AddBasicResourceLoaderIf<Resources::AudioManager>(types, ResourceType::AUDIO);
+    AddBasicResourceLoaderIf<Resources::StageManager>(types, ResourceType::STAGE);
+    AddBasicResourceLoaderIf<Resources::TextFileManager>(types, ResourceType::TEXT);
+    AddBasicResourceLoaderIf<Resources::BinaryFileManager>(types, ResourceType::BINARY);
+    AddBasicResourceLoaderIf<Resources::JSONFileManager>(types, ResourceType::JSON);
+    AddBasicResourceLoaderIf<Resources::CFGFileManager>(types, ResourceType::CFG);
 }
 
 Resources::Imports<Resources::Import> Resources::ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>* obj, ResourceType t) {
@@ -162,41 +169,46 @@ Resources::Imports<Resources::ShaderImport> Resources::ListShaderImports(const C
 }
 
 template <typename T>
-std::function<void(const CFG::CFGObject*, Resources::ResourceType)> CreateLoader(T& mgr, VariantEventHandler<Resources::ResourceLoadEvent, void(std::size_t), void(const std::string&)>& eventHandler) {
+std::function<void(const CFG::CFGObject*, Resources::ResourceType)> CreateLoader(T* mgr, VariantEventHandler<Resources::ResourceLoadEvent, void(std::size_t), void(const std::string&)>& eventHandler) {
     using namespace Resources;
-    
-    return [&](const CFG::CFGObject* obj, ResourceType t) {
-        EventID event = mgr.onResourceLoad.Subscribe([&](const std::string& resource) {
+
+    if (mgr == nullptr)
+        return nullptr;
+    return [&, mgr](const CFG::CFGObject* obj, ResourceType t) {
+        EventID event = mgr->onResourceLoad.Subscribe([&](const std::string& resource) {
             eventHandler.Dispatch<const std::string&>(ResourceLoadEvent::ON_IMPORT_LOAD, resource);
         });
-        mgr.LoadImports(ListImports(obj, t));
-        mgr.onResourceLoad.Unsubscribe(event);
+        mgr->LoadImports(ListImports(obj, t));
+        mgr->onResourceLoad.Unsubscribe(event);
     };
 }
 
-void ResourceManager::LoadImports(const CFG::CFGObject* root) {
+void ModularResourceManager::LoadImports(const CFG::CFGObject* root) {
     using namespace Resources;
 
     std::unordered_map<ResourceType, std::function<void(const CFG::CFGObject*, ResourceType)>> loaders = {
-        { ResourceType::TEXTURE, CreateLoader(textureManager, eventHandler) },
-        { ResourceType::MODEL, CreateLoader(modelManager, eventHandler) },
-        { ResourceType::FONT, CreateLoader(fontManager, eventHandler) },
-        { ResourceType::STAGE, CreateLoader(stageManager, eventHandler) },
+        { ResourceType::TEXTURE, CreateLoader(GetTextureManager(), eventHandler) },
+        { ResourceType::MODEL, CreateLoader(GetModelManager(), eventHandler) },
+        { ResourceType::FONT, CreateLoader(GetFontManager(), eventHandler) },
+        { ResourceType::STAGE, CreateLoader(GetStageManager(), eventHandler) },
         { ResourceType::SHADER,
             [&](const CFG::CFGObject* obj, ResourceType) {
-                EventID event = shaderManager.onResourceLoad.Subscribe([&](const std::string& resource) {
+                ShaderManager* mgr = GetShaderManager();
+                if (mgr == nullptr)
+                    return;
+                EventID event = mgr->onResourceLoad.Subscribe([&](const std::string& resource) {
                     eventHandler.Dispatch<const std::string&>(ResourceLoadEvent::ON_IMPORT_LOAD, resource);
                 });
-                shaderManager.LoadImports(ListShaderImports(obj));
-                shaderManager.onResourceLoad.Unsubscribe(event);
+                mgr->LoadImports(ListShaderImports(obj));
+                mgr->onResourceLoad.Unsubscribe(event);
             }
         },
-        { ResourceType::AUDIO, CreateLoader(audioManager, eventHandler) },
+        { ResourceType::AUDIO, CreateLoader(GetAudioManager(), eventHandler) },
 
-        { ResourceType::TEXT, CreateLoader(dataFiles.textFileManager, eventHandler) },
-        { ResourceType::BINARY, CreateLoader(dataFiles.binaryFileManager, eventHandler) },
-        { ResourceType::JSON, CreateLoader(dataFiles.jsonFileManager, eventHandler) },
-        { ResourceType::CFG, CreateLoader(dataFiles.cfgFileManager, eventHandler) }
+        { ResourceType::TEXT, CreateLoader(GetTextFileManager(), eventHandler) },
+        { ResourceType::BINARY, CreateLoader(GetBinaryFileManager(), eventHandler) },
+        { ResourceType::JSON, CreateLoader(GetJSONFileManager(), eventHandler) },
+        { ResourceType::CFG, CreateLoader(GetCFGFileManager(), eventHandler) }
     };
     std::unordered_map<std::string, ResourceType> cfgTypes = {
         { "[Texture]", ResourceType::TEXTURE },
@@ -220,7 +232,7 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
         auto t = cfgTypes.find(importList->typeAnnotation);
         if (t == cfgTypes.end())
             continue;
-        if ((resourceTypesToLoad & t->second) == 0)
+        if (loaders.count(t->second) == 0 || loaders.at(t->second) == nullptr)
             continue;
         const CFG::CFGObject* importListObj = static_cast<const CFG::CFGObject*>(importList);
         imports[t->second].push_back(static_cast<const CFG::CFGObject*>(importListObj));
@@ -238,16 +250,16 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::TEXTURE);
     loadImports(ResourceType::SHADER);
 
-    if ((resourceTypesToLoad & ResourceType::MATERIAL) != 0) {
+    if (GetMaterialSerializer() != nullptr) {
         spdlog::info("Loading materials.json");
-        materialsFile.DeserializeFile("${materials.json}"_resp);
+        GetMaterialSerializer()->DeserializeFile("${materials.json}"_resp);
         spdlog::info("Assigning materials to renderer");
-        materialsFile.Register(Systems::GetRenderer().GetMaterials());
+        GetMaterialSerializer()->Register(Systems::GetRenderer().GetMaterials());
     }
 
-    if ((resourceTypesToLoad & ResourceType::OBJECT) != 0) {
+    if (GetObjectSerializer() != nullptr) {
         spdlog::info("Loading objects.json");
-        objectsFile.DeserializeFile("${objects.json}"_resp);
+        GetObjectSerializer()->DeserializeFile("${objects.json}"_resp);
     }
 
     loadImports(ResourceType::MODEL);
@@ -259,20 +271,71 @@ void ResourceManager::LoadImports(const CFG::CFGObject* root) {
     loadImports(ResourceType::JSON);
     loadImports(ResourceType::CFG);
 
-    Serializer::BlueprintSerializer blueprints;
-    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0) {
+    if (GetBlueprintSerializer() != nullptr) {
         spdlog::info("Loading blueprints.json");
-        blueprints.DeserializeFile("${blueprints.json}"_resp);
+        GetBlueprintSerializer()->DeserializeFile("${blueprints.json}"_resp);
         spdlog::info("Using blueprints for stage loading");
-        stageManager.UseBlueprints(&blueprints);
+        GetStageManager()->UseBlueprints(GetBlueprintSerializer());
     }
     loadImports(ResourceType::STAGE);
-    if ((resourceTypesToLoad & ResourceType::BLUEPRINT) != 0) {
+    /*if (blueprintsFile != nullptr) {
         spdlog::info("Unactivating blueprints");
-        stageManager.UseBlueprints(nullptr);
-    }
+        stageManager->UseBlueprints(nullptr);
+    }*/
 }
 
-void ResourceManager::UnloadAll() {
+void ModularResourceManager::UnloadAll() {
     // TODO: clear all resourcemanagers
+}
+
+Serializer::MaterialSerializer* ModularResourceManager::GetMaterialSerializer() {
+    return GetBasicResourceLoader<Serializer::MaterialSerializer>(Resources::ResourceType::MATERIAL);
+}
+Serializer::ObjectSerializer* ModularResourceManager::GetObjectSerializer() {
+    return GetBasicResourceLoader<Serializer::ObjectSerializer>(Resources::ResourceType::OBJECT);
+}
+Serializer::BlueprintSerializer* ModularResourceManager::GetBlueprintSerializer() {
+    return GetBasicResourceLoader<Serializer::BlueprintSerializer>(Resources::ResourceType::BLUEPRINT);
+}
+
+Resources::TextureManager* ModularResourceManager::GetTextureManager() {
+    return GetBasicResourceLoader<Resources::TextureManager>(Resources::ResourceType::TEXTURE);
+}
+Resources::ShaderManager* ModularResourceManager::GetShaderManager() {
+    return GetBasicResourceLoader<Resources::ShaderManager>(Resources::ResourceType::SHADER);
+}
+Resources::FontManager* ModularResourceManager::GetFontManager() {
+    return GetBasicResourceLoader<Resources::FontManager>(Resources::ResourceType::FONT);
+}
+Resources::ModelManager* ModularResourceManager::GetModelManager() {
+    return GetBasicResourceLoader<Resources::ModelManager>(Resources::ResourceType::MODEL);
+}
+Resources::AudioManager* ModularResourceManager::GetAudioManager() {
+    return GetBasicResourceLoader<Resources::AudioManager>(Resources::ResourceType::AUDIO);
+}
+Resources::StageManager* ModularResourceManager::GetStageManager() {
+    return GetBasicResourceLoader<Resources::StageManager>(Resources::ResourceType::STAGE);
+}
+Resources::TextFileManager* ModularResourceManager::GetTextFileManager() {
+    return GetBasicResourceLoader<Resources::TextFileManager>(Resources::ResourceType::TEXT);
+}
+Resources::BinaryFileManager* ModularResourceManager::GetBinaryFileManager() {
+    return GetBasicResourceLoader<Resources::BinaryFileManager>(Resources::ResourceType::BINARY);
+}
+Resources::JSONFileManager* ModularResourceManager::GetJSONFileManager() {
+    return GetBasicResourceLoader<Resources::JSONFileManager>(Resources::ResourceType::JSON);
+}
+Resources::CFGFileManager* ModularResourceManager::GetCFGFileManager() {
+    return GetBasicResourceLoader<Resources::CFGFileManager>(Resources::ResourceType::CFG);
+}
+
+void GameResourceManager::LoadConfigs() {
+    std::fs::path usrDir = ResourcePath("${usr}").GetParsedPath();
+    std::fs::path saveDataDir = ResourcePath("${savedata}").GetParsedPath();
+    if (!std::fs::is_directory(usrDir) || !std::fs::exists(usrDir))
+        std::fs::create_directory(usrDir);
+    if (!std::fs::is_directory(saveDataDir) || !std::fs::exists(saveDataDir))
+        std::fs::create_directory(saveDataDir);
+    
+    Resources::LoadConfig(ResourcePath("${video.cfg}").GetParsedPath(), videoSettings);
 }

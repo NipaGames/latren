@@ -50,7 +50,7 @@ void TextComponent::Start() {
 }
 
 void TextComponent::CalculateBounds() {
-    auto& f = Systems::GetResources().fontManager.Get(font);
+    auto& f = Systems::GetResources().GetFontManager()->Get(font);
     float fontModifier = f.GetSizeModifier();
     const UITransform& trans = GetTransform();
     glm::vec2 pos = trans.pos;
@@ -110,7 +110,7 @@ void TextComponent::CalculateBounds() {
 
 void TextComponent::RenderTextToPos(glm::vec2 pos) {
     float size = GetTransform().size;
-    auto& f = Systems::GetResources().fontManager.Get(font);
+    auto& f = Systems::GetResources().GetFontManager()->Get(font);
     float fontModifier = f.GetSizeModifier();
 
     pos.y += (additionalRowsHeight_ + baseLine_.fromGlyphBottom) * size;
@@ -166,7 +166,7 @@ void TextComponent::Render(const glm::mat4& proj) {
         glBindTexture(GL_TEXTURE_2D, 0);
 
         #ifdef LATREN_DEBUG_TEXT_TEXTURES
-        auto& f = Systems::GetResources().fontManager.Get(font);
+        auto& f = Systems::GetResources().GetFontManager()->Get(font);
         Shader s = Shader(Shaders::ShaderID::UI_TEXT);
         s.Use();
         s.SetUniform("textColor", glm::vec4(glm::vec3(1.0f) - glm::vec3(color), 1.0f));
@@ -177,7 +177,7 @@ void TextComponent::Render(const glm::mat4& proj) {
 }
 
 void TextComponent::RenderTexture() {
-    auto& f = Systems::GetResources().fontManager.Get(font);
+    auto& f = Systems::GetResources().GetFontManager()->Get(font);
 
     glm::vec2 wndRatio = (glm::vec2) Systems::GetGameWindow().GetSize() / glm::vec2(1280.0f, 720.0f);
     glm::ivec2 texSize = actualTextSize_ * wndRatio;
@@ -211,7 +211,7 @@ void TextComponent::RenderTexture() {
 }
 
 void TextComponent::UpdateTextMetrics() {
-    auto& f = Systems::GetResources().fontManager.Get(font);
+    auto& f = Systems::GetResources().GetFontManager()->Get(font);
     additionalRows_ = (int) std::count(text_.begin(), text_.end(), '\n');
     baseLine_ = Text::GetBaseLine(f, text_);
     additionalRowsHeight_ = additionalRows_ * (f.fontHeight * f.GetSizeModifier() + lineSpacing);

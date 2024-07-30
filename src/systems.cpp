@@ -9,7 +9,7 @@ std::function<EntityManager&()> GLOBAL_ENTITY_MANAGER_GETTER_;
 std::function<GameWindow&()> GLOBAL_GAME_WINDOW_GETTER_;
 std::function<InputSystem&()> GLOBAL_INPUT_SYSTEM_GETTER_;
 std::function<Renderer&()> GLOBAL_RENDERER_GETTER_;
-std::function<ResourceManager&()> GLOBAL_RESOURCES_GETTER_;
+std::function<IResourceManager&()> GLOBAL_RESOURCES_GETTER_;
 std::function<AudioPlayer&()> GLOBAL_AUDIO_PLAYER_GETTER_; 
 std::function<PhysicsWorld&()> GLOBAL_PHYSICS_GETTER_;
 std::function<double()> GLOBAL_TIME_GETTER_; 
@@ -21,7 +21,7 @@ void Systems::UseGameInstance(std::unique_ptr<Game>&& instance) {
     SetGameWindowGetter([]() -> GameWindow& { return GetGame().GetGameWindow(); });
     SetInputSystemGetter([]() -> InputSystem& { return GetGame().GetGameWindow().inputSystem; });
     SetRendererGetter([]() -> Renderer& { return GetGame().GetRenderer(); });
-    SetResourcesGetter([]() -> ResourceManager& { return GetGame().GetResources(); });
+    SetResourcesGetter([]() -> IResourceManager& { return GetGame().GetResources(); });
     SetAudioPlayerGetter([]() -> AudioPlayer& { return GetGame().GetAudioPlayer(); });
     SetPhysicsGetter([]() -> PhysicsWorld& { return GetGame().GetPhysics(); });
     SetTimeGetter([] { return GetGame().GetTime(); });
@@ -59,7 +59,7 @@ Renderer& Systems::GetRenderer() {
     }
     return GLOBAL_RENDERER_GETTER_();
 }
-ResourceManager& Systems::GetResources() {
+IResourceManager& Systems::GetResources() {
     if (!GLOBAL_RESOURCES_GETTER_) {
         spdlog::error("Getter not defined for Systems::GetResources!");
         throw;
@@ -108,7 +108,7 @@ void Systems::SetInputSystemGetter(const std::function<InputSystem&()>& getter) 
 void Systems::SetRendererGetter(const std::function<Renderer&()>& getter) {
     GLOBAL_RENDERER_GETTER_ = getter;
 }
-void Systems::SetResourcesGetter(const std::function<ResourceManager&()>& getter) {
+void Systems::SetResourcesGetter(const std::function<IResourceManager&()>& getter) {
     GLOBAL_RESOURCES_GETTER_ = getter;
 }
 void Systems::SetAudioPlayerGetter(const std::function<AudioPlayer&()>& getter) {

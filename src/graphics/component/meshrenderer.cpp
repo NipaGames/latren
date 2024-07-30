@@ -10,7 +10,7 @@ Shader aabbShader = Shader(Shaders::ShaderID::UNLIT);
 
 void MeshRenderer::Start() {
     if (!object->empty()) {
-        for (const auto& mesh : Systems::GetResources().modelManager[object].meshes) {
+        for (const auto& mesh : Systems::GetResources().GetModelManager()->Get(object).meshes) {
             if (copyMeshes) {
                 std::shared_ptr<Mesh> meshCopy = std::make_shared<Mesh>(*mesh);
                 meshCopy->material = mesh->material;

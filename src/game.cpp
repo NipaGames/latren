@@ -72,7 +72,7 @@ void Game::GameThreadInit() {
     importsSerializer.DeserializeFile("${imports.cfg}"_resp);
     entityManager_.Setup();
     PreLoad();
-    resources_.shaderManager.LoadStandardShaders();
+    resources_.GetShaderManager()->LoadStandardShaders();
     renderer_.UpdateVideoSettings(resources_.videoSettings);
     resources_.LoadImports(importsSerializer.GetData());
 }
@@ -102,7 +102,7 @@ void Game::GameThreadCleanUp() {
     physics_.Destroy();
     window_.eventHandler.ClearEvents();
     window_.keyboardEventHandler.ClearEvents();
-    resources_.stageManager.UnloadAllStages();
+    resources_.GetStageManager()->UnloadAllStages();
     renderer_.CleanUp();
     entityManager_.ClearEverything();
     audioPlayer_.DeleteAllSources();
@@ -224,7 +224,7 @@ Renderer& Game::GetRenderer() {
     return renderer_;
 }
 
-ResourceManager& Game::GetResources() {
+ModularResourceManager& Game::GetResources() {
     return resources_;
 }
 

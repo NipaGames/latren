@@ -263,37 +263,91 @@ namespace Resources {
     };
 };
 
-class LATREN_API ResourceManager {
+class IResourceManager {
 public:
-    Resources::ResourceType resourceTypesToLoad = Resources::ResourceType::ALL;
-
-    Serializer::MaterialSerializer materialsFile;
-    Serializer::ObjectSerializer objectsFile;
-
-    Config::VideoSettings videoSettings;
-
-    // LATREN_API void OverrideImportPath(Resources::ResourceType, const std::string&);
-    // LATREN_API void OverrideImportCFGField(Resources::ResourceType, const std::string&);
-
-    Resources::TextureManager textureManager;
-    Resources::ShaderManager shaderManager;
-    Resources::FontManager fontManager;
-    Resources::ModelManager modelManager;
-    Resources::AudioManager audioManager;
-    Resources::StageManager stageManager;
-
-    struct {
-        Resources::TextFileManager textFileManager;
-        Resources::BinaryFileManager binaryFileManager;
-        Resources::JSONFileManager jsonFileManager;
-        Resources::CFGFileManager cfgFileManager;
-    } dataFiles;
-
     VariantEventHandler<Resources::ResourceLoadEvent,
         void(std::size_t),
         void(const std::string&)> eventHandler;
+    
+    virtual void LoadImports(const CFG::CFGObject*) = 0;
+    virtual void UnloadAll() = 0;
+    
+    virtual Serializer::MaterialSerializer* GetMaterialSerializer() = 0;
+    virtual Serializer::ObjectSerializer* GetObjectSerializer() = 0;
+    virtual Serializer::BlueprintSerializer* GetBlueprintSerializer() = 0;
 
-    void LoadImports(const CFG::CFGObject*);
-    void LoadConfigs();
-    void UnloadAll();
+    virtual Resources::TextureManager* GetTextureManager() = 0;
+    virtual Resources::ShaderManager* GetShaderManager() = 0;
+    virtual Resources::FontManager* GetFontManager() = 0;
+    virtual Resources::ModelManager* GetModelManager() = 0;
+    virtual Resources::AudioManager* GetAudioManager() = 0;
+    virtual Resources::StageManager* GetStageManager() = 0;
+
+    virtual Resources::TextFileManager* GetTextFileManager() = 0;
+    virtual Resources::BinaryFileManager* GetBinaryFileManager() = 0;
+    virtual Resources::JSONFileManager* GetJSONFileManager() = 0;
+    virtual Resources::CFGFileManager* GetCFGFileManager() = 0;
+};
+
+// Disable (basic) resource loaders with unflagging them in the ctor
+class LATREN_API ModularResourceManager : public IResourceManager {
+// uh oh
+typedef std::variant<
+    Serializer::MaterialSerializer,
+    Serializer::ObjectSerializer,
+    Serializer::BlueprintSerializer,
+    Resources::TextureManager,
+    Resources::ShaderManager,
+    Resources::FontManager,
+    Resources::ModelManager,
+    Resources::AudioManager,
+    Resources::StageManager,
+    Resources::TextFileManager,
+    Resources::BinaryFileManager,
+    Resources::JSONFileManager,
+    Resources::CFGFileManager
+> BasicResourceLoader;
+
+private:
+    std::unordered_map<Resources::ResourceType, BasicResourceLoader> basicResourceLoaders_;
+protected:
+    template <typename T>
+    void AddBasicResourceLoaderIf(Resources::ResourceType check, Resources::ResourceType t) {
+        if ((check & t) != 0)
+            basicResourceLoaders_.insert({ t, T() });
+    }
+    template <typename T>
+    T* GetBasicResourceLoader(Resources::ResourceType t) {
+        if (basicResourceLoaders_.count(t) == 0)
+            return nullptr;
+        return std::get_if<T>(&basicResourceLoaders_.at(t));
+    }
+public:
+    ModularResourceManager(Resources::ResourceType);
+
+    virtual void LoadImports(const CFG::CFGObject*) override;
+    virtual void UnloadAll() override;
+
+    virtual Serializer::MaterialSerializer* GetMaterialSerializer() override;
+    virtual Serializer::ObjectSerializer* GetObjectSerializer() override;
+    virtual Serializer::BlueprintSerializer* GetBlueprintSerializer() override;
+
+    virtual Resources::TextureManager* GetTextureManager() override;
+    virtual Resources::ShaderManager* GetShaderManager() override;
+    virtual Resources::FontManager* GetFontManager() override;
+    virtual Resources::ModelManager* GetModelManager() override;
+    virtual Resources::AudioManager* GetAudioManager() override;
+    virtual Resources::StageManager* GetStageManager() override;
+    virtual Resources::TextFileManager* GetTextFileManager() override;
+    virtual Resources::BinaryFileManager* GetBinaryFileManager() override;
+    virtual Resources::JSONFileManager* GetJSONFileManager() override;
+    virtual Resources::CFGFileManager* GetCFGFileManager() override;
+};
+
+class GameResourceManager : public ModularResourceManager {
+public:
+    Config::VideoSettings videoSettings;
+
+    GameResourceManager() : ModularResourceManager(Resources::ResourceType::ALL) { }
+    virtual void LoadConfigs();
 };

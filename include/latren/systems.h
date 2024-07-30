@@ -10,7 +10,7 @@ class EntityManager;
 class GameWindow;
 class InputSystem;
 class Renderer;
-class ResourceManager;
+class IResourceManager;
 class AudioPlayer;
 class PhysicsWorld;
 
@@ -30,7 +30,7 @@ namespace Systems {
     LATREN_API GameWindow& GetGameWindow();
     LATREN_API InputSystem& GetInputSystem();
     LATREN_API Renderer& GetRenderer();
-    LATREN_API ResourceManager& GetResources();
+    LATREN_API IResourceManager& GetResources();
     LATREN_API AudioPlayer& GetAudioPlayer();
     LATREN_API PhysicsWorld& GetPhysics();
     LATREN_API double GetTime();
@@ -40,7 +40,7 @@ namespace Systems {
     LATREN_API void SetGameWindowGetter(const std::function<GameWindow&()>&);
     LATREN_API void SetInputSystemGetter(const std::function<InputSystem&()>&);
     LATREN_API void SetRendererGetter(const std::function<Renderer&()>&);
-    LATREN_API void SetResourcesGetter(const std::function<ResourceManager&()>&);
+    LATREN_API void SetResourcesGetter(const std::function<IResourceManager&()>&);
     LATREN_API void SetAudioPlayerGetter(const std::function<AudioPlayer&()>&);
     LATREN_API void SetPhysicsGetter(const std::function<PhysicsWorld&()>&);
     LATREN_API void SetTimeGetter(const std::function<double()>&);

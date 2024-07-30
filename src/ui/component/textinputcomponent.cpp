@@ -23,7 +23,7 @@ void TextInputComponent::SetValue(const std::string& val) {
     if (maxLength != -1 && val.length() > maxLength)
         return;
     value = val;
-    textWidth_ = Text::GetTextWidth(Systems::GetResources().fontManager.Get(font), value) * GetTransform().size;
+    textWidth_ = Text::GetTextWidth(Systems::GetResources().GetFontManager()->Get(font), value) * GetTransform().size;
     UpdateCaretAndOffsetPos();
     SetText(value);
 }

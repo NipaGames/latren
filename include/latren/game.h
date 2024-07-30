@@ -14,7 +14,7 @@ protected:
     EntityManager entityManager_;
     GameWindow window_;
     Renderer renderer_;
-    ResourceManager resources_;
+    GameResourceManager resources_;
     AudioPlayer audioPlayer_;
     PhysicsWorld physics_;
 
@@ -69,7 +69,7 @@ public:
     virtual EntityManager& GetEntityManager();
     virtual GameWindow& GetGameWindow();
     virtual Renderer& GetRenderer();
-    virtual ResourceManager& GetResources();
+    virtual ModularResourceManager& GetResources();
     virtual AudioPlayer& GetAudioPlayer();
     virtual PhysicsWorld& GetPhysics();
 

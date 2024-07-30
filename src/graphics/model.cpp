@@ -68,9 +68,9 @@ std::optional<Model> Resources::ModelManager::LoadResource(const ResourcePath& p
     Model model;
     model.LoadModel(path.GetParsedPathStr());
     std::string id = GetItemID();
-    const auto& items = Systems::GetResources().objectsFile.GetItems();
+    const auto& items = Systems::GetResources().GetObjectSerializer()->GetItems();
     if (items.find(id) != items.end()) {
-        const Object& objData = Systems::GetResources().objectsFile.GetItem(id);
+        const Object& objData = Systems::GetResources().GetObjectSerializer()->GetItem(id);
         if (objData.defaultMaterial != nullptr) {
             for (auto& m : model.meshes) {
                 m->material = objData.defaultMaterial;

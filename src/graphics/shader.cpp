@@ -168,11 +168,11 @@ std::optional<GLuint> Resources::ShaderManager::LoadResource(const ResourcePath&
 }
 
 GLuint Shaders::GetShaderProgram(ShaderID shader) {
-    return Systems::GetResources().shaderManager.Get(shader);
+    return Systems::GetResources().GetShaderManager()->Get(shader);
 }
 
 GLuint Shaders::GetShaderProgram(const std::string& shader) {
-    return Systems::GetResources().shaderManager.Get(shader);
+    return Systems::GetResources().GetShaderManager()->Get(shader);
 }
 
 GLuint Shader::GetProgram() const {
