@@ -9,7 +9,7 @@ namespace ComponentSerialization {
     LATREN_API const ComponentTypeData& GetComponentType(const std::string&);
     LATREN_API const ComponentTypeData& GetComponentType(ComponentType);
     template <typename T>
-    static std::optional<ComponentTypeData> GetComponentType() { return GetComponentType(typeid(T)); }
+    static const ComponentTypeData& GetComponentType() { return GetComponentType(typeid(T)); }
 
     LATREN_API std::optional<std::string> GetComponentName(ComponentType);
     template <typename T>

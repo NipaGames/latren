@@ -98,4 +98,8 @@ public:
     }
 };
 
+// https://stackoverflow.com/a/13842784
+#define COMBINE_VARGS(...) __VA_ARGS__
+
+// if the type contains commas, wrap it in COMBINE_VARGS
 #define SERIALIZABLE(Type, name) static constexpr const char _varName_##name[] = #name; Serializable<Type, _varName_##name> name

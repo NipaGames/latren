@@ -88,13 +88,8 @@ bool JSONComponentDeserializer::DeserializeComponentDataFromJSON(SerializableFie
     return true;
 }
 
-std::optional<TypedComponentData> JSONComponentDeserializer::DeserializeComponent(const std::string& component, const nlohmann::json& json) const {
-    if (!ComponentSerialization::IsComponentRegistered(component)) {
-        spdlog::warn("Component '{}' not found!", component);
-        return std::nullopt;
-    }
+TypedComponentData JSONComponentDeserializer::DeserializeComponent(const ComponentTypeData& typeData, const nlohmann::json& json) const {
     SerializableFieldValueMap map;
-    const ComponentTypeData& typeData = ComponentSerialization::GetComponentType(component);
     for (const auto& [name, field] : typeData.serializableFields) {
         map.insert({ name, { nullptr, field.type, field.containerType } });
     }
@@ -109,16 +104,18 @@ bool JSONComponentDeserializer::DeserializeComponents(std::vector<Serialization:
         // not a component
         if (!cv.is_object())
             continue;
-        auto data = DeserializeComponent(ck, cv);
-        // fucked up early component deserialization
-        if (!data.has_value())
+        
+        if (!ComponentSerialization::IsComponentRegistered(ck)) {
+            spdlog::warn("Component '{}' not found!", ck);
             return false;
-        bool success = DeserializeComponentDataFromJSON(data->fields, cv, entityId);
+        }
+        Serialization::TypedComponentData data = DeserializeComponent(ComponentSerialization::GetComponentType(ck), cv);
+        bool success = DeserializeComponentDataFromJSON(data.fields, cv, entityId);
         if (!success) {
             spdlog::warn("Failed deserializing component '{}'!", ck);
             return false;
         }
-        components.push_back(data.value());
+        components.push_back(data);
     }
     return true;
 }

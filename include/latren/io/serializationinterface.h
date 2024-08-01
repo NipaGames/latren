@@ -26,6 +26,8 @@
 */
 #include <iostream>
 
+struct ComponentTypeData;
+
 namespace Serialization {
     class DeserializationContext;
     
@@ -320,7 +322,7 @@ namespace Serialization {
     public:
         virtual bool ParseJSONComponentData(SerializableFieldValueMap&, const std::string&, const nlohmann::json&, const std::string& = "") const;
         virtual bool DeserializeComponentDataFromJSON(SerializableFieldValueMap&, const nlohmann::json&, const std::string& = "") const;
-        virtual std::optional<TypedComponentData> DeserializeComponent(const std::string&, const nlohmann::json&) const;
-        virtual bool DeserializeComponents(std::vector<Serialization::TypedComponentData>&, const nlohmann::json&, const std::string& = "") const;
+        virtual TypedComponentData DeserializeComponent(const ComponentTypeData&, const nlohmann::json&) const;
+        virtual bool DeserializeComponents(std::vector<TypedComponentData>&, const nlohmann::json&, const std::string& = "") const;
     };
 };
