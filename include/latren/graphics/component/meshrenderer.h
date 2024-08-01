@@ -24,6 +24,6 @@ public:
 
     void Start() override;
     bool IsOnFrustum(const ViewFrustum&) const override;
-    void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const override;
+    void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, int = RENDER_MODE_NORMAL) const override;
     const ViewFrustum::AABB& GetAABB() const;
 };

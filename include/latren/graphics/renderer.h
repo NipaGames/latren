@@ -9,10 +9,13 @@
 #include "mesh.h"
 #include "shape.h"
 #include "viewport.h"
+#include "renderpass.h"
+#include "rendermode.h"
 #include <latren/ec/mempool.h>
 
 // forward declarations
 class PostProcessing;
+class IRenderable;
 namespace UI {
     class Canvas;
 };
@@ -36,12 +39,12 @@ private:
     std::unordered_map<std::string, UI::Canvas*> canvases_;
     Camera camera_ = Camera();
     Shader framebufferShader_;
-    Shader normalShader_;
     glm::ivec2 viewportSize_;
     int maxRenderedLights_ = 0;
     std::vector<GLuint> shaders_;
     std::vector<GeneralComponentReference> renderablesOnFrustum_;
     std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
+    std::array<std::vector<GeneralComponentReference>, RenderPass::TOTAL_RENDER_PASSES> renderPasses_;
 public:
     std::shared_ptr<Mesh> skybox = nullptr;
     Texture::TextureID skyboxTexture = TEXTURE_NONE;
@@ -54,11 +57,13 @@ public:
     Renderer(Viewport*);
     virtual ~Renderer();
     void UpdateLighting();
-    void SetViewport(Viewport* viewport) { viewport_ = viewport; }
-    Camera& GetCamera() { return camera_; }
+    void SetViewport(Viewport*);
+    Camera& GetCamera();
     bool Init();
     void Start();
     void Render();
+    void RenderItem(IRenderable&, int = RENDER_MODE_NORMAL);
+    void DoRenderPass(RenderPass::Enum);
     void UpdateCameraProjection(int, int);
     void CopyShadersFromResources();
     void UpdateFrustum();
@@ -75,8 +80,12 @@ public:
     void MoveCanvas(const std::string&, UI::Canvas*);
     void RemoveCanvas(const std::string&);
     void CleanUp();
-    std::size_t CountEntitiesOnFrustum() const { return renderablesOnFrustum_.size(); }
+    std::size_t CountEntitiesOnFrustum() const;
     std::shared_ptr<Material> GetMaterial(const std::string&) const;
-    std::unordered_map<std::string, std::shared_ptr<Material>>& GetMaterials() { return materials_; }
-    const std::vector<GLuint>& GetShaders() const { return shaders_; }
+    std::unordered_map<std::string, std::shared_ptr<Material>>& GetMaterials();
+    const std::vector<GLuint>& GetShaders() const;
+
+    void DebugDrawNormals();
+    void DebugDrawHitboxes();
+    void DebugDrawAABBs();
 };

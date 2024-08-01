@@ -6,7 +6,8 @@
 
 #include <limits>
 
-Shader aabbShader = Shader(Shaders::ShaderID::UNLIT);
+Shader DEBUG_AABB_SHADER = Shader(Shaders::ShaderID::LINE);
+Shader DEBUG_NORMAL_SHADER = Shader(Shaders::ShaderID::HIGHLIGHT_NORMALS);
 
 void MeshRenderer::Start() {
     if (!object->empty()) {
@@ -44,83 +45,99 @@ void MeshRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& project
     shader.SetUniform("model", modelMatrix_ * transformMatrix);
 }
 
-void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, bool aabbDebug) const {
-    bool useDefaultShaders = (shader == nullptr);
-    for (int i = 0; i < meshes->size(); i++) {
-        const std::shared_ptr<Mesh>& mesh = meshes->at(i);
-        if (mesh->material == nullptr)
-            continue;
-        
-        if (useDefaultShaders) {
-            const Shader& s = GetMaterialShader(mesh->material);
-            UpdateUniforms(s, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
-            mesh->material->Use(s);
-            if (useCustomMaterial && (meshesUsingCustomMaterial->empty() || meshesUsingCustomMaterial->count(i) > 0)) {
-                customMaterial->Use(s);
-                s.SetUniform("material.hasTexture", mesh->material->GetTexture() != TEXTURE_NONE);
+void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, int renderMode) const {
+    switch (renderMode) {
+        case RENDER_MODE_NORMAL:
+        case RENDER_MODE_NO_MATERIALS: {
+            bool overrideShader = (shader != nullptr);
+            for (int i = 0; i < meshes->size(); i++) {
+                const std::shared_ptr<Mesh>& mesh = meshes->at(i);
+                if (mesh->material == nullptr)
+                    continue;
+                if (!overrideShader)
+                    shader = &GetMaterialShader(mesh->material);
+                UpdateUniforms(*shader, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
+                if (renderMode != RENDER_MODE_NO_MATERIALS) {
+                    mesh->material->Use(*shader);
+                    if (useCustomMaterial && (meshesUsingCustomMaterial->empty() || meshesUsingCustomMaterial->count(i) > 0)) {
+                        customMaterial->Use(*shader);
+                        shader->SetUniform("material.hasTexture", mesh->material->GetTexture() != TEXTURE_NONE);
+                    }
+                }
+                mesh->Bind();
+                mesh->Render();
+                glBindVertexArray(0);
             }
-        }
-        else {
-            UpdateUniforms(*shader, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
-            mesh->material->Use(*shader);
-        }
-
-
-        mesh->Bind();
-        mesh->Render();
-
-        // unbinding
-        glBindVertexArray(0);
-    }
-    // not gonna optimize this since it's just a debug visualizer
-    // yeah, it's pretty horrible that a new meshes gets created every frame
-    // well, at least this doesn't cause a memory leak afaik (meshes are also deleted)
-    if (aabbDebug) {
-        glm::vec3 aabbMin = aabb_.GetMin();
-        glm::vec3 aabbMax = aabb_.GetMax();
-        Mesh aabbMesh(
-            {
-                aabbMin.x, aabbMax.y, aabbMax.z,
-                aabbMin.x, aabbMin.y, aabbMax.z,
-                aabbMax.x, aabbMax.y, aabbMax.z,
-                aabbMax.x, aabbMin.y, aabbMax.z,
-                aabbMin.x, aabbMax.y, aabbMin.z,
-                aabbMin.x, aabbMin.y, aabbMin.z,
-                aabbMax.x, aabbMax.y, aabbMin.z,
-                aabbMax.x, aabbMin.y, aabbMin.z
-            },
-            {
-                3, 2, 0, 1, 3, 0,
-                7, 6, 2, 3, 7, 2,
-                5, 4, 6, 7, 5, 6,
-                1, 0, 4, 5, 1, 4,
-                6, 4, 0, 2, 6, 0,
-                1, 5, 7, 1, 7, 3,
+        } break;
+        case RENDER_MODE_DEBUG_NORMALS:
+            shader = &DEBUG_NORMAL_SHADER;
+            for (int i = 0; i < meshes->size(); i++) {
+                const std::shared_ptr<Mesh>& mesh = meshes->at(i);
+                UpdateUniforms(*shader, projectionMatrix, viewMatrix, mesh->transformMatrix, viewPos);
+                mesh->Bind();
+                mesh->Render();
+                glBindVertexArray(0);
             }
-        );
-        aabbMesh.GenerateVAO();
+            break;
+        case RENDER_MODE_DEBUG_AABBS:
+            shader = &DEBUG_AABB_SHADER;
+            glm::vec3 aabbMin = aabb_.GetMin();
+            glm::vec3 aabbMax = aabb_.GetMax();
 
-        aabbShader.Use();
-        glBindVertexArray(aabbMesh.vao);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, aabbMesh.ebo);
+            shader->Use();
+            shader->SetUniform("lineColor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+            shader->SetUniform("view", viewMatrix);
+            shader->SetUniform("projection", projectionMatrix);
 
-        aabbShader.SetUniform("projection", projectionMatrix);
-        aabbShader.SetUniform("view", viewMatrix);
-        aabbShader.SetUniform("model", modelMatrix_);
-        aabbShader.SetUniform("viewPos", Systems::GetRenderer().GetCamera().pos);
-        aabbShader.SetUniform("time", (float) GetTime());
+            GLuint aabbVao, aabbVbo;
+            glGenVertexArrays(1, &aabbVao);
+            glGenBuffers(1, &aabbVbo);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        aabbShader.SetUniform("material.color", glm::vec3(1.0f, 0.0f, 0.0f));
-        aabbShader.SetUniform("material.opacity", 1.0f);
-        aabbMesh.Render();
+            glBindVertexArray(aabbVao);
+            glBindBuffer(GL_ARRAY_BUFFER, aabbVbo);
+            // I LOVE WRITING PERMUTATIONS BY HAND
+            std::vector<glm::vec3> vertices = {
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMin.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMin.x, aabbMax.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMin.y, aabbMax.z, 1.0f),
+                modelMatrix_ * glm::vec4(aabbMax.x, aabbMax.y, aabbMax.z, 1.0f)
+            };
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0));
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+            glDrawArrays(GL_POINTS, 0, (GLsizei) vertices.size() * 3);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDeleteVertexArrays(1, &aabbVao);
+            glDeleteBuffers(1, &aabbVbo);
+
+            break;
     }
 }
 
-bool MeshRenderer::IsOnFrustum(const ViewFrustum& frustum) const {    
-    glm::vec3 center = modelMatrix_  * glm::vec4(aabb_.center, 1.0f);
+bool MeshRenderer::IsOnFrustum(const ViewFrustum& frustum) const {
+    glm::vec3 center = modelMatrix_ * glm::vec4(aabb_.center, 1.0f);
 
     // Scaled orientation
     glm::vec3 right = modelMatrix_[0] * aabb_.extents.x;

@@ -13,15 +13,21 @@
 
 class LATREN_API Material {
 private:
-    std::unordered_map<std::string, int> intUniforms_;
-    std::unordered_map<std::string, float> floatUniforms_;
+    std::unordered_map<std::string, int> intUniforms_ = {
+        { "fog.use", 0 }
+    };
+    std::unordered_map<std::string, float> floatUniforms_ = {
+        { "opacity", 1.0f }
+    };
 
     std::unordered_map<std::string, glm::mat2> mat2Uniforms_;
     std::unordered_map<std::string, glm::mat3> mat3Uniforms_;
     std::unordered_map<std::string, glm::mat4> mat4Uniforms_;
 
     std::unordered_map<std::string, glm::vec2> vec2Uniforms_;
-    std::unordered_map<std::string, glm::vec3> vec3Uniforms_;
+    std::unordered_map<std::string, glm::vec3> vec3Uniforms_ = {
+        { "color", glm::vec3(1.0f) }
+    };
     std::unordered_map<std::string, glm::vec4> vec4Uniforms_;
 
     Shader shader_;

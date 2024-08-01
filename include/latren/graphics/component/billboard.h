@@ -21,5 +21,5 @@ public:
     virtual void UpdateVertexBuffer();
     virtual void CalculateMatrices();
     virtual void UpdateUniforms(const Shader&, const glm::mat4&, const glm::mat4&, const glm::vec3&) const override;
-    virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const;
+    virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, int = RENDER_MODE_NORMAL) const;
 };

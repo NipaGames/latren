@@ -4,18 +4,8 @@
 #include <latren/io/serializationinterface.h>
 #include "../material.h"
 #include "../camera.h"
-
-namespace RenderPass {
-    enum Enum : std::size_t {
-        // until i fix transparency all transparent objects should be rendered late
-        NORMAL,
-        LATE,
-        AFTER_POST_PROCESSING,
-        // doesn't render in the renderer pipeline
-        CUSTOM
-    };
-    inline constexpr std::size_t TOTAL_RENDER_PASSES = magic_enum::enum_count<Enum>();
-};
+#include "../renderpass.h"
+#include "../rendermode.h"
 
 class Renderer;
 class IRenderable {
@@ -27,7 +17,7 @@ public:
     virtual bool IsAlwaysOnFrustum() const = 0;
     virtual bool IsOnFrustum(const ViewFrustum&) const = 0;
     virtual glm::vec3 GetPosition() const = 0;
-    virtual void IRender(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const = 0;
+    virtual void IRender(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, int = RENDER_MODE_NORMAL) const = 0;
     
     virtual operator IComponent&() = 0;
 };
@@ -57,12 +47,6 @@ public:
     virtual void UseMaterial(const std::shared_ptr<Material>& mat) const { mat->Use(); }
     virtual void UpdateUniforms(const Shader& shader, const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos) const {
         shader.Use();
-        // default uniforms
-        // idk if it would be better to define these as default initializers for Material class
-        shader.SetUniform("material.color", glm::vec3(1.0f));
-        shader.SetUniform("material.opacity", 1.0f);
-        shader.SetUniform("material.fog.use", false);
-
         shader.SetUniform("projection", projectionMatrix);
         shader.SetUniform("view", viewMatrix);
         shader.SetUniform("viewPos", viewPos);
@@ -77,15 +61,15 @@ public:
     }
 
     virtual void CalculateMatrices() override { }
-    virtual void IRender(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader = nullptr, bool aabbDebug = false) const override {
+    virtual void IRender(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader = nullptr, int renderMode = RENDER_MODE_NORMAL) const override {
         if (disableDepthTest)
             glDisable(GL_DEPTH_TEST);
-        Render(projectionMatrix, viewMatrix, viewPos, shader, aabbDebug);
+        Render(projectionMatrix, viewMatrix, viewPos, shader, renderMode);
         glBindVertexArray(0);
         if (disableDepthTest)
             glEnable(GL_DEPTH_TEST);
     }
-    virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, bool = false) const { }
+    virtual void Render(const glm::mat4&, const glm::mat4&, const glm::vec3&, const Shader* = nullptr, int = RENDER_MODE_NORMAL) const { }
 
     virtual operator IComponent&() override { return *this; }
 };

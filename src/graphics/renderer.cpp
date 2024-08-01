@@ -87,7 +87,6 @@ bool Renderer::Init() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     framebufferShader_ = Shader(Shaders::ShaderID::FRAMEBUFFER);
-    normalShader_ = Shader(Shaders::ShaderID::HIGHLIGHT_NORMALS);
 
     Shapes::CreateDefaultShapes();
 
@@ -135,6 +134,14 @@ void Renderer::UpdateLighting() {
     maxRenderedLights_ = std::max(Lights::LIGHTS_INDEX, maxRenderedLights_);
 }
 
+void Renderer::SetViewport(Viewport* viewport) {
+    viewport_ = viewport;
+}
+
+Camera& Renderer::GetCamera() {
+    return camera_;
+}
+
 void Renderer::CopyShadersFromResources() {
     const auto& shaderMap = Systems::GetResources().GetShaderManager()->GetAll();
     shaders_.clear();
@@ -178,7 +185,9 @@ void Renderer::Render() {
             r.CalculateMatrices();
     });
     // todo: cache these
-    std::array<std::vector<GeneralComponentReference>, RenderPass::TOTAL_RENDER_PASSES> passes;
+    for (auto& pass : renderPasses_) {
+        pass.clear();
+    }
     auto it = renderablesOnFrustum_.begin();
     while (it != renderablesOnFrustum_.end()) {
         GeneralComponentReference& ref = *it;
@@ -186,13 +195,11 @@ void Renderer::Render() {
             it = renderablesOnFrustum_.erase(it);
             continue;
         }
-        passes[ref.CastComponent<IRenderable>().GetRenderPass()].push_back(ref);
+        renderPasses_[ref.CastComponent<IRenderable>().GetRenderPass()].push_back(ref);
         ++it;
     }
 
-    for (GeneralComponentReference& ref : passes[RenderPass::NORMAL]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
-    }
+    DoRenderPass(RenderPass::NORMAL);
 
     // draw skybox
     if (skybox != nullptr) {
@@ -219,19 +226,14 @@ void Renderer::Render() {
         glDisable(GL_DEPTH_CLAMP);
     }
     
-    for (GeneralComponentReference& ref : passes[RenderPass::LATE]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
-    }
+    DoRenderPass(RenderPass::LATE);
     
-    if (highlightNormals) {
-        Systems::GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
-            r.IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, &normalShader_);
-        });
-    }
-    if (showHitboxes) {
-        if (Systems::GetPhysics().GetDynamicsWorld() != nullptr)
-            Systems::GetPhysics().GetDynamicsWorld()->debugDrawWorld();
-    }
+    if (showAabbs)
+        DebugDrawAABBs();
+    if (highlightNormals)
+        DebugDrawNormals();
+    if (showHitboxes)
+        DebugDrawHitboxes();
 
     // second pass (draw framebuffer onto screen)
     glBindFramebuffer(GL_READ_FRAMEBUFFER, MSAAFbo_);
@@ -250,9 +252,7 @@ void Renderer::Render() {
 
     glEnable(GL_DEPTH_TEST);
     glClear(GL_DEPTH_BUFFER_BIT);
-    for (GeneralComponentReference& ref : passes[RenderPass::AFTER_POST_PROCESSING]) {
-        ref.CastComponent<IRenderable>().IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, showAabbs);
-    }
+    DoRenderPass(RenderPass::AFTER_POST_PROCESSING);
     glDisable(GL_DEPTH_TEST);
     for (auto& c : canvases_) {
         c.second->Update();
@@ -260,6 +260,16 @@ void Renderer::Render() {
     }
 
     glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::RenderItem(IRenderable& renderable, int renderMode) {
+    renderable.IRender(camera_.projectionMatrix, camera_.viewMatrix, camera_.pos, nullptr, renderMode);
+}
+
+void Renderer::DoRenderPass(RenderPass::Enum pass) {
+    for (GeneralComponentReference& ref : renderPasses_[pass]) {
+        RenderItem(ref.CastComponent<IRenderable>());
+    }
 }
 
 void Renderer::RestoreViewport() {
@@ -302,12 +312,6 @@ void Renderer::UpdateVideoSettings(const Config::VideoSettings& settings) {
         UpdateCameraProjection(wndSize.x, wndSize.y);
 }
 
-std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) const {
-    if (materials_.find(mat) == materials_.end())
-        return materials_.at(MATERIAL_MISSING);
-    return materials_.at(mat);
-}
-
 UI::Canvas& Renderer::CreateCanvas(std::string id) {
     UI::Canvas* c = new UI::Canvas();
     c->isOwnedByRenderer = true;
@@ -345,4 +349,39 @@ void Renderer::CleanUp() {
     canvases_.clear();
     renderablesOnFrustum_.clear();
     UpdateFrustum();
+}
+
+std::size_t Renderer::CountEntitiesOnFrustum() const {
+    return renderablesOnFrustum_.size();
+}
+
+std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) const {
+    if (materials_.find(mat) == materials_.end())
+        return materials_.at(MATERIAL_MISSING);
+    return materials_.at(mat);
+}
+
+std::unordered_map<std::string, std::shared_ptr<Material>>& Renderer::GetMaterials() {
+    return materials_;
+}
+
+const std::vector<GLuint>& Renderer::GetShaders() const {
+    return shaders_;
+}
+
+void Renderer::DebugDrawNormals() {
+    Systems::GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
+        RenderItem(r, RENDER_MODE_DEBUG_NORMALS);
+    });
+}
+
+void Renderer::DebugDrawHitboxes() {
+    if (Systems::GetPhysics().GetDynamicsWorld() != nullptr)
+        Systems::GetPhysics().GetDynamicsWorld()->debugDrawWorld();
+}
+
+void Renderer::DebugDrawAABBs() {
+    Systems::GetEntityManager().GetComponentMemory().ForEachDerivedComponent<IRenderable>([&](IRenderable& r, IComponentMemoryPool&) {
+        RenderItem(r, RENDER_MODE_DEBUG_AABBS);
+    });
 }

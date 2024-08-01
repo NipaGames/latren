@@ -48,7 +48,10 @@ void BillboardRenderer::UpdateUniforms(const Shader& shader, const glm::mat4& pr
     shader.SetUniform("model", modelMatrix_);
 }
 
-void BillboardRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader* shader, bool aabbDebug) const {
+void BillboardRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, const glm::vec3& viewPos, const Shader*, int renderMode) const {
+    if (renderMode != RENDER_MODE_NORMAL)
+        return;
+    
     if (material.Get() != nullptr) {
         UpdateUniforms(GetMaterialShader(material), projectionMatrix, viewMatrix, viewPos);
         material.Get()->Use();

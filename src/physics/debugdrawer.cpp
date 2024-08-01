@@ -27,9 +27,8 @@ void DebugDrawer::clearLines() {
 void DebugDrawer::flushLines() {
     shader_.Use();
     Camera& cam = Systems::GetRenderer().GetCamera();
-    glm::mat4 viewMatrix = glm::lookAt(cam.pos, cam.pos + cam.front, cam.up);
     shader_.SetUniform("lineColor", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-    shader_.SetUniform("view", viewMatrix);
+    shader_.SetUniform("view", cam.viewMatrix);
     shader_.SetUniform("projection", cam.projectionMatrix);
 
     glBindVertexArray(vao_);
