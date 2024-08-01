@@ -10,12 +10,10 @@
 #include <spdlog/spdlog.h>
 
 std::optional<Stage> Resources::StageManager::LoadResource(const ResourcePath& path) {
-    Serialization::StageSerializer serializer;
-    serializer.UseBlueprints(blueprints_);
-    serializer.DeserializeFile(path.GetParsedPathStr());
-    if (!serializer.Success())
+    stageSerializer_->DeserializeFile(path.GetParsedPathStr());
+    if (!stageSerializer_->Success())
         return std::nullopt;
-    Stage s = serializer.GetStage();
+    Stage s = stageSerializer_->GetStage();
     if (s.id.empty())
         return std::nullopt;
     SetItemID(s.id);
@@ -89,5 +87,5 @@ const std::vector<std::string>& Resources::StageManager::GetLoadedStages() {
 }
 
 void Resources::StageManager::UseBlueprints(Serialization::BlueprintSerializer* blueprints) {
-    blueprints_ = blueprints;
+    stageSerializer_->UseBlueprints(blueprints);
 }

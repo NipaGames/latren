@@ -17,7 +17,9 @@ namespace Resources {
     ShaderManager::ShaderManager() : ResourceTypeManager<GLuint>(GetDefaultPath(ResourceType::SHADER)) { }
     FontManager::FontManager() : ResourceTypeManager<UI::Text::Font>(GetDefaultPath(ResourceType::FONT), ResourceName("font")) { }
     ModelManager::ModelManager() : ResourceTypeManager<Model>(GetDefaultPath(ResourceType::MODEL), ResourceName("model")) { }
-    StageManager::StageManager() : ResourceTypeManager<Stage>(GetDefaultPath(ResourceType::STAGE), ResourceName("stage")) { }
+    StageManager::StageManager() : ResourceTypeManager<Stage>(GetDefaultPath(ResourceType::STAGE), ResourceName("stage")) {
+        stageSerializer_ = std::make_unique<Serialization::StageSerializer>();
+    }
     AudioManager::AudioManager() : ResourceTypeManager<AudioBufferHandle>(GetDefaultPath(ResourceType::AUDIO), ResourceName("audio file")) { }
 
     TextFileManager::TextFileManager() : ResourceTypeManager<std::string>(GetDefaultPath(ResourceType::TEXT), ResourceName("text file")) { }

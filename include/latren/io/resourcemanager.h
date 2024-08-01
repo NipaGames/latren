@@ -16,6 +16,7 @@
 #include "files/materials.h"
 #include "files/objects.h"
 #include "files/blueprints.h"
+#include "files/stage.h"
 #include "files/cfg.h"
 #include <latren/stage.h>
 #include <latren/graphics/shader.h>
@@ -201,7 +202,7 @@ namespace Resources {
     class LATREN_API StageManager : public ResourceTypeManager<Stage> {
     protected:
         std::vector<std::string> loadedStages_;
-        Serialization::BlueprintSerializer* blueprints_ = nullptr;
+        std::unique_ptr<Serialization::StageSerializer> stageSerializer_;
         virtual std::optional<Stage> LoadResource(const ResourcePath&) override;
     public:
         StageManager();
