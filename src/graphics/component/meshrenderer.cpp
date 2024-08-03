@@ -64,6 +64,12 @@ void MeshRenderer::Render(const glm::mat4& projectionMatrix, const glm::mat4& vi
                         shader->SetUniform("material.hasTexture", mesh->material->GetTexture() != TEXTURE_NONE);
                     }
                 }
+                else {
+                    if (mesh->material->cullFaces)
+                        glEnable(GL_CULL_FACE);
+                    else
+                        glDisable(GL_CULL_FACE);
+                }
                 mesh->Bind();
                 mesh->Render();
                 glBindVertexArray(0);

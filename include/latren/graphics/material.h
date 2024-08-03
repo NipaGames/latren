@@ -55,7 +55,7 @@ public:
     Material(const Shader& shader, Texture::TextureID textureId, const Uniform<U>&... uniforms) : Material(shader, uniforms...) { texture_ = textureId; }
     void RestoreDefaultUniforms();
     void ClearUniforms();
-    void Use(const Shader& shader) const;
+    void Use(const Shader&) const;
     void Use() const;
     template <typename T>
     void SetShader(T s) {

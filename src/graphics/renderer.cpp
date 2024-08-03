@@ -78,7 +78,7 @@ bool Renderer::Init() {
     glBindTexture(GL_TEXTURE_2D, framebufferTexture_);
     Systems::GetResources().GetTextureManager()->Set("FRAMEBUFFER", framebufferTexture_);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportSize_.x, viewportSize_.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportSize_.x, viewportSize_.y, 0, GL_RGB, GL_UNSIGNED_BYTE, GL_NONE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -285,7 +285,7 @@ void Renderer::UpdateCameraProjection(int width, int height) {
     glBindRenderbuffer(GL_RENDERBUFFER, rbo_);
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
     glBindTexture(GL_TEXTURE_2D, framebufferTexture_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, GL_NONE);
 
     camera_.aspectRatio = (float) width / (float) height;
     camera_.projectionMatrix = glm::perspective(glm::radians(camera_.fov), camera_.aspectRatio, camera_.clippingNear, camera_.clippingFar);
