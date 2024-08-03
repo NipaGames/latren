@@ -81,6 +81,7 @@ public:
     void RemoveCanvas(const std::string&);
     void CleanUp();
     std::size_t CountEntitiesOnFrustum() const;
+    void ForEachRenderableOnFrustum(const std::function<void(IRenderable&)>&);
     std::shared_ptr<Material> GetMaterial(const std::string&) const;
     std::unordered_map<std::string, std::shared_ptr<Material>>& GetMaterials();
     const std::vector<GLuint>& GetShaders() const;

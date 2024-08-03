@@ -19,7 +19,7 @@ namespace UI {
     public:
         glm::vec2 caretOffset = glm::vec2(0.0f);
         float caretWidth = 3.0f;
-        std::shared_ptr<Material> caretMaterial = DEFAULE_CARET_MATERIAL;
+        std::shared_ptr<Material> caretMaterial = DEFAULT_CARET_MATERIAL;
         int maxLength = -1;
         std::string value;
         TextInputComponent();

@@ -355,6 +355,12 @@ std::size_t Renderer::CountEntitiesOnFrustum() const {
     return renderablesOnFrustum_.size();
 }
 
+void Renderer::ForEachRenderableOnFrustum(const std::function<void(IRenderable&)>& fn) {
+    for (GeneralComponentReference& renderable : renderablesOnFrustum_) {
+        fn(renderable.CastComponent<IRenderable>());
+    }
+}
+
 std::shared_ptr<Material> Renderer::GetMaterial(const std::string& mat) const {
     if (materials_.find(mat) == materials_.end())
         return materials_.at(MATERIAL_MISSING);
