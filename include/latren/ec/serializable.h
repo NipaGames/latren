@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 #include <typeindex>
+#include <any>
 #include "mempool.h"
 #include <latren/latren.h>
 #include <latren/util/templatestr.h>
@@ -20,13 +21,15 @@ public:
     virtual const char* GetName() const = 0;
     virtual std::type_index GetType() const = 0;
     virtual ComponentDataContainerType GetContainerType() const = 0;
+    virtual std::function<bool(void*, const std::any&)> GetAssignmentOperator() const = 0;
 };
 
 struct SerializableField {
-    ptrdiff_t offset;
+    std::ptrdiff_t offset;
     int index;
     std::type_index type;
     ComponentDataContainerType containerType;
+    std::function<bool(void*, const std::any&)> assignmentOperator;
 };
 typedef std::unordered_map<std::string, SerializableField> SerializableFieldMap;
 
@@ -49,7 +52,7 @@ struct ComponentDataContainerTypeDeduction<std::vector<T, A>> {
 };
 
 template <typename T, const char* Name>
-class Serializable : ISerializable {
+class Serializable : public ISerializable {
 public:
     using Type = T;
 protected:
@@ -96,6 +99,15 @@ public:
     ComponentDataContainerType GetContainerType() const override {
         return ComponentDataContainerTypeDeduction<Type>::TYPE;
     }
+    std::function<bool(void*, const std::any&)> GetAssignmentOperator() const override {
+        return [](void* ptr, const std::any& val) -> bool {
+            Type& thisVal = *static_cast<Type*>(ptr);
+            if (val.type().hash_code() != typeid(Type).hash_code())
+                return false;
+            thisVal = std::any_cast<const T&>(val);
+            return true;
+        };
+    };
 };
 
 // https://stackoverflow.com/a/13842784
