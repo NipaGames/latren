@@ -48,7 +48,7 @@ bool GameWindow::Create(Renderer& renderer) {
     glfwSetInputMode(window_, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     glewExperimental = true;
-    if(glewInit() != GLEW_OK) {
+    if(glewInit()) {
         spdlog::critical("GLEW init failed. {}", glGetError());
         return false;
     }

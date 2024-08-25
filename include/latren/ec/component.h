@@ -29,7 +29,6 @@ public:
     IComponent(const IComponent&) = default;
     virtual void IStart() = 0;
     virtual void IDelete() = 0;
-    virtual void Delete() = 0;
     virtual void IUpdate() = 0;
     virtual void IFixedUpdate() = 0;
     virtual bool OverrideType(ComponentType) = 0;
