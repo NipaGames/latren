@@ -4,7 +4,7 @@
 #include <latren/graphics/mesh.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
-class LATREN_API Plane : public Mesh {
+class  Plane : public Mesh {
 private:
     glm::ivec2 tiling_;
     std::vector<std::vector<float>> heightGrid_;

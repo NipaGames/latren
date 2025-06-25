@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0079 NEW)
 
 option(LATREN_BUILD_STANDALONE OFF)
@@ -57,13 +57,7 @@ set(LATREN_THIRDPARTY_INCLUDES
 file(GLOB_RECURSE GLOB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 # output binary
-if(LATREN_SHARED)
-    add_compile_definitions(LATREN_DLL)
-    add_compile_definitions(LATREN_EXPORT_DLL)
-    add_library(latren SHARED ${GLOB_SOURCES})
-else()
-    add_library(latren STATIC ${GLOB_SOURCES})
-endif()
+add_library(latren STATIC ${GLOB_SOURCES})
 if(NOT LATREN_BUILD_STANDALONE)
     set_target_properties(latren PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH})
     set_target_properties(latren PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
@@ -174,9 +168,11 @@ add_subdirectory(${SUBMODULE_FREETYPE_DIR})
 target_link_latren_depen(freetype)
 
 message("[ OpenAL ]")
+find_package(OpenAL REQUIRED)
 set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
 set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
+set(ALSOFT_BACKEND_SNDIO OFF CACHE BOOL "" FORCE)
 add_subdirectory(${SUBMODULE_OPENAL_DIR})
 target_link_latren_depen(OpenAL)
 

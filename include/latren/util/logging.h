@@ -12,5 +12,5 @@ namespace Logging {
         DEBUG
     };
 
-    LATREN_API void InitSPDLog(const std::string& = std::string(DEFAULE_SPDLOG_PATTERN), LogLevel = LogLevel::DEFAULT);
+     void InitSPDLog(const std::string& = std::string(DEFAULE_SPDLOG_PATTERN), LogLevel = LogLevel::DEFAULT);
 };

@@ -29,7 +29,7 @@ namespace Input {
     enum class KeyboardEventType;
 };
 
-class LATREN_API GameWindow : public Viewport {
+class  GameWindow : public Viewport {
 private:
     GLFWwindow* window_ = nullptr;
     std::string title_;

@@ -5,7 +5,7 @@
 
 #include "fs.h"
 
-class LATREN_API ResourcePath {
+class  ResourcePath {
 private:
     std::string path_;
 public:
@@ -20,6 +20,6 @@ public:
     bool IsEmpty() const;
 };
 
-LATREN_API ResourcePath operator ""_res(const char*, std::size_t);
+ ResourcePath operator ""_res(const char*, std::size_t);
 // parsed path
-LATREN_API std::string operator ""_resp(const char*, std::size_t);
+ std::string operator ""_resp(const char*, std::size_t);

@@ -15,15 +15,15 @@ namespace Lights {
     };
     
     extern int LIGHTS_INDEX;
-    LATREN_API int GetNextLightIndex();
+     int GetNextLightIndex();
     typedef uint32_t LightReserves;
     extern LightReserves RESERVED_LIGHTS;
     extern const uint8_t MAX_LIGHTS;
 
-    LATREN_API void ReserveIndex(int);
-    LATREN_API bool IsReserved(int);
-    LATREN_API int& GetIndex(LightType);
-    LATREN_API void ResetIndices();
+     void ReserveIndex(int);
+     bool IsReserved(int);
+     int& GetIndex(LightType);
+     void ResetIndices();
 
     class ILight {
     public:
@@ -67,7 +67,7 @@ namespace Lights {
         virtual operator IComponent&() override { return *this; }
     };
 
-    class LATREN_API PointLight : public Light<PointLight> {
+    class  PointLight : public Light<PointLight> {
     public:
         SERIALIZABLE(float, range) = 20.0f;
         SERIALIZABLE(glm::vec3, offset) = glm::vec3(0.0f);
@@ -76,7 +76,7 @@ namespace Lights {
         void ApplyLight(GLuint) const;
     };
 
-    class LATREN_API DirectionalLight : public Light<DirectionalLight> {
+    class  DirectionalLight : public Light<DirectionalLight> {
     public:
         SERIALIZABLE(glm::vec3, dir);
         
@@ -84,7 +84,7 @@ namespace Lights {
         void ApplyLight(GLuint) const;
     };
 
-    class LATREN_API DirectionalLightPlane : public Light<DirectionalLightPlane> {
+    class  DirectionalLightPlane : public Light<DirectionalLightPlane> {
     public:
         SERIALIZABLE(glm::vec3, dir);
         SERIALIZABLE(float, range) = 20.0f;
@@ -94,7 +94,7 @@ namespace Lights {
         void ApplyLight(GLuint) const;
     };
 
-    class LATREN_API Spotlight : public Light<Spotlight> {
+    class  Spotlight : public Light<Spotlight> {
     public:
         SERIALIZABLE(float, cutOffMin);
         SERIALIZABLE(float, cutOffMax);

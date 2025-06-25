@@ -10,7 +10,7 @@ struct GlobalEntityData {
     std::unordered_set<ComponentType> components;
 };
 
-class LATREN_API EntityManager : public IDFactory<EntityIndex> {
+class  EntityManager : public IDFactory<EntityIndex> {
 friend class Game;
 private:
     ComponentMemoryManager componentMemoryManager_;

@@ -5,7 +5,7 @@
 #include <latren/stage.h>
 
 namespace Serialization {
-    class LATREN_API StageSerializer : public JSONFileSerializer, public Serialization::JSONComponentDeserializer {
+    class  StageSerializer : public JSONFileSerializer, public Serialization::JSONComponentDeserializer {
     protected:
         Stage stage_;
         Serialization::BlueprintSerializer* blueprints_ = nullptr;

@@ -4,7 +4,7 @@
 #include "../shaders.h"
 #include "../material.h"
 
-class LATREN_API BillboardRenderer : public Renderable<BillboardRenderer> {
+class  BillboardRenderer : public Renderable<BillboardRenderer> {
 private:
     mutable glm::mat4 modelMatrix_;
     GLuint vao_ = GL_NONE;

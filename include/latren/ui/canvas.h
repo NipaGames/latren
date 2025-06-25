@@ -65,7 +65,7 @@ namespace UI {
         }
     };
 
-    class LATREN_API Canvas {
+    class  Canvas {
     private:
         template <typename T>
         void _AddUIComponent(const T& c, int p) {

@@ -7,7 +7,7 @@
 #include "../materials.h"
 
 namespace UI {
-    class LATREN_API TextInputComponent : public TextComponent {
+    class  TextInputComponent : public TextComponent {
     private:
         bool inputFocus_ = false;
         bool overflow_ = false;

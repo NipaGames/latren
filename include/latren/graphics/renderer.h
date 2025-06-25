@@ -26,7 +26,7 @@ namespace Config {
     struct VideoSettings;
 };
 
-class LATREN_API Renderer {
+class  Renderer {
 private:
     Viewport* viewport_;
     GLuint fbo_ = GL_NONE;

@@ -7,7 +7,7 @@
 #include <latren/defines/opengl.h>
 #include <memory>
 
-class LATREN_API MeshRenderer : public Renderable<MeshRenderer> {
+class  MeshRenderer : public Renderable<MeshRenderer> {
 friend class Renderer;
 private:
     mutable glm::mat4 modelMatrix_;

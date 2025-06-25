@@ -29,7 +29,7 @@ namespace UI {
     };
     class Canvas;
     class Interactable;
-    class LATREN_API UIComponent : public Component<UIComponent> {
+    class  UIComponent : public Component<UIComponent> {
     friend class Canvas;
     friend class Interactable;
     protected:

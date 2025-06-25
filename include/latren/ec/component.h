@@ -17,7 +17,7 @@ struct ComponentTypeData {
     std::function<std::unique_ptr<IComponentMemoryPool>()> memPoolInitializer;
 };
 
-class LATREN_API IComponent {
+class  IComponent {
 protected:
     bool hasStarted_ = false;
     bool useDeleteDestructor_ = false;

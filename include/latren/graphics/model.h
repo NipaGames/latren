@@ -8,7 +8,7 @@
 
 #include "mesh.h"
 
-class LATREN_API Model {
+class  Model {
 private:
     std::string dir_;
     void ProcessNodes(const aiNode*, const aiScene*);

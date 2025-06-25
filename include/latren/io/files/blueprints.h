@@ -3,7 +3,7 @@
 #include "../serializationinterface.h"
 
 namespace Serialization {
-    class LATREN_API BlueprintSerializer :
+    class  BlueprintSerializer :
         public JSONFileSerializer,
         public SerializerItemInterface<std::vector<TypedComponentData>>,
         public Serialization::JSONComponentDeserializer

@@ -37,7 +37,7 @@ namespace CFG {
     #define CFG_STRUCT(...) CFG::CFGFieldType::STRUCT, __VA_ARGS__
     #define CFG_VEC2(type) CFG_STRUCT(CFG_REQUIRE(type), CFG_REQUIRE(type))
 
-    LATREN_API bool IsValidType(CFGFieldType, CFGFieldType, bool = true);
+     bool IsValidType(CFGFieldType, CFGFieldType, bool = true);
     
     enum class CFGStringLiteral {
         APOSTROPHES,
@@ -249,13 +249,13 @@ namespace CFG {
         field->type = type;
         return field;
     }
-    LATREN_API ICFGField* CreateNewCFGField(CFGFieldType);
-    LATREN_API ICFGField* CreateNewCFGField(const ICFGField*);
+     ICFGField* CreateNewCFGField(CFGFieldType);
+     ICFGField* CreateNewCFGField(const ICFGField*);
 
     // serialize cfg object to a stringstream
-    LATREN_API void Dump(const CFGObject*, std::stringstream&, const CFGFormatting& = STANDARD_FORMATTING);
+     void Dump(const CFGObject*, std::stringstream&, const CFGFormatting& = STANDARD_FORMATTING);
     // serialize cfg object to a string
-    LATREN_API std::string Dump(const CFGObject*, const CFGFormatting& = STANDARD_FORMATTING);
+     std::string Dump(const CFGObject*, const CFGFormatting& = STANDARD_FORMATTING);
 
     template <typename T>
     struct CFGParseTreeNode {
@@ -297,7 +297,7 @@ namespace CFG {
 }
 
 namespace Serialization {
-    class LATREN_API CFGSerializer : public IFileSerializer<CFG::CFGObject*> {
+    class  CFGSerializer : public IFileSerializer<CFG::CFGObject*> {
     private:
         CFG::CFGFileTemplate fileTemplate_;
     public:
@@ -316,7 +316,7 @@ namespace Serialization {
 namespace Serialization {
     typedef DeserializerFunction<const CFG::ICFGField*> CFGDeserializerFunction;
     typedef std::vector<std::shared_ptr<IValueDeserializer<CFGDeserializerFunction>>> CFGDeserializerList;
-    LATREN_API CFGDeserializerList& GetCFGDeserializerList();
+     CFGDeserializerList& GetCFGDeserializerList();
     
     template <typename... T>
     void AssignCFGDeserializer(const CFGDeserializerFunction& f) {

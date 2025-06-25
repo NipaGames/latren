@@ -7,7 +7,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-class LATREN_API Transform : public Component<Transform> {
+class  Transform : public Component<Transform> {
 public:
     SERIALIZABLE(glm::vec3, position) = glm::vec3(0.0f);
     SERIALIZABLE(glm::vec3, size) = glm::vec3(1.0f);

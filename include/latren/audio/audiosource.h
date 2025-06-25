@@ -10,7 +10,7 @@ enum class AudioSourceRelativeTo {
     WORLD_SPACE
 };
 
-class LATREN_API AudioSourceHandle : public OpenAlHandle {
+class  AudioSourceHandle : public OpenAlHandle {
 using OpenAlHandle::OpenAlHandle;
 public:
     void BindBuffer(const AudioBufferHandle&);

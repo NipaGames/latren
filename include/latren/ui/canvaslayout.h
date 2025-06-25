@@ -5,7 +5,7 @@
 #include <latren/graphics/renderer.h>
 
 namespace UI {
-    class LATREN_API CanvasLayout : public Canvas {
+    class  CanvasLayout : public Canvas {
     private:
         std::unordered_map<std::string, std::vector<SharedComponentPtr<UIComponent>>> pages_;
     protected:

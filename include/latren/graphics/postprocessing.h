@@ -8,7 +8,7 @@
 #include <latren/graphics/shader.h>
 #include <latren/defines/mathdefines.h>
 
-class LATREN_API PostProcessing {
+class  PostProcessing {
 public:
     struct Vignette {
         bool isActive = false;

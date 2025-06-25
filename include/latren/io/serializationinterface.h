@@ -209,7 +209,7 @@ namespace Serialization {
     }
 
     typedef std::vector<std::shared_ptr<IValueDeserializer<JSONDeserializerFunction>>> JSONDeserializerList;
-    LATREN_API JSONDeserializerList& GetJSONDeserializerList();
+     JSONDeserializerList& GetJSONDeserializerList();
 
     template <typename... T>
     void AssignJSONDeserializer(const JSONDeserializerFunction& f) {
@@ -240,8 +240,8 @@ namespace Serialization {
     };
 
     // the destructor must be called from the dll too
-    LATREN_API bool UseInputFileStream(const std::string&, std::ios_base::openmode, const std::function<bool(std::ifstream&)>&);
-    LATREN_API bool UseOutputFileStream(const std::string&, std::ios_base::openmode, const std::function<bool(std::ofstream&)>&);
+     bool UseInputFileStream(const std::string&, std::ios_base::openmode, const std::function<bool(std::ifstream&)>&);
+     bool UseOutputFileStream(const std::string&, std::ios_base::openmode, const std::function<bool(std::ofstream&)>&);
 
     template <typename T, std::ios_base::openmode Mode = static_cast<std::ios_base::openmode>(0)>
     class IFileSerializer {
@@ -308,7 +308,7 @@ namespace Serialization {
         }
     };
 
-    class LATREN_API JSONFileSerializer : public IFileSerializer<nlohmann::json> {
+    class  JSONFileSerializer : public IFileSerializer<nlohmann::json> {
     using IFileSerializer::IFileSerializer;
     protected:
         virtual bool ParseJSON() = 0;

@@ -20,7 +20,7 @@ namespace UI {
         RENDER_TO_TEXTURE
     };
 
-    class LATREN_API TextComponent : public UIComponent {
+    class  TextComponent : public UIComponent {
     protected:
         Shader shader_ = Shader(Shaders::ShaderID::UI_TEXT);
         Shader textureShader_ = Shader(Shaders::ShaderID::UI_TEXT);

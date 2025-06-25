@@ -10,7 +10,7 @@
 
 class Camera;
 
-class LATREN_API AudioPlayer {
+class  AudioPlayer {
 private:
     ALCdevice* alcDevice_ = nullptr;
     ALCcontext* alcContext_ = nullptr;

@@ -35,7 +35,7 @@ namespace Resources {
         std::string id;
         AdditionalImportData additionalData;
     };
-    LATREN_API const ResourcePath& GetDefaultPath(ResourceType);
+     const ResourcePath& GetDefaultPath(ResourceType);
     template <typename ImportType = Import>
     struct Imports {
         ResourceType resourceType;
@@ -151,14 +151,14 @@ namespace Resources {
         }
     };
 
-    class LATREN_API TextureManager : public ResourceTypeManager<Texture::TextureID> {
+    class  TextureManager : public ResourceTypeManager<Texture::TextureID> {
     protected:
         virtual std::optional<Texture::TextureID> LoadResource(const ResourcePath&) override;
     public:
         TextureManager();
     };
 
-    class LATREN_API ShaderManager : public ResourceTypeManager<GLuint> {
+    class  ShaderManager : public ResourceTypeManager<GLuint> {
     protected:
         virtual std::optional<GLuint> LoadResource(const ResourcePath&) override;
         virtual void LoadShader(GLuint, const ResourcePath&, Shaders::ShaderType);
@@ -175,7 +175,7 @@ namespace Resources {
     };
 
     #define BASE_FONT_SIZE 48
-    class LATREN_API FontManager : public ResourceTypeManager<UI::Text::Font> {
+    class  FontManager : public ResourceTypeManager<UI::Text::Font> {
     protected:
         glm::ivec2 fontSize_ = { 0, BASE_FONT_SIZE };
         virtual std::optional<UI::Text::Font> LoadResource(const ResourcePath&) override;
@@ -185,21 +185,21 @@ namespace Resources {
         virtual void SetFontSize(int);
     };
 
-    class LATREN_API ModelManager : public ResourceTypeManager<Model> {
+    class  ModelManager : public ResourceTypeManager<Model> {
     protected:
         virtual std::optional<Model> LoadResource(const ResourcePath&) override;
     public:
         ModelManager();
     };
 
-    class LATREN_API AudioManager : public ResourceTypeManager<AudioBufferHandle> {
+    class  AudioManager : public ResourceTypeManager<AudioBufferHandle> {
     protected:
         virtual std::optional<AudioBufferHandle> LoadResource(const ResourcePath&) override;
     public:
         AudioManager();
     };
 
-    class LATREN_API StageManager : public ResourceTypeManager<Stage> {
+    class  StageManager : public ResourceTypeManager<Stage> {
     protected:
         std::vector<std::string> loadedStages_;
         std::unique_ptr<Serialization::StageSerializer> stageSerializer_;
@@ -213,7 +213,7 @@ namespace Resources {
         virtual void UseBlueprints(Serialization::BlueprintSerializer*);
     };
 
-    class LATREN_API TextFileManager : public ResourceTypeManager<std::string> {
+    class  TextFileManager : public ResourceTypeManager<std::string> {
     protected:
         virtual std::optional<std::string> LoadResource(const ResourcePath&) override;
     public:
@@ -228,19 +228,19 @@ namespace Resources {
             delete[] buffer;
         }
     };
-    class LATREN_API BinaryFileManager : public ResourceTypeManager<BinaryFile> {
+    class  BinaryFileManager : public ResourceTypeManager<BinaryFile> {
     protected:
         virtual std::optional<BinaryFile> LoadResource(const ResourcePath&) override;
     public:
         BinaryFileManager();
     };
-    class LATREN_API JSONFileManager : public ResourceTypeManager<nlohmann::json> {
+    class  JSONFileManager : public ResourceTypeManager<nlohmann::json> {
     protected:
         virtual std::optional<nlohmann::json> LoadResource(const ResourcePath&) override;
     public:
         JSONFileManager();
     };
-    class LATREN_API CFGFileManager : public ResourceTypeManager<CFG::CFGObject*> {
+    class  CFGFileManager : public ResourceTypeManager<CFG::CFGObject*> {
     protected:
         virtual std::optional<CFG::CFGObject*> LoadResource(const ResourcePath&) override;
     public:
@@ -248,11 +248,11 @@ namespace Resources {
         CFGFileManager();
     };
 
-    LATREN_API void SaveConfig(const std::fs::path&, const SerializableStruct&);
-    LATREN_API void LoadConfig(const std::fs::path&, SerializableStruct&);
+     void SaveConfig(const std::fs::path&, const SerializableStruct&);
+     void LoadConfig(const std::fs::path&, SerializableStruct&);
 
-    LATREN_API Imports<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*, ResourceType);
-    LATREN_API Imports<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
+     Imports<Import> ListImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*, ResourceType);
+     Imports<ShaderImport> ListShaderImports(const CFG::CFGField<std::vector<CFG::ICFGField*>>*);
 
     class ImportsFileTemplate : public CFG::CFGFileTemplateFactory {
         CFG::CFGCustomTypes DefineCustomTypes() const override;
@@ -291,7 +291,7 @@ public:
 };
 
 // Disable (basic) resource loaders with unflagging them in the ctor
-class LATREN_API ModularResourceManager : public IResourceManager {
+class  ModularResourceManager : public IResourceManager {
 // uh oh
 typedef std::variant<
     Serialization::MaterialSerializer,

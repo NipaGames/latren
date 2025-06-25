@@ -9,7 +9,7 @@
 #include "shader.h"
 #include "camera.h"
 
-class LATREN_API Mesh {
+class  Mesh {
 public:
     GLuint vao = GL_NONE;
     GLuint vbo = GL_NONE;
@@ -41,7 +41,7 @@ public:
 };
 
 namespace Meshes {
-    LATREN_API std::shared_ptr<Mesh> CreateMeshInstance(const Mesh&);
+     std::shared_ptr<Mesh> CreateMeshInstance(const Mesh&);
     static Mesh CUBE(
         "cube",
         {

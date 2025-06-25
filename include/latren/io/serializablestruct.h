@@ -31,7 +31,7 @@ struct SerializableStructMemberData {
     std::string metaData;
 };
 
-struct LATREN_API SerializableStruct {
+struct  SerializableStruct {
 private:
     int _metaCounter = 0;
 protected:

@@ -3,7 +3,7 @@
 #include <latren/latren.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-class LATREN_API ViewFrustum {
+class  ViewFrustum {
 public:
     struct AABB {
         glm::vec3 center = glm::vec3(0.0f);
@@ -34,7 +34,7 @@ public:
     bool IsOnFrustum(const AABB&) const;
 };
 
-class LATREN_API Camera {
+class  Camera {
 public:
     ViewFrustum frustum;
     float fov = 60.0f;

@@ -12,7 +12,7 @@ namespace Physics {
     };
 
     // would be great to have a separate collider component
-    class LATREN_API RigidBody : public Component<RigidBody> {
+    class  RigidBody : public Component<RigidBody> {
     private:
         bool enableDebugVisualization_ = true;
         bool enableRotation_ = true;

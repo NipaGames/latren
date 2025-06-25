@@ -28,7 +28,7 @@ namespace Input {
         RELEASED
     };
 
-    class LATREN_API KeyInputListener {
+    class  KeyInputListener {
     private:
         std::mutex mutex_;
         std::unordered_map<int, KeyState> keysBeforePoll_;

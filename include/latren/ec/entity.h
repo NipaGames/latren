@@ -10,7 +10,7 @@ class EntityManager;
 
 // basically a wrapper around entitymanager, doesn't store anything by itself
 // you could also think this as a pointer to entitymanager which actually stores the data
-class LATREN_API Entity {
+class  Entity {
 private:
     EntityManager* entityManager_;
     EntityIndex index_;

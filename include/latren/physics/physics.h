@@ -5,7 +5,7 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <memory>
 
-class LATREN_API PhysicsWorld {
+class  PhysicsWorld {
 private:
     // don't really know if these have a reason to be heap-allocated but the official Bullet HelloWorld.cpp has them allocated like this,
     // so there must be some reason, right?

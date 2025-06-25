@@ -3,22 +3,22 @@
 #include "component.h"
 
 namespace ComponentSerialization {
-    LATREN_API const std::vector<ComponentTypeData>& GetComponentTypes();
-    LATREN_API bool IsComponentRegistered(const std::string&);
-    LATREN_API bool IsComponentRegistered(ComponentType);
-    LATREN_API const ComponentTypeData& GetComponentType(const std::string&);
-    LATREN_API const ComponentTypeData& GetComponentType(ComponentType);
+     const std::vector<ComponentTypeData>& GetComponentTypes();
+     bool IsComponentRegistered(const std::string&);
+     bool IsComponentRegistered(ComponentType);
+     const ComponentTypeData& GetComponentType(const std::string&);
+     const ComponentTypeData& GetComponentType(ComponentType);
     template <typename T>
     static const ComponentTypeData& GetComponentType() { return GetComponentType(typeid(T)); }
 
-    LATREN_API std::optional<std::string> GetComponentName(ComponentType);
+     std::optional<std::string> GetComponentName(ComponentType);
     template <typename T>
     static std::optional<std::string> GetComponentName() { return GetComponentName(typeid(T)); }
 
-    LATREN_API std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool(ComponentType);
+     std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool(ComponentType);
     template <typename T>
     static std::unique_ptr<IComponentMemoryPool> CreateComponentMemoryPool() { return CreateComponentMemoryPool(typeid(T)); }
-    LATREN_API ComponentPoolContainer CreateComponentMemoryPools();
+     ComponentPoolContainer CreateComponentMemoryPools();
 
     template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<IComponent, T>>>
     std::shared_ptr<T> CreateInstance(Args... args) {
@@ -26,7 +26,7 @@ namespace ComponentSerialization {
         std::static_pointer_cast<IComponent>(instance)->UseDeleteDestructor(true);
         return instance;
     }
-    LATREN_API const bool RegisterComponent(
+     const bool RegisterComponent(
         const char*,
         const std::type_info&,
         const std::function<IComponent*()>&,
@@ -46,8 +46,8 @@ namespace ComponentSerialization {
         );
     }
 
-    LATREN_API void RegisterCoreComponents();
-    LATREN_API void RegisterCoreDeserializers();
+     void RegisterCoreComponents();
+     void RegisterCoreDeserializers();
 };
 
 #define LATREN_REGISTER_COMPONENT(C) ComponentSerialization::RegisterComponent<C>(#C)

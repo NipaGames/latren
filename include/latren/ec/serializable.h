@@ -36,10 +36,10 @@ typedef std::unordered_map<std::string, SerializableField> SerializableFieldMap;
 namespace GlobalSerialization {
     static constexpr inline char EMPTY_VAR_NAME[] = "";
 
-    LATREN_API void ToggleQueueing(bool);
-    LATREN_API void PushSerializable(ISerializable*);
-    LATREN_API void PopSerializables();
-    LATREN_API SerializableFieldMap PopSerializables(const IComponent*);
+     void ToggleQueueing(bool);
+     void PushSerializable(ISerializable*);
+     void PopSerializables();
+     SerializableFieldMap PopSerializables(const IComponent*);
 };
 
 template <typename T>

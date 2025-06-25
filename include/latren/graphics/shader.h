@@ -20,11 +20,11 @@ namespace Shaders {
     extern const std::string EXT_VERT;
     extern const std::string EXT_FRAG;
     extern const std::string EXT_GEOM;
-    LATREN_API GLuint GetShaderProgram(ShaderID);
-    LATREN_API GLuint GetShaderProgram(const std::string&);
+     GLuint GetShaderProgram(ShaderID);
+     GLuint GetShaderProgram(const std::string&);
 };
 
-class LATREN_API Shader {
+class  Shader {
 private:
     std::variant<std::string, Shaders::ShaderID> id_;
     // cache shader program

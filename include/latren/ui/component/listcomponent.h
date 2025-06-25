@@ -4,7 +4,7 @@
 #include "containercomponent.h"
 
 namespace UI {
-    class LATREN_API ListComponent : public ContainerComponent {
+    class  ListComponent : public ContainerComponent {
     private:
         EventID scrollEvent_ = -1;
         float scrollPos_ = 0.0f;
@@ -23,7 +23,7 @@ namespace UI {
         void SetScrollPos(float);
     };
 
-    class LATREN_API TextListComponent : public ListComponent {
+    class  TextListComponent : public ListComponent {
     using ListComponent::ListComponent;
     public:
         HorizontalAlignment itemAlignment = HorizontalAlignment::CENTER;

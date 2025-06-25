@@ -3,7 +3,7 @@
 #include "uicomponent.h"
 
 namespace UI {
-    class LATREN_API Interactable : public UISubcomponent {
+    class  Interactable : public UISubcomponent {
     private:
         bool isSelected_ = false;
     public:

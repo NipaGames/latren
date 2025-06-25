@@ -3,7 +3,7 @@
 #include <latren/latren.h>
 #include <latren/defines/opengl.h>
 
-class LATREN_API Shape {
+class  Shape {
 private:
     float* vertexData = nullptr;
 public:
@@ -31,6 +31,6 @@ namespace Shapes {
         RECTANGLE_VEC4,
         RECTANGLE_VEC2_VEC2
     };
-    LATREN_API void CreateDefaultShapes();
+     void CreateDefaultShapes();
     const Shape& GetDefaultShape(DefaultShape);
 };

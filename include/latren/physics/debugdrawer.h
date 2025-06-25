@@ -6,7 +6,7 @@
 #include <latren/graphics/shader.h>
 
 namespace Physics {
-    class LATREN_API DebugDrawer : public btIDebugDraw {
+    class  DebugDrawer : public btIDebugDraw {
     private:
         int debugMode_ = btIDebugDraw::DBG_DrawWireframe;
         Shader shader_;

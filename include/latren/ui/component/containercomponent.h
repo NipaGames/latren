@@ -5,7 +5,7 @@
 
 namespace UI {
     // basically the <div>-equivelant
-    class LATREN_API ContainerComponent : public UIComponent, public Canvas {
+    class  ContainerComponent : public UIComponent, public Canvas {
     using UIComponent::UIComponent;
     public:
         void Render(const glm::mat4&) override;

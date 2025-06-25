@@ -6,7 +6,7 @@
 #include <latren/graphics/shape.h>
 
 namespace UI {
-    class LATREN_API Image : public UISubcomponent {
+    class  Image : public UISubcomponent {
     private:
         Shape quadShape_;
     public:

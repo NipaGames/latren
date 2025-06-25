@@ -3,7 +3,7 @@
 #include <latren/latren.h>
 #include "mempool.h"
 
-class LATREN_API ComponentMemoryManager {
+class  ComponentMemoryManager {
 private:
     // optimally all the pools would be stored contiguously but this is the best i can come up with
     // afaik std any doesn't store the memory itself

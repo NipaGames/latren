@@ -11,7 +11,7 @@
 
 #define MATERIAL_MISSING "MATERIAL_MISSING"
 
-class LATREN_API Material {
+class  Material {
 private:
     std::unordered_map<std::string, int> intUniforms_ = {
         { "fog.use", 0 }

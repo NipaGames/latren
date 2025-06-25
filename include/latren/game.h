@@ -9,7 +9,7 @@
 #include "audio/audioplayer.h"
 #include "physics/physics.h"
 
-class LATREN_API Game {
+class  Game {
 protected:
     EntityManager entityManager_;
     GameWindow window_;
